@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -30,7 +31,7 @@ func ToLibPath(path string) string {
 	if strings.HasPrefix(path, runtime.Cfg.LibraryPath) {
 		return path
 	}
-	return fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path)
+	return filepath.Clean(fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path))
 }
 
 func Move(src, dst string) error {
@@ -40,5 +41,5 @@ func Move(src, dst string) error {
 		return err
 	}
 
-	return os.Rename(src, dst)
+	return os.Rename(ToLibPath(src), dst)
 }

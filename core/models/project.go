@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -22,7 +23,7 @@ type Project struct {
 func NewProjectFromPath(path string) *Project {
 	path, _ = filepath.Rel(runtime.Cfg.LibraryPath, path)
 	project := NewProject()
-	project.Path = path
+	project.Path = filepath.Clean(fmt.Sprintf("/%s", path))
 	project.Name = filepath.Base(path)
 	return project
 }

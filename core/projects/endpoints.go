@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
@@ -92,20 +93,21 @@ func save(c echo.Context) error {
 
 	pproject.Assets = project.Assets
 
-	if pproject.Name != project.Name || !strings.HasSuffix(pproject.Path, fmt.Sprintf("/%s", pproject.Name)) {
-		project.Name = pproject.Name
-	}
+	if pproject.Name != project.Name {
+		pproject.Path = strings.TrimRight(project.Path, project.Name)
+		pproject.Path = filepath.Clean(fmt.Sprintf("%s/%s", pproject.Path, pproject.Name))
 
-	err := move(project, pproject)
+		err := utils.Move(project.Path, pproject.Path)
 
-	if err != nil {
-		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		if err != nil {
+			log.Println(err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	state.Projects[pproject.UUID] = pproject
 
-	err = state.PersistProject(pproject)
+	err := state.PersistProject(pproject)
 
 	if err != nil {
 		log.Println(err)
@@ -201,14 +203,16 @@ func moveHandler(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	err := move(project, pproject)
+	pproject.Path = filepath.Clean(pproject.Path)
+	err := utils.Move(project.Path, pproject.Path)
 
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	project.Path = pproject.Path
+	project.Path = filepath.Clean(pproject.Path)
+	project.Name = filepath.Base(project.Path)
 
 	err = state.PersistProject(project)
 
@@ -216,7 +220,7 @@ func moveHandler(c echo.Context) error {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	
+
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
 		Path string `json:"path"`
@@ -243,7 +247,7 @@ func setMainImageHandler(c echo.Context) error {
 
 	if pproject.DefaultImagePath != project.DefaultImagePath {
 		project.DefaultImagePath = pproject.DefaultImagePath
-	} 
+	}
 
 	err := state.PersistProject(project)
 
