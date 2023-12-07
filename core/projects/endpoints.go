@@ -111,7 +111,7 @@ func save(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, pproject)
 }
 
 func new(c echo.Context) error {
