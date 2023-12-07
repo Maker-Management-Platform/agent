@@ -34,7 +34,7 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	var err error
 	asset.Extension = filepath.Ext(fileName)
 	asset.MimeType = mime.TypeByExtension(asset.Extension)
-	asset.SHA1, err = utils.GetFileSha1(fmt.Sprintf("%s/%s", project.Path, fileName))
+	asset.SHA1, err = utils.GetFileSha1(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
 	if err != nil {
 		return nil, err
 	}

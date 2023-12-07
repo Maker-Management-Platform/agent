@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/models"
@@ -66,11 +65,11 @@ func getAsset(c echo.Context) error {
 	}
 
 	if c.QueryParam("download") != "" {
-		return c.Attachment(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, asset.Name)), asset.Name)
+		return c.Attachment(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)), asset.Name)
 
 	}
 
-	return c.Inline(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, asset.Name)), asset.Name)
+	return c.Inline(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)), asset.Name)
 }
 
 func save(c echo.Context) error {
@@ -94,10 +93,8 @@ func save(c echo.Context) error {
 	pproject.Assets = project.Assets
 
 	if pproject.Name != project.Name {
-		pproject.Path = strings.TrimRight(project.Path, project.Name)
-		pproject.Path = filepath.Clean(fmt.Sprintf("%s/%s", pproject.Path, pproject.Name))
 
-		err := utils.Move(project.Path, pproject.Path)
+		err := utils.Move(project.FullPath(), pproject.FullPath())
 
 		if err != nil {
 			log.Println(err)
@@ -204,7 +201,8 @@ func moveHandler(c echo.Context) error {
 	}
 
 	pproject.Path = filepath.Clean(pproject.Path)
-	err := utils.Move(project.Path, pproject.Path)
+	pproject.Name = project.Name
+	err := utils.Move(project.FullPath(), pproject.FullPath())
 
 	if err != nil {
 		log.Println(err)
@@ -212,7 +210,6 @@ func moveHandler(c echo.Context) error {
 	}
 
 	project.Path = filepath.Clean(pproject.Path)
-	project.Name = filepath.Base(project.Path)
 
 	err = state.PersistProject(project)
 

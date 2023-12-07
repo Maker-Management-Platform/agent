@@ -37,7 +37,7 @@ func save(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	oldPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, asset.Name))
+	oldPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name))
 
 	if pAsset.ProjectUUID != asset.ProjectUUID {
 
@@ -47,7 +47,7 @@ func save(c echo.Context) error {
 			return c.NoContent(http.StatusNotFound)
 		}
 
-		newPath := utils.ToLibPath(fmt.Sprintf("%s/%s", newProject.Path, pAsset.Name))
+		newPath := utils.ToLibPath(fmt.Sprintf("%s/%s", newProject.FullPath(), pAsset.Name))
 		err = utils.Move(oldPath, newPath)
 
 		if err != nil {

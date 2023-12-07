@@ -75,7 +75,7 @@ func (p ProjectSlice) MarshalJSON() ([]byte, error) {
 }
 
 func (s *ProjectSlice) ParseGcode(project *Project) error {
-	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, s.Name))
+	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), s.Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (s *ProjectSlice) ParseGcode(project *Project) error {
 
 	if image.Data != nil {
 		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(s.Name, ".gcode"))
-		imgPath := fmt.Sprintf("%s/%s", project.Path, imgName)
+		imgPath := fmt.Sprintf("%s/%s", project.FullPath(), imgName)
 
 		h := sha1.New()
 		_, err = h.Write(image.Data)

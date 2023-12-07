@@ -51,7 +51,7 @@ func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, fil
 
 func loadImage(model *ProjectModel, project *Project) {
 	renderName := fmt.Sprintf("%s.render.png", model.Name)
-	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, renderName))
+	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
 	if _, err := os.Stat(renderPath); err != nil {
 		errChan := make(chan error, 1)
@@ -88,7 +88,7 @@ func renderWorker(jobs <-chan *cacheJob) {
 	for job := range jobs {
 		go func(job *cacheJob) {
 			log.Println("rendering", job.renderName)
-			err := render.RenderModel(job.renderName, job.model.Name, job.project.Path)
+			err := render.RenderModel(job.renderName, job.model.Name, job.project.FullPath())
 			log.Println(err)
 			job.err <- err
 			log.Println("rendered", job.renderName)

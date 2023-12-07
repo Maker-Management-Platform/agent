@@ -58,7 +58,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 }
 
 func DiscoverProjectAssets(project *models.Project) error {
-	libPath := utils.ToLibPath(project.Path)
+	libPath := utils.ToLibPath(project.FullPath())
 	files, err := ioutil.ReadDir(libPath)
 	if err != nil {
 		return err
@@ -70,21 +70,21 @@ func DiscoverProjectAssets(project *models.Project) error {
 	}
 
 	if slices.Contains(fNames, ".project.stlib") {
-		log.Println("found project", project.Path)
+		log.Println("found project", project.FullPath())
 		err = initProject(project)
 		if err != nil {
 			log.Printf("error loading the project %q: %v\n", project.Path, err)
 			return err
 		}
 	}
-	
+
 	if !project.Initialized {
 		project.Tags = pathToTags(project.Path)
 	}
 
 	err = initProjectAssets(project, files)
 	if err != nil {
-		log.Printf("error loading the project %q: %v\n", project.Path, err)
+		log.Printf("error loading the project %q: %v\n", project.FullPath(), err)
 		return err
 	}
 
@@ -102,10 +102,9 @@ func DiscoverProjectAssets(project *models.Project) error {
 
 func pathToTags(path string) []string {
 	log.Println("pathToTags", path)
+	path = strings.Trim(path, "/")
 	tags := strings.Split(path, "/")
-	if len(tags) > 1 {
-		tags = tags[1:]
-	} else {
+	if len(tags) == 0 {
 		tags = make([]string, 0)
 	}
 	log.Println("pathToTags", tags)
@@ -113,9 +112,9 @@ func pathToTags(path string) []string {
 }
 
 func initProject(project *models.Project) error {
-	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.Path)), &project)
+	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.FullPath())), &project)
 	if err != nil {
-		log.Printf("error decoding the project %q: %v\n", project.Path, err)
+		log.Printf("error decoding the project %q: %v\n", project.FullPath(), err)
 		return err
 	}
 
@@ -137,7 +136,7 @@ func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
 		if blacklisted {
 			continue
 		}
-		f, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, file.Name())))
+		f, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), file.Name())))
 		if err != nil {
 			return err
 		}

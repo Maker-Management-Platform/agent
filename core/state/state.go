@@ -18,7 +18,7 @@ var Files = make(map[string]*models.ProjectAsset)
 var Assets = make(map[string]*models.ProjectAsset)
 
 func PersistProject(project *models.Project) error {
-	f, err := os.OpenFile(fmt.Sprintf("%s/.project.stlib", utils.ToLibPath(project.Path)), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile(fmt.Sprintf("%s/.project.stlib", utils.ToLibPath(project.FullPath())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println(err)
 	}

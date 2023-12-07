@@ -31,7 +31,7 @@ func fetchThing(url string) error {
 		tempPath := utils.ToLibPath(id)
 
 		project := models.NewProjectFromPath(tempPath)
-		_ = os.Mkdir(utils.ToLibPath(project.Path), os.ModePerm)
+		_ = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm)
 
 		err := fetchDetails(id, project, httpClient)
 		if err != nil {
@@ -48,7 +48,7 @@ func fetchThing(url string) error {
 			return err
 		}
 
-		err = utils.Move(utils.ToLibPath(project.Path), utils.ToLibPath(project.Name))
+		err = utils.Move(utils.ToLibPath(project.FullPath()), utils.ToLibPath(project.Name))
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 
 	for _, file := range files {
 
-		out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, file.Name)))
+		out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), file.Name)))
 		if err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 
 		for _, size := range image.Sizes {
 			if size.Size == "large" && size.Type == "display" {
-				out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, image.Name)))
+				out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), image.Name)))
 				if err != nil {
 					return err
 				}
