@@ -104,11 +104,21 @@ func pathToTags(path string) []string {
 	log.Println("pathToTags", path)
 	path = strings.Trim(path, "/")
 	tags := strings.Split(path, "/")
-	if len(tags) == 0 {
-		tags = make([]string, 0)
+	tagSet := make(map[string]bool)
+	for _, t := range tags {
+		if t != "" {
+			tagSet[t] = true
+		}
+
 	}
-	log.Println("pathToTags", tags)
-	return tags
+	rtn := make([]string, len(tagSet))
+	i := 0
+	for k := range tagSet {
+		rtn[i] = k
+		i++
+	}
+	log.Println("pathToTags", rtn)
+	return rtn
 }
 
 func initProject(project *models.Project) error {
