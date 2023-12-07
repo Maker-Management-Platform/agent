@@ -1,7 +1,12 @@
 package main
 
-import stlib "github.com/eduardooliveira/stLib/core"
+import (
+	"log"
+
+	stlib "github.com/eduardooliveira/stLib/core"
+)
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	stlib.Run()
 }

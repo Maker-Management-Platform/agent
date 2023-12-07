@@ -6,3 +6,4 @@ main.exe
 release-*
 cache
 *.log
+__debug*
