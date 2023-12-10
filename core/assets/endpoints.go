@@ -181,7 +181,7 @@ func deleteAsset(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	err := os.Remove(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, asset.Name)))
+	err := os.Remove(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
