@@ -8,4 +8,5 @@ func Register(e *echo.Group) {
 
 	e.POST("/:sha1/delete", deleteAsset)
 	e.POST("/:sha1", save)
+	e.POST("", new)
 }
