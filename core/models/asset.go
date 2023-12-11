@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/eduardooliveira/stLib/core/utils"
 	"golang.org/x/exp/slices"
@@ -17,6 +18,8 @@ type ProjectAsset struct {
 	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
 	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
 	Path         string        `json:"path" toml:"path" form:"path" query:"path"`
+	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
+	ModTime      time.Time     `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
 	AssetType    string        `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
 	Extension    string        `json:"extension" toml:"extension" form:"extension" query:"extension"`
 	MimeType     string        `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
@@ -31,10 +34,20 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 		Name:        fileName,
 		ProjectUUID: project.UUID,
 	}
+	fullFilePath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
+
 	var err error
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	asset.Size = stat.Size()
+	asset.ModTime = stat.ModTime()
+
 	asset.Extension = filepath.Ext(fileName)
 	asset.MimeType = mime.TypeByExtension(asset.Extension)
-	asset.SHA1, err = utils.GetFileSha1(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
+	asset.SHA1, err = utils.GetFileSha1(fullFilePath)
 	if err != nil {
 		return nil, err
 	}
