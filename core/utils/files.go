@@ -28,7 +28,7 @@ func GetFileSha1(path string) (string, error) {
 }
 
 func ToLibPath(path string) string {
-	if strings.HasPrefix(path, runtime.Cfg.LibraryPath) {
+	if strings.HasPrefix(path, filepath.Clean(runtime.Cfg.LibraryPath)) {
 		return path
 	}
 	return filepath.Clean(fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path))

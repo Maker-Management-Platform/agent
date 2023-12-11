@@ -132,6 +132,7 @@ func (s *ProjectSlice) ParseGcode(project *Project) error {
 		if err != nil {
 			return err
 		}
+		defer f.Close()
 
 		s.Image, err = NewProjectAsset(filepath.Base(imgPath), project, f)
 		if err != nil {
@@ -245,7 +246,6 @@ func storeImage(img *tmpImg, name string) (*os.File, error) {
 		return nil, err
 	}
 	out, _ := os.Create(utils.ToLibPath(name))
-	defer out.Close()
 
 	err = png.Encode(out, i)
 
