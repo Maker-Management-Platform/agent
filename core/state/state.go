@@ -12,6 +12,7 @@ import (
 
 var Projects = make(map[string]*models.Project)
 var Models = make(map[string]*models.ProjectAsset)
+var TempFiles = make(map[string]*models.TempFile)
 var Images = make(map[string]*models.ProjectAsset)
 var Slices = make(map[string]*models.ProjectAsset)
 var Files = make(map[string]*models.ProjectAsset)
