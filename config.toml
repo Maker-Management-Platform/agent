@@ -1,7 +1,8 @@
 port = 8000
+server_hostname = "localhost"
 library_path = "./testdata"
 max_render_workers = 10
-file_blacklist = [".potato",".example"]
+file_blacklist = [".potato",".example",".gitkeep",".gitignore"]
 model_render_color = "#167DF0"
 model_background_color =  "#FFFFFF"
 #thingiverse_token = "your_thingiverse_token"

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	LibraryPath          string   `toml:"library_path"`
 	Port                 int      `toml:"port"`
+	ServerHostname       string   `toml:"server_hostname"`
 	MaxRenderWorkers     int      `toml:"max_render_workers"`
 	FileBlacklist        []string `toml:"file_blacklist"`
 	ModelRenderColor     string   `toml:"model_render_color"`
@@ -23,6 +24,7 @@ func init() {
 
 	viper.SetDefault("port", 8000)
 	viper.SetDefault("library_path", "./library")
+	viper.SetDefault("server_hostname", "localhost")
 	viper.SetDefault("max_render_workers", 5)
 	viper.SetDefault("file_blacklist", []string{})
 	viper.SetDefault("model_render_color", "#ffffff")
@@ -44,6 +46,7 @@ func init() {
 	Cfg = &Config{
 		LibraryPath:          viper.GetString("library_path"),
 		Port:                 viper.GetInt("port"),
+		ServerHostname:       viper.GetString("server_hostname"),
 		MaxRenderWorkers:     viper.GetInt("max_render_workers"),
 		FileBlacklist:        append(viper.GetStringSlice("file_blacklist"), ".gitignore", ".gitkeep", ".DS_Store", ".project.stlib", ".thumb.png", ".gitkeep"),
 		ModelRenderColor:     viper.GetString("model_render_color"),

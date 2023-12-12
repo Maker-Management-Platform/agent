@@ -31,6 +31,8 @@ func Run() {
 	}
 
 	discovery.Run(runtime.Cfg.LibraryPath)
+	discovery.RunTempDiscovery()
+
 	fmt.Println("starting server...")
 	e := echo.New()
 	e.Use(middleware.CORS())

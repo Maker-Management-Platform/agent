@@ -9,5 +9,6 @@ var group *echo.Group
 func Register(e *echo.Group) {
 	group = e
 	group.GET("", index)
-	group.POST("move", move)
+	group.POST("/:uuid", move)
+	group.POST("/:uuid/delete", deleteTempFile)
 }
