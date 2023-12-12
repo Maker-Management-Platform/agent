@@ -9,9 +9,11 @@ import (
 	"github.com/eduardooliveira/stLib/core/assets"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
+	"github.com/eduardooliveira/stLib/core/integrations/slicer"
 	"github.com/eduardooliveira/stLib/core/projects"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/system"
+	"github.com/eduardooliveira/stLib/core/tempfiles"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -29,6 +31,8 @@ func Run() {
 	}
 
 	discovery.Run(runtime.Cfg.LibraryPath)
+	discovery.RunTempDiscovery()
+
 	fmt.Println("starting server...")
 	e := echo.New()
 	e.Use(middleware.CORS())
@@ -42,10 +46,13 @@ func Run() {
 		HTML5:  true,
 	}))
 
+	slicer.Register(e.Group(""))
+
 	api := e.Group("/api")
 
 	projects.Register(api.Group("/projects"))
 	assets.Register(api.Group("/assets"))
+	tempfiles.Register(api.Group("/tempfiles"))
 	downloader.Register(api.Group("/downloader"))
 	system.Register(api.Group("/system"))
 
