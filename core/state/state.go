@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +26,45 @@ func PersistProject(project *models.Project) error {
 	}
 	if err := f.Close(); err != nil {
 		log.Println(err)
+	}
+	return err
+}
+
+func PercistPrinters() error {
+	f, err := os.OpenFile("data/printers.toml", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		log.Println(err)
+	}
+	if err := toml.NewEncoder(f).Encode(Printers); err != nil {
+		log.Println(err)
+	}
+	if err := f.Close(); err != nil {
+		log.Println(err)
+	}
+	return err
+}
+
+func LoadPrinters() error {
+	_, err := os.Stat("data/printers.toml")
+
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		if err := os.Mkdir("data", 0666); err != nil {
+			if !errors.Is(err, os.ErrExist) {
+				return err
+			}
+		}
+		if _, err = os.Create("data/printers.toml"); err != nil {
+			return err
+		}
+
+	}
+
+	_, err = toml.DecodeFile("data/printers.toml", &Printers)
+	if err != nil {
+		log.Println("error loading printers")
 	}
 	return err
 }

@@ -8,5 +8,7 @@ func Register(e *echo.Group) {
 
 	group = e
 	//group.GET("", index)
-	group.POST("", save)
+	group.POST("", new)
+	group.GET("", index)
+	group.POST("/test", testConnection)
 }
