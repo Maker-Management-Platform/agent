@@ -18,6 +18,34 @@ func index(c echo.Context) error {
 	return c.JSON(http.StatusOK, rtn)
 }
 
+func show(c echo.Context) error {
+	uuid := c.Param("uuid")
+	printer, ok := state.Printers[uuid]
+
+	if !ok {
+		return c.NoContent(http.StatusNotFound)
+	}
+	return c.JSON(http.StatusOK, printer)
+}
+
+func deleteHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
+	printer, ok := state.Printers[uuid]
+
+	if !ok {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	delete(state.Printers, printer.UUID)
+
+	err := state.PercistPrinters()
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, printer)
+}
+
 func new(c echo.Context) error {
 
 	pPrinter := &models.Printer{}
@@ -28,6 +56,34 @@ func new(c echo.Context) error {
 	}
 
 	printer := models.NewPrinter()
+	printer.Name = pPrinter.Name
+	printer.Address = pPrinter.Address
+	printer.Type = pPrinter.Type
+
+	state.Printers[printer.UUID] = printer
+	state.PercistPrinters()
+
+	return c.JSON(http.StatusCreated, state.Printers[printer.UUID])
+}
+
+func edit(c echo.Context) error {
+	pPrinter := &models.Printer{}
+
+	if err := c.Bind(pPrinter); err != nil {
+		log.Println(err)
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	if pPrinter.UUID != c.Param("uuid") {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	printer, ok := state.Printers[pPrinter.UUID]
+
+	if !ok {
+		return c.NoContent(http.StatusNotFound)
+	}
+
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
