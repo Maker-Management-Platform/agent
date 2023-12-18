@@ -1,9 +1,18 @@
 package klipper
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+
+	"github.com/eduardooliveira/stLib/core/models"
+	"github.com/eduardooliveira/stLib/core/state"
+	"github.com/eduardooliveira/stLib/core/utils"
 )
 
 func (p *KipplerPrinter) serverInfo() (*Result, error) {
@@ -21,4 +30,58 @@ func (p *KipplerPrinter) serverInfo() (*Result, error) {
 	}
 
 	return r.Result, nil
+}
+
+func (p *KipplerPrinter) ServerFilesUpload(asset *models.ProjectAsset) error {
+
+	project, ok := state.Projects[asset.ProjectUUID]
+
+	if !ok {
+		return errors.New("project not found")
+	}
+
+	file, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", asset.Name)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return err
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/server/files/upload", p.Address), body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if err != nil {
+		return err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	} else {
+		if resp.StatusCode != 201 {
+			body := &bytes.Buffer{}
+			body.ReadFrom(resp.Body)
+			resp.Body.Close()
+			fmt.Println(resp.StatusCode)
+			fmt.Println(resp.Header)
+			fmt.Println(body)
+			return errors.New("unknown error uploading file")
+		}
+	}
+
+	return nil
 }

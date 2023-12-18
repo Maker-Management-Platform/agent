@@ -46,6 +46,33 @@ func deleteHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, printer)
 }
 
+func sendHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
+	printer, ok := state.Printers[uuid]
+
+	if !ok {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	sha1 := c.Param("sha1")
+	asset, ok := state.Assets[sha1]
+
+	if !ok {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	var err error
+	if printer.Type == "klipper" {
+		err = klipper.UploadFile(printer, asset)
+	}
+	if err != nil {
+		log.Println(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
 func new(c echo.Context) error {
 
 	pPrinter := &models.Printer{}

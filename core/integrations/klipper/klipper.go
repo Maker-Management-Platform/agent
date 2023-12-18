@@ -18,3 +18,9 @@ func ConntectionStatus(printer *models.Printer) error {
 
 	return nil
 }
+
+func UploadFile(printer *models.Printer, asset *models.ProjectAsset) error {
+	kp := &KipplerPrinter{printer}
+
+	return kp.ServerFilesUpload(asset)
+}
