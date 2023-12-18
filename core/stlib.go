@@ -9,9 +9,11 @@ import (
 	"github.com/eduardooliveira/stLib/core/assets"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
+	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
 	"github.com/eduardooliveira/stLib/core/projects"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/tempfiles"
 	"github.com/labstack/echo/v4"
@@ -32,6 +34,10 @@ func Run() {
 
 	discovery.Run(runtime.Cfg.LibraryPath)
 	discovery.RunTempDiscovery()
+	err := state.LoadPrinters()
+	if err != nil {
+		log.Fatal("error loading printers", err)
+	}
 
 	fmt.Println("starting server...")
 	e := echo.New()
@@ -53,8 +59,8 @@ func Run() {
 	projects.Register(api.Group("/projects"))
 	assets.Register(api.Group("/assets"))
 	tempfiles.Register(api.Group("/tempfiles"))
+	printers.Register(api.Group("/printers"))
 	downloader.Register(api.Group("/downloader"))
 	system.Register(api.Group("/system"))
-
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", runtime.Cfg.Port)))
 }
