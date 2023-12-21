@@ -31,7 +31,7 @@ func fetch(c echo.Context) error {
 			err := fetchThing(url)
 			if err != nil {
 				log.Println(err)
-				return c.NoContent(http.StatusInternalServerError)
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
 		}
 	}
