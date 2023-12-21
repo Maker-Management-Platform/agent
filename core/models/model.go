@@ -125,8 +125,7 @@ func load3MfImage(model *ProjectModel, project *Project) {
 		}
 
 		// Ignore thumbnail since we should have the original image already
-		// Also ignore metadata since it has a lot of half-render images
-		if strings.Contains(f.Name, ".thumbnails/") || strings.Contains(f.Name, "Metadata/") {
+		if strings.Contains(f.Name, ".thumbnails/") {
 			continue
 		}
 
