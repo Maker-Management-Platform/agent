@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"os"
 )
 
@@ -13,14 +12,6 @@ type ProjectImage struct {
 	*ProjectAsset
 }
 
-type marshalProjectImage struct{}
-
 func NewProjectImage(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectImage, error) {
-	return &ProjectImage{
-		ProjectAsset: asset,
-	}, nil
-}
-
-func (p ProjectImage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(marshalProjectImage{})
+	return &ProjectImage{}, nil
 }

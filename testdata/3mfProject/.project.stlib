@@ -1,8 +1,8 @@
-uuid = "21ad6233-ae08-44f2-84a6-c351af52cec9"
+uuid = "7a477312-440e-41b9-a6dd-8f1200f948b0"
 name = "3mfProject"
 description = ""
-path = "3mfProject"
+path = "/"
 external_link = ""
 tags = []
-default_image_path = "91f9f92fe59b7efa669c9cb72692ea5a0cbe1ee8"
+default_image_path = "2f3fc441318a93d02bbf0aace0cc9514fb9e5966"
 initialized = true

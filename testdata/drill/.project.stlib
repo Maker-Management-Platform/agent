@@ -1,7 +1,7 @@
-uuid = "3d08d600-ddc0-4ef0-ac41-d9612b4e2d45"
+uuid = "09e2cc55-5e6d-42b3-b3ec-429ed2a59669"
 name = "drill"
 description = ""
-path = "drill"
+path = "/"
 external_link = ""
 tags = []
 default_image_path = "ad6773bcff246a10b07e7d31eb72e473c6cbd263"
