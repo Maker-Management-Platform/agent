@@ -7,7 +7,7 @@ import (
 
 const ProjectImageType = "image"
 
-var ImageExtensions = []string{".png", ".jpg", ".jpeg", ".gif", ".bmp"}
+var ImageExtensions = []string{".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 
 type ProjectImage struct {
 	*ProjectAsset
@@ -24,4 +24,3 @@ func NewProjectImage(fileName string, asset *ProjectAsset, project *Project, fil
 func (p ProjectImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(marshalProjectImage{})
 }
-
