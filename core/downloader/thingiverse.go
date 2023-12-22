@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"errors"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,47 +20,53 @@ import (
 
 func fetchThing(url string) error {
 
+	if runtime.Cfg.ThingiverseToken == "" {
+		return errors.New("Missing Thingiverse API token")
+	}
+
 	r := regexp.MustCompile(`thing:(\d+)`)
 	matches := r.FindStringSubmatch(url)
 
-	if len(matches) > 0 {
-		id := matches[1]
-		log.Println("Processing thing: ", id)
-
-		httpClient := &http.Client{}
-
-		tempPath := utils.ToLibPath(id)
-
-		project := models.NewProjectFromPath(tempPath)
-		_ = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm)
-
-		err := fetchDetails(id, project, httpClient)
-		if err != nil {
-			return err
-		}
-		err = fetchFiles(id, project, httpClient)
-		if err != nil {
-			log.Println("error fetching files")
-			return err
-		}
-		err = fetchImages(id, project, httpClient)
-		if err != nil {
-			log.Println("error fetching images")
-			return err
-		}
-
-		err = utils.Move(utils.ToLibPath(project.FullPath()), utils.ToLibPath(project.Name))
-		if err != nil {
-			return err
-		}
-		project.Path = project.Name
-
-		project.Initialized = true
-
-		state.PersistProject(project)
-		state.Projects[project.UUID] = project
-
+	if len(matches) == 0 {
+		return errors.New("Url doesn't match thingiverse schema")
 	}
+
+	id := matches[1]
+	log.Println("Processing thing: ", id)
+
+	httpClient := &http.Client{}
+
+	tempPath := utils.ToLibPath(id)
+
+	project := models.NewProjectFromPath(tempPath)
+	_ = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm)
+
+	err := fetchDetails(id, project, httpClient)
+	if err != nil {
+		return err
+	}
+	err = fetchFiles(id, project, httpClient)
+	if err != nil {
+		log.Println("error fetching files")
+		return err
+	}
+	err = fetchImages(id, project, httpClient)
+	if err != nil {
+		log.Println("error fetching images")
+		return err
+	}
+
+	err = utils.Move(utils.ToLibPath(project.FullPath()), utils.ToLibPath(project.Name))
+	if err != nil {
+		return err
+	}
+	project.Path = project.Name
+
+	project.Initialized = true
+
+	state.PersistProject(project)
+	state.Projects[project.UUID] = project
+
 	return nil
 }
 
