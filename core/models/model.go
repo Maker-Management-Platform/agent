@@ -2,7 +2,6 @@ package models
 
 import (
 	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -27,16 +26,13 @@ type ProjectModel struct {
 
 type cacheJob struct {
 	renderName string
+	parent     *ProjectAsset
 	model      *ProjectModel
 	project    *Project
 	err        chan error
 }
 
 var cacheJobs chan *cacheJob
-
-type marshalProjectModel struct {
-	ImageSha1 string `json:"image_sha1"`
-}
 
 func init() {
 	log.Println("Starting", runtime.Cfg.MaxRenderWorkers, "render workers")
@@ -45,33 +41,31 @@ func init() {
 }
 
 func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, error) {
-	m := &ProjectModel{
-		ProjectAsset: asset,
-	}
+	m := &ProjectModel{}
 
-	loadImage(m, project)
+	loadImage(m, asset, project)
 
 	return m, nil
 }
 
-func loadImage(model *ProjectModel, project *Project) {
-	log.Println(model.ProjectAsset.Extension)
+func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 
-	if strings.ToLower(model.ProjectAsset.Extension) == ".stl" {
-		loadStlImage(model, project)
-	} else if strings.ToLower(model.ProjectAsset.Extension) == ".3mf" {
-		load3MfImage(model, project)
+	if strings.ToLower(parent.Extension) == ".stl" {
+		loadStlImage(model, parent, project)
+	} else if strings.ToLower(parent.Extension) == ".3mf" {
+		load3MfImage(model, parent, project)
 	}
 
 }
-func loadStlImage(model *ProjectModel, project *Project) {
-	renderName := fmt.Sprintf("%s.render.png", model.Name)
+func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+	renderName := fmt.Sprintf("%s.render.png", parent.Name)
 	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
 	if _, err := os.Stat(renderPath); err != nil {
 		errChan := make(chan error, 1)
 		cacheJobs <- &cacheJob{
 			renderName: renderName,
+			parent:     parent,
 			model:      model,
 			project:    project,
 			err:        errChan,
@@ -99,9 +93,9 @@ func loadStlImage(model *ProjectModel, project *Project) {
 
 }
 
-func load3MfImage(model *ProjectModel, project *Project) {
+func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 	projectPath := utils.ToLibPath(project.FullPath())
-	filePath := filepath.Join(projectPath, model.Name)
+	filePath := filepath.Join(projectPath, parent.Name)
 	log.Println(filePath)
 
 	tmpDir, err := os.MkdirTemp("", "tmp")
@@ -172,16 +166,10 @@ func renderWorker(jobs <-chan *cacheJob) {
 	for job := range jobs {
 		go func(job *cacheJob) {
 			log.Println("rendering", job.renderName)
-			err := render.RenderModel(job.renderName, job.model.Name, job.project.FullPath())
+			err := render.RenderModel(job.renderName, job.parent.Name, job.project.FullPath())
 			log.Println(err)
 			job.err <- err
 			log.Println("rendered", job.renderName)
 		}(job)
 	}
-}
-
-func (p ProjectModel) MarshalJSON() ([]byte, error) {
-	return json.Marshal(marshalProjectModel{
-		ImageSha1: p.ImageSha1,
-	})
 }

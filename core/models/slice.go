@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -45,37 +44,16 @@ type Filament struct {
 	Weight float64 `json:"weight" toml:"weight" form:"weight" query:"weight"`
 }
 
-type marshalProjectSlice struct {
-	Image      *ProjectAsset `json:"image" toml:"image" form:"image" query:"image"`
-	Slicer     string        `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
-	Filament   *Filament     `json:"filament" toml:"filament" form:"filament" query:"filament"`
-	Cost       float64       `json:"cost" toml:"cost" form:"cost" query:"cost"`
-	LayerCount int           `json:"layer_count" toml:"layer_count" form:"layer_count" query:"layer_count"`
-	Duration   string        `json:"duration" toml:"duration" form:"duration" query:"duration"`
-}
-
 func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectSlice, error) {
 	s := &ProjectSlice{
-		ProjectAsset: asset,
-		Filament:     &Filament{},
+		Filament: &Filament{},
 	}
-	s.ParseGcode(project)
+	parseGcode(s, asset, project)
 	return s, nil
 }
 
-func (p ProjectSlice) MarshalJSON() ([]byte, error) {
-	return json.Marshal(marshalProjectSlice{
-		Image:      p.Image,
-		Slicer:     p.Slicer,
-		Filament:   p.Filament,
-		Cost:       p.Cost,
-		LayerCount: p.LayerCount,
-		Duration:   p.Duration,
-	})
-}
-
-func (s *ProjectSlice) ParseGcode(project *Project) error {
-	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), s.Name))
+func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) error {
+	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), parent.Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -119,7 +97,7 @@ func (s *ProjectSlice) ParseGcode(project *Project) error {
 	}
 
 	if image.Data != nil {
-		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(s.Name, ".gcode"))
+		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(parent.Name, ".gcode"))
 		imgPath := fmt.Sprintf("%s/%s", project.FullPath(), imgName)
 
 		h := sha1.New()
