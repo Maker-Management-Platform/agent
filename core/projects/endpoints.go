@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/models"
@@ -138,6 +139,8 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	projectName := uuid
+
 	for _, file := range files {
 		// Source
 		src, err := file.Open()
@@ -161,6 +164,9 @@ func new(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
+		if projectName == uuid {
+			projectName = strings.TrimSuffix(file.Filename, filepath.Ext(file.Filename))
+		}
 	}
 	project := models.NewProjectFromPath(path)
 
@@ -169,6 +175,8 @@ func new(c echo.Context) error {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err
 	}
+
+	project.Name = projectName
 
 	j, _ := json.Marshal(project)
 	log.Println(string(j))
