@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha1"
+	"database/sql/driver"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -29,13 +31,24 @@ type tmpImg struct {
 }
 
 type ProjectSlice struct {
-	*ProjectAsset
 	Image      *ProjectAsset `json:"image" toml:"image" form:"image" query:"image"`
 	Slicer     string        `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
 	Filament   *Filament     `json:"filament" toml:"filament" form:"filament" query:"filament"`
 	Cost       float64       `json:"cost" toml:"cost" form:"cost" query:"cost"`
 	LayerCount int           `json:"layer_count" toml:"layer_count" form:"layer_count" query:"layer_count"`
 	Duration   string        `json:"duration" toml:"duration" form:"duration" query:"duration"`
+}
+
+func (n *ProjectSlice) Scan(src interface{}) error {
+	str, ok := src.(string)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSON string:", src))
+	}
+	return json.Unmarshal([]byte(str), &n)
+}
+func (n ProjectSlice) Value() (driver.Value, error) {
+	val, err := json.Marshal(n)
+	return string(val), err
 }
 
 type Filament struct {

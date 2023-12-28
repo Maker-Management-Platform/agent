@@ -2,6 +2,7 @@ package projects
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -16,52 +18,61 @@ import (
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func index(c echo.Context) error {
-	rtn := make([]*models.Project, 0)
-	for _, p := range state.Projects {
-		rtn = append(rtn, p)
+	rtn, err := database.GetProjects()
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, rtn)
 }
 
 func show(c echo.Context) error {
 	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	rtn, err := database.GetProject(uuid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, project)
+	return c.JSON(http.StatusOK, rtn)
 }
 
 func showAssets(c echo.Context) error {
 	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
-	}
-	rtn := make([]*models.ProjectAsset, 0)
-	for _, a := range project.Assets {
-		rtn = append(rtn, a)
+	rtn, err := database.GetAssetsByProject(uuid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, rtn)
 }
 
 func getAsset(c echo.Context) error {
-	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(c.Param("uuid"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	asset, ok := project.Assets[c.Param("sha1")]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	asset, err := database.GetAsset(project.UUID, c.Param("sha1"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if c.QueryParam("download") != "" {
@@ -77,20 +88,21 @@ func save(c echo.Context) error {
 
 	if err := c.Bind(pproject); err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if pproject.UUID != c.Param("uuid") {
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("parameter mismatch"))
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(c.Param("uuid"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
-	pproject.Assets = project.Assets
 
 	if pproject.Name != project.Name {
 
@@ -98,17 +110,22 @@ func save(c echo.Context) error {
 
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
 
-	state.Projects[pproject.UUID] = pproject
-
-	err := state.PersistProject(pproject)
+	err = state.PersistProject(pproject)
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(pproject)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, pproject)
@@ -177,6 +194,13 @@ func new(c echo.Context) error {
 
 	state.Projects[project.UUID] = project
 
+	err = database.InsertProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
 	}{project.UUID})
@@ -194,15 +218,18 @@ func moveHandler(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(pproject.UUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	pproject.Path = filepath.Clean(pproject.Path)
 	pproject.Name = project.Name
-	err := utils.Move(project.FullPath(), pproject.FullPath())
+	err = utils.Move(project.FullPath(), pproject.FullPath())
 
 	if err != nil {
 		log.Println(err)
@@ -215,7 +242,14 @@ func moveHandler(c echo.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, struct {
@@ -236,21 +270,31 @@ func setMainImageHandler(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(pproject.UUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if pproject.DefaultImagePath != project.DefaultImagePath {
 		project.DefaultImagePath = pproject.DefaultImagePath
 	}
 
-	err := state.PersistProject(project)
+	err = state.PersistProject(project)
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, struct {

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/eduardooliveira/stLib/core/assets"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
@@ -32,9 +33,13 @@ func Run() {
 		log.SetOutput(wrt)
 	}
 
+	err := database.InitDatabase()
+	if err != nil {
+		log.Fatal("error initing database", err)
+	}
 	discovery.Run(runtime.Cfg.LibraryPath)
 	discovery.RunTempDiscovery()
-	err := state.LoadPrinters()
+	err = state.LoadPrinters()
 	if err != nil {
 		log.Fatal("error loading printers", err)
 	}
@@ -45,12 +50,12 @@ func Run() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	/*e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:   "frontend/dist",
 		Index:  "index.html",
 		Browse: false,
 		HTML5:  true,
-	}))
+	}))*/
 
 	slicer.Register(e.Group(""))
 

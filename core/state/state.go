@@ -1,7 +1,6 @@
 package state
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -45,21 +44,19 @@ func PercistPrinters() error {
 }
 
 func LoadPrinters() error {
-	_, err := os.Stat("data/printers.toml")
+
+	err := utils.CreateFolder("data")
 
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-		if err := os.Mkdir("data", 0666); err != nil {
-			if !errors.Is(err, os.ErrExist) {
-				return err
-			}
-		}
+		return err
+	}
+
+	_, err = os.Stat("data/printers.toml")
+
+	if err != nil {
 		if _, err = os.Create("data/printers.toml"); err != nil {
 			return err
 		}
-
 	}
 
 	_, err = toml.DecodeFile("data/printers.toml", &Printers)

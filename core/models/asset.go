@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"log"
 	"mime"
 	"os"
 	"path/filepath"
@@ -14,10 +13,10 @@ import (
 )
 
 type ProjectAsset struct {
-	SHA1         string        `json:"sha1" toml:"sha1" form:"sha1" query:"sha1"`
+	SHA1         string        `json:"sha1" toml:"sha1" form:"sha1" query:"sha1" gorm:"primaryKey"`
 	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
-	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
-	Path         string        `json:"path" toml:"path" form:"path" query:"path"`
+	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid" gorm:"primaryKey"`
+	Project      *Project      `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
 	ModTime      time.Time     `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
 	AssetType    string        `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
@@ -65,6 +64,5 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 		asset.ProjectFile, err = NewProjectFile(fileName, asset, project, file)
 	}
 
-	log.Println(asset.AssetType)
 	return asset, err
 }

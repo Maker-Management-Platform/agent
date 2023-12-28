@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -49,6 +50,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 	if len(project.Assets) > 0 {
 		project.Initialized = true
 		state.Projects[project.UUID] = project
+		database.InsertProject(project)
 		err := state.PersistProject(project)
 		if err != nil {
 			log.Println(err)
@@ -160,11 +162,13 @@ func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
 		if asset.AssetType == models.ProjectSliceType {
 			if asset.Slice.Image != nil {
 				project.Assets[asset.Slice.Image.SHA1] = asset.Slice.Image
+				database.InsertAsset(asset.Slice.Image)
 			}
 		}
 
 		project.Assets[asset.SHA1] = asset
 		state.Assets[asset.SHA1] = asset
+		database.InsertAsset(asset)
 
 	}
 

@@ -2,6 +2,9 @@ package models
 
 import (
 	"archive/zip"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,8 +23,19 @@ const ProjectModelType = "model"
 var ModelExtensions = []string{".stl", ".3mf"}
 
 type ProjectModel struct {
-	*ProjectAsset
 	ImageSha1 string `json:"image_sha1"`
+}
+
+func (n *ProjectModel) Scan(src interface{}) error {
+	str, ok := src.(string)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSON string:", src))
+	}
+	return json.Unmarshal([]byte(str), &n)
+}
+func (n ProjectModel) Value() (driver.Value, error) {
+	val, err := json.Marshal(n)
+	return string(val), err
 }
 
 type cacheJob struct {
