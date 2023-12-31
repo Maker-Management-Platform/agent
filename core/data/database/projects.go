@@ -6,25 +6,25 @@ import (
 )
 
 func initProjects() error {
-	if err := db.AutoMigrate(&models.Project{}); err != nil {
+	if err := DB.AutoMigrate(&models.Project{}); err != nil {
 		return err
 	}
 
-	return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Project{}).Error
+	return DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Project{}).Error
 }
 
 func InsertProject(p *models.Project) error {
-	return db.Create(p).Error
+	return DB.Create(p).Error
 }
 
 func UpdateProject(p *models.Project) error {
-	return db.Save(p).Error
+	return DB.Save(p).Error
 }
 
 func GetProjects() (rtn []*models.Project, err error) {
-	return rtn, db.Order("name").Find(&rtn).Error
+	return rtn, DB.Order("name").Find(&rtn).Error
 }
 
 func GetProject(uuid string) (rtn *models.Project, err error) {
-	return rtn, db.Where(&models.Project{UUID: uuid}).First(&rtn).Error
+	return rtn, DB.Where(&models.Project{UUID: uuid}).First(&rtn).Error
 }

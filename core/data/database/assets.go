@@ -6,21 +6,21 @@ import (
 )
 
 func initAssets() error {
-	if err := db.AutoMigrate(&models.ProjectAsset{}); err != nil {
+	if err := DB.AutoMigrate(&models.ProjectAsset{}); err != nil {
 		return err
 	}
 
-	return db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.ProjectAsset{}).Error
+	return DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.ProjectAsset{}).Error
 }
 
 func InsertAsset(a *models.ProjectAsset) error {
-	return db.Create(a).Error
+	return DB.Create(a).Error
 }
 
 func GetAssetsByProject(uuid string) (rtn []*models.ProjectAsset, err error) {
-	return rtn, db.Order("name").Where(&models.ProjectAsset{ProjectUUID: uuid}).Find(&rtn).Error
+	return rtn, DB.Order("name").Where(&models.ProjectAsset{ProjectUUID: uuid}).Find(&rtn).Error
 }
 
 func GetAsset(uuid string, sha1 string) (rtn *models.ProjectAsset, err error) {
-	return rtn, db.Where(&models.ProjectAsset{SHA1: sha1, ProjectUUID: uuid}).First(&rtn).Error
+	return rtn, DB.Where(&models.ProjectAsset{SHA1: sha1, ProjectUUID: uuid}).First(&rtn).Error
 }

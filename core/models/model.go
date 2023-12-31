@@ -54,24 +54,22 @@ func init() {
 	go renderWorker(cacheJobs)
 }
 
-func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, error) {
+func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, []*ProjectAsset, error) {
 	m := &ProjectModel{}
 
-	loadImage(m, asset, project)
-
-	return m, nil
+	return m, loadImage(m, asset, project), nil
 }
 
-func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
-
+func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
 	if strings.ToLower(parent.Extension) == ".stl" {
-		loadStlImage(model, parent, project)
+		return []*ProjectAsset{loadStlImage(model, parent, project)}
 	} else if strings.ToLower(parent.Extension) == ".3mf" {
-		load3MfImage(model, parent, project)
+		return load3MfImage(model, parent, project)
 	}
-
+	return nil
 }
-func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+
+func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) *ProjectAsset {
 	renderName := fmt.Sprintf("%s.render.png", parent.Name)
 	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
@@ -93,21 +91,22 @@ func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 	f, err := os.Open(renderPath)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 
-	asset, err := NewProjectAsset(renderName, project, f)
+	asset, _, err := NewProjectAsset(renderName, project, f)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 
 	project.Assets[asset.SHA1] = asset
 	model.ImageSha1 = asset.SHA1
-
+	return asset
 }
 
-func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
+	rtn := make([]*ProjectAsset, 0)
 	projectPath := utils.ToLibPath(project.FullPath())
 	filePath := filepath.Join(projectPath, parent.Name)
 	log.Println(filePath)
@@ -115,14 +114,14 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 	tmpDir, err := os.MkdirTemp("", "tmp")
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	defer os.RemoveAll(tmpDir)
 
 	archive, err := zip.OpenReader(filePath)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	defer archive.Close()
 
@@ -162,18 +161,21 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 			continue
 		}
 
-		asset, err := NewProjectAsset(filepath.Base(outputPath), project, dstFile)
+		asset, _, err := NewProjectAsset(filepath.Base(outputPath), project, dstFile)
 		if err != nil {
 			log.Println(err)
-			return
+			return nil
 		}
 
-		project.Assets[asset.SHA1] = asset
+		rtn = append(rtn, asset)
+
 		// Use first image as the default
 		if model.ImageSha1 == "" {
 			model.ImageSha1 = asset.SHA1
 		}
 	}
+
+	return rtn
 }
 
 func renderWorker(jobs <-chan *cacheJob) {

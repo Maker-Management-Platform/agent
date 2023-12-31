@@ -1,8 +1,8 @@
 package downloader
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -152,7 +152,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 			return err
 		}
 
-		asset, err := models.NewProjectAsset(file.Name, project, out)
+		asset, _, err := models.NewProjectAsset(file.Name, project, out)
 		if err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 					return err
 				}
 
-				asset, err := models.NewProjectAsset(image.Name, project, out)
+				asset, _, err := models.NewProjectAsset(image.Name, project, out)
 				if err != nil {
 					return err
 				}

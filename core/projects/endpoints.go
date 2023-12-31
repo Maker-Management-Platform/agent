@@ -18,16 +18,18 @@ import (
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/morkid/paginate"
 	"gorm.io/gorm"
 )
 
 func index(c echo.Context) error {
-	rtn, err := database.GetProjects()
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	pg := paginate.New()
+	page := pg.With(database.DB.Model(&models.Project{})).Request(c.Request()).Response(&[]models.Project{})
+	if page.RawError != nil {
+		log.Println(page.RawError)
+		return echo.NewHTTPError(http.StatusInternalServerError, page.RawError.Error())
 	}
-	return c.JSON(http.StatusOK, rtn)
+	return c.JSON(http.StatusOK, page)
 }
 
 func show(c echo.Context) error {

@@ -42,12 +42,12 @@ func walker(path string, d fs.DirEntry, err error) error {
 
 	project := models.NewProjectFromPath(path)
 
-	err = DiscoverProjectAssets(project)
+	init, err := DiscoverProjectAssets2(project)
 	if err != nil {
 		return err
 	}
 
-	if len(project.Assets) > 0 {
+	if init {
 		project.Initialized = true
 		state.Projects[project.UUID] = project
 		database.InsertProject(project)
@@ -57,6 +57,71 @@ func walker(path string, d fs.DirEntry, err error) error {
 		}
 	}
 	return nil
+}
+
+func DiscoverProjectAssets2(project *models.Project) (foundAssets bool, err error) {
+	projectPath := utils.ToLibPath(project.FullPath())
+
+	entries, err := os.ReadDir(projectPath)
+	if err != nil {
+		log.Println("failed to read path", projectPath)
+		return false, err
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if e.Name() == ".project.stlib" {
+			log.Println("found project", project.FullPath())
+			err = loadProject(project)
+			if err != nil {
+				log.Printf("error loading the project %q: %v\n", project.Path, err)
+				return false, err
+			}
+		}
+
+		blacklisted := false
+		for _, blacklist := range runtime.Cfg.FileBlacklist {
+			if strings.HasSuffix(e.Name(), blacklist) {
+				blacklisted = true
+				break
+			}
+		}
+		if blacklisted {
+			continue
+		}
+
+		f, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), e.Name())))
+		if err != nil {
+			log.Println("failed to open file", err)
+			continue
+		}
+		defer f.Close()
+		asset, nestedAssets, err := models.NewProjectAsset(e.Name(), project, f)
+		if err != nil {
+			log.Println("failed create asset", err)
+			continue
+		}
+
+		if err = database.InsertAsset(asset); err != nil {
+			log.Println(err)
+			continue
+		}
+
+		for _, a := range nestedAssets {
+			if err = database.InsertAsset(a); err != nil {
+				log.Println(err)
+				continue
+			}
+		}
+		foundAssets = true
+	}
+
+	if !project.Initialized {
+		project.Tags = pathToTags(project.Path)
+	}
+
+	return foundAssets, nil
 }
 
 func DiscoverProjectAssets(project *models.Project) error {
@@ -73,7 +138,7 @@ func DiscoverProjectAssets(project *models.Project) error {
 
 	if slices.Contains(fNames, ".project.stlib") {
 		log.Println("found project", project.FullPath())
-		err = initProject(project)
+		err = loadProject(project)
 		if err != nil {
 			log.Printf("error loading the project %q: %v\n", project.Path, err)
 			return err
@@ -123,7 +188,7 @@ func pathToTags(path string) []string {
 	return rtn
 }
 
-func initProject(project *models.Project) error {
+func loadProject(project *models.Project) error {
 	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.FullPath())), &project)
 	if err != nil {
 		log.Printf("error decoding the project %q: %v\n", project.FullPath(), err)
@@ -153,17 +218,10 @@ func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
 			return err
 		}
 		defer f.Close()
-		asset, err := models.NewProjectAsset(file.Name(), project, f)
+		asset, _, err := models.NewProjectAsset(file.Name(), project, f)
 
 		if err != nil {
 			return err
-		}
-
-		if asset.AssetType == models.ProjectSliceType {
-			if asset.Slice.Image != nil {
-				project.Assets[asset.Slice.Image.SHA1] = asset.Slice.Image
-				database.InsertAsset(asset.Slice.Image)
-			}
 		}
 
 		project.Assets[asset.SHA1] = asset

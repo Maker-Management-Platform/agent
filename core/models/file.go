@@ -25,6 +25,6 @@ func (n ProjectFile) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-func NewProjectFile(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectFile, error) {
-	return &ProjectFile{}, nil
+func NewProjectFile(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectFile, []*ProjectAsset, error) {
+	return &ProjectFile{}, nil, nil
 }

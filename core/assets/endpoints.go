@@ -67,17 +67,11 @@ func save(c echo.Context) error {
 		}
 		defer f.Close()
 
-		asset, err := models.NewProjectAsset(pAsset.Name, newProject, f)
+		asset, _, err := models.NewProjectAsset(pAsset.Name, newProject, f)
 
 		if err != nil {
 			log.Println("new", err)
 			return c.NoContent(http.StatusInternalServerError)
-		}
-
-		if asset.AssetType == models.ProjectSliceType {
-			if asset.Slice.Image != nil {
-				newProject.Assets[asset.Slice.Image.SHA1] = asset.Slice.Image
-			}
 		}
 
 		newProject.Assets[asset.SHA1] = asset

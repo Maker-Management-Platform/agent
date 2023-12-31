@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
 
 func InitDatabase() error {
 	err := utils.CreateFolder("data")
@@ -14,7 +14,7 @@ func InitDatabase() error {
 		return err
 	}
 
-	db, err = gorm.Open(sqlite.Open("data/data.db"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open("data/data.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
