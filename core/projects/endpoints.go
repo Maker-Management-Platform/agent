@@ -197,6 +197,12 @@ func new(c echo.Context) error {
 
 	state.Projects[project.UUID] = project
 
+	err = state.PersistProject(project)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
 	}{project.UUID})
