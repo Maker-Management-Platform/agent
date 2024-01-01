@@ -183,18 +183,21 @@ func new(c echo.Context) error {
 	}
 	project := models.NewProjectFromPath(path)
 
-	err = discovery.DiscoverProjectAssets(project)
+	ok, err := discovery.DiscoverProjectAssets2(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err
+	}
+	if !ok {
+		err = errors.New("failed to find assets")
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	j, _ := json.Marshal(project)
 	log.Println(string(j))
 	m, _ := json.Marshal(project.Assets)
 	log.Println(string(m))
-
-	state.Projects[project.UUID] = project
 
 	err = database.InsertProject(project)
 

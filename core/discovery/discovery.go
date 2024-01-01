@@ -1,7 +1,6 @@
 package discovery
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -25,8 +24,6 @@ func Run(path string) {
 		fmt.Printf("error walking the path %q: %v\n", path, err)
 		return
 	}
-	j, _ := json.Marshal(state.Projects)
-	log.Println(string(j))
 }
 
 func walker(path string, d fs.DirEntry, err error) error {
@@ -49,7 +46,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 
 	if init {
 		project.Initialized = true
-		state.Projects[project.UUID] = project
+
 		database.InsertProject(project)
 		err := state.PersistProject(project)
 		if err != nil {
@@ -78,6 +75,7 @@ func DiscoverProjectAssets2(project *models.Project) (foundAssets bool, err erro
 				log.Printf("error loading the project %q: %v\n", project.Path, err)
 				return false, err
 			}
+			continue
 		}
 
 		blacklisted := false
@@ -107,12 +105,19 @@ func DiscoverProjectAssets2(project *models.Project) (foundAssets bool, err erro
 			log.Println(err)
 			continue
 		}
+		if project.DefaultImagePath == "" && asset.AssetType == "image" {
+			project.DefaultImagePath = asset.SHA1
+		}
 
 		for _, a := range nestedAssets {
 			if err = database.InsertAsset(a); err != nil {
 				log.Println(err)
 				continue
 			}
+			if project.DefaultImagePath == "" && a.AssetType == "image" {
+				project.DefaultImagePath = a.SHA1
+			}
+
 		}
 		foundAssets = true
 	}
@@ -225,7 +230,6 @@ func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
 		}
 
 		project.Assets[asset.SHA1] = asset
-		state.Assets[asset.SHA1] = asset
 		database.InsertAsset(asset)
 
 	}

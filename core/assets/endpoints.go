@@ -141,7 +141,7 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	err = discovery.DiscoverProjectAssets(project)
+	ok, err = discovery.DiscoverProjectAssets2(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err
