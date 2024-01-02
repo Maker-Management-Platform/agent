@@ -79,7 +79,7 @@ func DiscoverProjectAssets(project *models.Project) error {
 	}
 
 	if !project.Initialized {
-		project.Tags = pathToTags(project.Path)
+		project.Tags = append(project.Tags, pathToTags(project.Path)...)
 	}
 
 	err = initProjectAssets(project, files)

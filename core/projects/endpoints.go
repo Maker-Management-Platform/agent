@@ -14,7 +14,6 @@ import (
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -114,6 +113,12 @@ func save(c echo.Context) error {
 	return c.JSON(http.StatusOK, pproject)
 }
 
+type CreateProject struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
+}
+
 func new(c echo.Context) error {
 
 	form, err := c.MultipartForm()
@@ -129,10 +134,26 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	uuid := uuid.New().String()
+	projectPayload := form.Value["payload"]
+	if len(projectPayload) != 1 {
+		fmt.Println("more payloads than expected")
+		return c.NoContent(http.StatusBadRequest)
+	}
 
-	path := fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, uuid)
+	createProject := &CreateProject{}
+	err = json.Unmarshal([]byte(projectPayload[0]), createProject)
+	if err != nil {
+		fmt.Println(err)
+		return c.NoContent(http.StatusBadRequest)
+	}
 
+	project := models.NewProject()
+	project.Name = createProject.Name
+	project.Path = "/"
+	project.Description = createProject.Description
+	project.Tags = createProject.Tags
+
+	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -162,7 +183,6 @@ func new(c echo.Context) error {
 		}
 
 	}
-	project := models.NewProjectFromPath(path)
 
 	err = discovery.DiscoverProjectAssets(project)
 	if err != nil {
@@ -176,6 +196,12 @@ func new(c echo.Context) error {
 	log.Println(string(m))
 
 	state.Projects[project.UUID] = project
+
+	err = state.PersistProject(project)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
