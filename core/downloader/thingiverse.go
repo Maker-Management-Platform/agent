@@ -96,7 +96,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	project.Description = thing.Description
 
 	for _, tag := range thing.Tags {
-		project.Tags = append(project.Tags, tag.Name)
+		project.Tags = append(project.Tags, models.StringToTag(tag.Name))
 	}
 
 	log.Println("Downloading details for thing: ", thing.Name)

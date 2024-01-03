@@ -19,6 +19,10 @@ func InitDatabase() error {
 		panic("failed to connect database")
 	}
 
+	if err = initTags(); err != nil {
+		return err
+	}
+
 	if err = initProjects(); err != nil {
 		return err
 	}

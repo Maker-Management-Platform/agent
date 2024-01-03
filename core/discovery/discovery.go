@@ -172,7 +172,7 @@ func DiscoverProjectAssets(project *models.Project) error {
 	return nil
 }
 
-func pathToTags(path string) []string {
+func pathToTags(path string) []*models.Tag {
 	log.Println("pathToTags", path)
 	path = strings.Trim(path, "/")
 	tags := strings.Split(path, "/")
@@ -183,10 +183,10 @@ func pathToTags(path string) []string {
 		}
 
 	}
-	rtn := make([]string, len(tagSet))
+	rtn := make([]*models.Tag, len(tagSet))
 	i := 0
 	for k := range tagSet {
-		rtn[i] = k
+		rtn[i] = models.StringToTag(k)
 		i++
 	}
 	log.Println("pathToTags", rtn)

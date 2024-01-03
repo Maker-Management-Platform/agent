@@ -52,7 +52,7 @@ func DiscoverTempFile(name string) (*models.TempFile, error) {
 			tempFile.AddMatch(p.UUID)
 		}
 		for _, tag := range p.Tags {
-			if strings.Contains(strings.ToLower(tag), token) {
+			if strings.Contains(strings.ToLower(tag.Value), token) {
 				tempFile.AddMatch(p.UUID)
 			}
 		}

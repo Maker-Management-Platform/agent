@@ -6,7 +6,6 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 type Project struct {
@@ -16,7 +15,7 @@ type Project struct {
 	Path             string                   `json:"path" toml:"path" form:"path" query:"path"`
 	ExternalLink     string                   `json:"external_link" toml:"external_link" form:"external_link" query:"external_link"`
 	Assets           map[string]*ProjectAsset `json:"-" toml:"-" form:"assets" query:"assets" gorm:"-"`
-	Tags             pq.StringArray           `json:"tags" toml:"tags" form:"tags" query:"tags" gorm:"type:text[]"`
+	Tags             []*Tag                   `json:"tags" toml:"tags" form:"tags" query:"tags" gorm:"many2many:project_tags"`
 	DefaultImagePath string                   `json:"default_image_path" toml:"default_image_path" form:"default_image_path" query:"default_image_path"`
 	Initialized      bool                     `json:"initialized" toml:"initialized" form:"initialized" query:"initialized"`
 }
@@ -39,7 +38,7 @@ func NewProject() *Project {
 	project := &Project{
 		UUID:        uuid.New().String(),
 		Initialized: false,
-		Tags:        make([]string, 0),
+		Tags:        make([]*Tag, 0),
 		Assets:      make(map[string]*ProjectAsset),
 	}
 	return project

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
@@ -23,7 +24,20 @@ import (
 
 func index(c echo.Context) error {
 	pg := paginate.New()
-	page := pg.With(database.DB.Model(&models.Project{})).Request(c.Request()).Response(&[]models.Project{})
+
+	q := database.DB.Debug().Model(&models.Project{}).Preload("Tags")
+
+	if c.QueryParams().Has("name") {
+		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", c.QueryParam("name")))
+	}
+	if c.QueryParams().Has("tags") {
+		for i, t := range strings.Split(c.QueryParam("tags"), ",") {
+			q.Joins(fmt.Sprintf("LEFT JOIN project_tags as project_tags%d on project_tags%d.project_uuid = projects.uuid", i, i)).
+				Where(fmt.Sprintf("project_tags%d.tag_value = ?", i), t)
+		}
+
+	}
+	page := pg.With(q).Request(c.Request()).Response(&[]models.Project{})
 	if page.RawError != nil {
 		log.Println(page.RawError)
 		return echo.NewHTTPError(http.StatusInternalServerError, page.RawError.Error())
@@ -170,7 +184,7 @@ func new(c echo.Context) error {
 	project.Name = createProject.Name
 	project.Path = "/"
 	project.Description = createProject.Description
-	project.Tags = createProject.Tags
+	project.Tags = models.StringsToTags(createProject.Tags)
 
 	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
 	if err := os.Mkdir(path, os.ModePerm); err != nil {

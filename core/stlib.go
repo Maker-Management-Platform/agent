@@ -16,6 +16,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/system"
+	"github.com/eduardooliveira/stLib/core/tags"
 	"github.com/eduardooliveira/stLib/core/tempfiles"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -62,6 +63,7 @@ func Run() {
 	api := e.Group("/api")
 
 	projects.Register(api.Group("/projects"))
+	tags.Register(api.Group("/tags"))
 	assets.Register(api.Group("/assets"))
 	tempfiles.Register(api.Group("/tempfiles"))
 	printers.Register(api.Group("/printers"))
