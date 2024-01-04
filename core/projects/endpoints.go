@@ -162,9 +162,9 @@ func save(c echo.Context) error {
 }
 
 type CreateProject struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Tags        []*models.Tag `json:"tags"`
 }
 
 func new(c echo.Context) error {
@@ -199,12 +199,12 @@ func new(c echo.Context) error {
 	project.Name = createProject.Name
 	project.Path = "/"
 	project.Description = createProject.Description
-	project.Tags = models.StringsToTags(createProject.Tags)
+	project.Tags = createProject.Tags
 
 	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	for _, file := range files {
@@ -212,7 +212,7 @@ func new(c echo.Context) error {
 		src, err := file.Open()
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		defer src.Close()
 
@@ -220,14 +220,14 @@ func new(c echo.Context) error {
 		dst, err := os.Create(fmt.Sprintf("%s/%s", path, file.Filename))
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 
 	}
