@@ -23,7 +23,10 @@ import (
 )
 
 func index(c echo.Context) error {
-	pg := paginate.New()
+	config := paginate.Config{
+		FieldSelectorEnabled: true,
+	}
+	pg := paginate.New(config)
 
 	q := database.DB.Debug().Model(&models.Project{}).Preload("Tags")
 
@@ -43,6 +46,18 @@ func index(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, page.RawError.Error())
 	}
 	return c.JSON(http.StatusOK, page)
+}
+
+func list(c echo.Context) error {
+	rtn, err := database.GetProjectNames()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, rtn)
 }
 
 func show(c echo.Context) error {
@@ -81,7 +96,7 @@ func getAsset(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	asset, err := database.GetAsset(project.UUID, c.Param("sha1"))
+	asset, err := database.GetProjectAsset(project.UUID, c.Param("sha1"))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -217,7 +232,7 @@ func new(c echo.Context) error {
 
 	}
 
-	ok, err := discovery.DiscoverProjectAssets2(project)
+	ok, err := discovery.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err

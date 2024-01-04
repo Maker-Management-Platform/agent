@@ -21,6 +21,14 @@ func GetAssetsByProject(uuid string) (rtn []*models.ProjectAsset, err error) {
 	return rtn, DB.Order("name").Where(&models.ProjectAsset{ProjectUUID: uuid}).Find(&rtn).Error
 }
 
-func GetAsset(uuid string, sha1 string) (rtn *models.ProjectAsset, err error) {
+func GetAsset(sha1 string) (rtn *models.ProjectAsset, err error) {
+	return rtn, DB.Where(&models.ProjectAsset{SHA1: sha1}).First(&rtn).Error
+}
+
+func GetProjectAsset(uuid string, sha1 string) (rtn *models.ProjectAsset, err error) {
 	return rtn, DB.Where(&models.ProjectAsset{SHA1: sha1, ProjectUUID: uuid}).First(&rtn).Error
+}
+
+func DeleteAsset(sha1 string) (err error) {
+	return DB.Where(&models.ProjectAsset{SHA1: sha1}).Delete(&models.ProjectAsset{}).Error
 }

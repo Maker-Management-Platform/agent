@@ -10,6 +10,7 @@ func Register(e *echo.Group) {
 
 	group = e
 	group.GET("", index)
+	group.GET("/list", list)
 	group.GET("/:uuid", show)
 	group.GET("/:uuid/assets", showAssets)
 	group.GET("/:uuid/assets/:sha1", getAsset)

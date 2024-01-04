@@ -25,6 +25,10 @@ func GetProjects() (rtn []*models.Project, err error) {
 	return rtn, DB.Order("name").Find(&rtn).Error
 }
 
+func GetProjectNames() (rtn []*models.Project, err error) {
+	return rtn, DB.Order("name").Select("uuid", "name").Find(&rtn).Error
+}
+
 func GetProject(uuid string) (rtn *models.Project, err error) {
 	return rtn, DB.Where(&models.Project{UUID: uuid}).Preload("Tags").First(&rtn).Error
 }

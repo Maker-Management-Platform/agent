@@ -183,7 +183,6 @@ func renderWorker(jobs <-chan *cacheJob) {
 		go func(job *cacheJob) {
 			log.Println("rendering", job.renderName)
 			err := render.RenderModel(job.renderName, job.parent.Name, job.project.FullPath())
-			log.Println(err)
 			job.err <- err
 			log.Println("rendered", job.renderName)
 		}(job)

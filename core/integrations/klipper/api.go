@@ -6,12 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -34,10 +35,11 @@ func (p *KipplerPrinter) serverInfo() (*Result, error) {
 
 func (p *KipplerPrinter) ServerFilesUpload(asset *models.ProjectAsset) error {
 
-	project, ok := state.Projects[asset.ProjectUUID]
+	project, err := database.GetProject(asset.ProjectUUID)
 
-	if !ok {
-		return errors.New("project not found")
+	if err != nil {
+		log.Println(err)
+		return err
 	}
 
 	file, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -55,13 +56,13 @@ func sendHandler(c echo.Context) error {
 	}
 
 	sha1 := c.Param("sha1")
-	asset, ok := state.Assets[sha1]
+	asset, err := database.GetAsset(sha1)
 
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	var err error
 	if printer.Type == "klipper" {
 		err = klipper.UploadFile(printer, asset)
 	}

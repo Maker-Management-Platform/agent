@@ -12,23 +12,23 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
 func fetchThing(url string) error {
 
 	if runtime.Cfg.ThingiverseToken == "" {
-		return errors.New("Missing Thingiverse API token")
+		return errors.New("missing Thingiverse api token")
 	}
 
 	r := regexp.MustCompile(`thing:(\d+)`)
 	matches := r.FindStringSubmatch(url)
 
 	if len(matches) == 0 {
-		return errors.New("Url doesn't match thingiverse schema")
+		return errors.New("url doesn't match thingiverse schema")
 	}
 
 	id := matches[1]
@@ -64,10 +64,7 @@ func fetchThing(url string) error {
 
 	project.Initialized = true
 
-	state.PersistProject(project)
-	state.Projects[project.UUID] = project
-
-	return nil
+	return database.InsertProject(project)
 }
 
 func fetchDetails(id string, project *models.Project, httpClient *http.Client) error {

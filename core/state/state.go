@@ -10,8 +10,6 @@ import (
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
-var Projects = make(map[string]*models.Project)
-var Assets = make(map[string]*models.ProjectAsset)
 var TempFiles = make(map[string]*models.TempFile)
 var Printers = make(map[string]*models.Printer)
 

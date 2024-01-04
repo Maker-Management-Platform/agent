@@ -8,3 +8,4 @@ release-*
 cache
 *.log
 __debug*
+/data/data.db
