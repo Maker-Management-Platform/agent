@@ -79,8 +79,8 @@ func move(c echo.Context) error {
 	}
 
 	for _, a := range nestedAssets {
-		if project.DefaultImagePath == "" && a.AssetType == "image" {
-			project.DefaultImagePath = a.SHA1
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
 			if err := database.UpdateProject(project); err != nil {
 				log.Println(err)
 			}

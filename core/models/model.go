@@ -23,7 +23,7 @@ const ProjectModelType = "model"
 var ModelExtensions = []string{".stl", ".3mf"}
 
 type ProjectModel struct {
-	ImageSha1 string `json:"image_sha1"`
+	ImageID string `json:"image_id"`
 }
 
 func (n *ProjectModel) Scan(src interface{}) error {
@@ -100,8 +100,8 @@ func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) *
 		return nil
 	}
 
-	project.Assets[asset.SHA1] = asset
-	model.ImageSha1 = asset.SHA1
+	project.Assets[asset.ID] = asset
+	model.ImageID = asset.ID
 	return asset
 }
 
@@ -170,8 +170,8 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) [
 		rtn = append(rtn, asset)
 
 		// Use first image as the default
-		if model.ImageSha1 == "" {
-			model.ImageSha1 = asset.SHA1
+		if model.ImageID == "" {
+			model.ImageID = asset.ID
 		}
 	}
 

@@ -96,7 +96,7 @@ func getAsset(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	asset, err := database.GetProjectAsset(project.UUID, c.Param("sha1"))
+	asset, err := database.GetProjectAsset(project.UUID, c.Param("id"))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -339,8 +339,8 @@ func setMainImageHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if pproject.DefaultImagePath != project.DefaultImagePath {
-		project.DefaultImagePath = pproject.DefaultImagePath
+	if pproject.DefaultImageID != project.DefaultImageID {
+		project.DefaultImageID = pproject.DefaultImageID
 	}
 
 	err = state.PersistProject(project)
@@ -360,5 +360,5 @@ func setMainImageHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
 		Path string `json:"path"`
-	}{project.UUID, project.DefaultImagePath})
+	}{project.UUID, project.DefaultImageID})
 }

@@ -31,7 +31,7 @@ type tmpImg struct {
 }
 
 type ProjectSlice struct {
-	ImageSha1  string    `json:"image_sha1"`
+	ImageID    string    `json:"image_id"`
 	Slicer     string    `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
 	Filament   *Filament `json:"filament" toml:"filament" form:"filament" query:"filament"`
 	Cost       float64   `json:"cost" toml:"cost" form:"cost" query:"cost"`
@@ -136,7 +136,7 @@ func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*Proje
 			return nil, err
 		}
 
-		s.ImageSha1 = img.SHA1
+		s.ImageID = img.ID
 
 	}
 

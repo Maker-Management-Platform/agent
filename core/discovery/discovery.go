@@ -102,9 +102,9 @@ func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
 			continue
 		}
 
-		assets[asset.SHA1] = asset
+		assets[asset.ID] = asset
 		for _, a := range nestedAssets {
-			assets[asset.SHA1] = a
+			assets[a.ID] = a
 		}
 
 		foundAssets = true
@@ -115,8 +115,8 @@ func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
 	}
 
 	for _, a := range assets {
-		if project.DefaultImagePath == "" && a.AssetType == "image" {
-			project.DefaultImagePath = a.SHA1
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
 		}
 
 		err := database.InsertAsset(a)

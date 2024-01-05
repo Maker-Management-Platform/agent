@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"mime"
 	"os"
@@ -13,9 +14,9 @@ import (
 )
 
 type ProjectAsset struct {
-	SHA1         string        `json:"sha1" toml:"sha1" form:"sha1" query:"sha1" gorm:"primaryKey"`
+	ID           string        `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
 	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
-	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid" gorm:"primaryKey"`
+	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
 	Project      *Project      `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
 	ModTime      time.Time     `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
@@ -46,7 +47,7 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 
 	asset.Extension = filepath.Ext(fileName)
 	asset.MimeType = mime.TypeByExtension(asset.Extension)
-	asset.SHA1, err = utils.GetFileSha1(fullFilePath)
+	asset.ID, err = assetSha1(project.UUID, fileName, fullFilePath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -65,4 +66,12 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	}
 
 	return asset, nestedAssets, err
+}
+
+func assetSha1(projectUuid string, assetName string, fullFilePath string) (string, error) {
+	fSha1, err := utils.GetFileSha1(fullFilePath)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%s%s%s", projectUuid, assetName, fSha1)))), nil
 }

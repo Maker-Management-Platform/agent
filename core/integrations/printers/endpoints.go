@@ -55,8 +55,8 @@ func sendHandler(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	sha1 := c.Param("sha1")
-	asset, err := database.GetAsset(sha1)
+	id := c.Param("id")
+	asset, err := database.GetAsset(id)
 
 	if err != nil {
 		log.Println(err)

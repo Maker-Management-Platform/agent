@@ -154,7 +154,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 			return err
 		}
 
-		project.Assets[asset.SHA1] = asset
+		project.Assets[asset.ID] = asset
 
 	}
 
@@ -217,8 +217,8 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 					return err
 				}
 
-				project.Assets[asset.SHA1] = asset
-				project.DefaultImagePath = asset.SHA1
+				project.Assets[asset.ID] = asset
+				project.DefaultImageID = asset.ID
 			}
 		}
 

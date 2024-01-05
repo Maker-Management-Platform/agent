@@ -17,13 +17,13 @@ import (
 
 /* not in use, needs to be migrated to database
 func save(c echo.Context) error {
-	sha1 := c.Param("sha1")
+	id := c.Param("id")
 
-	if sha1 == "" {
+	if id == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	asset, ok := state.Assets[sha1]
+	asset, ok := state.Assets[id]
 
 	if !ok {
 		return c.NoContent(http.StatusNotFound)
@@ -59,8 +59,8 @@ func save(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		delete(state.Assets, sha1)
-		delete(project.Assets, sha1)
+		delete(state.Assets, id)
+		delete(project.Assets, id)
 
 		f, err := os.Open(newPath)
 		if err != nil {
@@ -76,8 +76,8 @@ func save(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		newProject.Assets[asset.SHA1] = asset
-		state.Assets[asset.SHA1] = asset
+		newProject.Assets[asset.ID] = asset
+		state.Assets[asset.ID] = asset
 	}
 
 	if pAsset.Name != asset.Name {
@@ -159,8 +159,8 @@ func new(c echo.Context) error {
 	}
 
 	for _, a := range nestedAssets {
-		if project.DefaultImagePath == "" && a.AssetType == "image" {
-			project.DefaultImagePath = a.SHA1
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
 			if err := database.UpdateProject(project); err != nil {
 				log.Println(err)
 			}
@@ -177,13 +177,33 @@ func new(c echo.Context) error {
 
 func deleteAsset(c echo.Context) error {
 
-	sha1 := c.Param("sha1")
+	id := c.Param("id")
 
-	if sha1 == "" {
+	if id == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
+	asset, err := database.GetAsset(id)
 
-	if err := database.DeleteAsset(sha1); err != nil {
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	project, err := database.GetProject(asset.ProjectUUID)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = os.Remove(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	if err := database.DeleteAsset(id); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
