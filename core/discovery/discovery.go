@@ -111,7 +111,7 @@ func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
 	}
 
 	if !project.Initialized {
-		project.Tags = append(project.Tags, pathToTags(projectPath)...)
+		project.Tags = append(project.Tags, pathToTags(project.Path)...)
 	}
 
 	for _, a := range assets {
