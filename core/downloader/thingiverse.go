@@ -15,6 +15,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -36,33 +37,46 @@ func fetchThing(url string) error {
 
 	httpClient := &http.Client{}
 
-	tempPath := utils.ToLibPath(id)
-
-	project := models.NewProjectFromPath(tempPath)
-	_ = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm)
+	project := models.NewProject()
 
 	err := fetchDetails(id, project, httpClient)
 	if err != nil {
 		return err
 	}
-	err = fetchFiles(id, project, httpClient)
+
+	if err = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm); err != nil {
+		log.Println("error creating project folder")
+		return err
+	}
+
+	files, err := fetchFiles(id, project, httpClient)
 	if err != nil {
 		log.Println("error fetching files")
 		return err
 	}
-	err = fetchImages(id, project, httpClient)
+	images, err := fetchImages(id, project, httpClient)
 	if err != nil {
 		log.Println("error fetching images")
 		return err
 	}
 
-	err = utils.Move(utils.ToLibPath(project.FullPath()), utils.ToLibPath(project.Name))
-	if err != nil {
-		return err
+	for _, a := range files {
+		if err := database.InsertAsset(a); err != nil {
+			log.Println(err)
+		}
 	}
-	project.Path = project.Name
+
+	for _, a := range images {
+		if err := database.InsertAsset(a); err != nil {
+			log.Println(err)
+		}
+	}
 
 	project.Initialized = true
+
+	if err = state.PersistProject(project); err != nil {
+		return err
+	}
 
 	return database.InsertProject(project)
 }
@@ -101,7 +115,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	return nil
 }
 
-func fetchFiles(id string, project *models.Project, httpClient *http.Client) error {
+func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
@@ -111,22 +125,23 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var files []*ThingFile
 	if err := json.NewDecoder(res.Body).Decode(&files); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
+	rtn := make([]*models.ProjectAsset, 0)
 
 	for _, file := range files {
 
 		out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), file.Name)))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer out.Close()
 
@@ -134,36 +149,37 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 		req.URL, _ = url.Parse(file.DownloadURL)
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer resp.Body.Close()
 
 		// Check server response
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("bad status: %s", resp.Status)
+			return nil, fmt.Errorf("bad status: %s", resp.Status)
 		}
 
 		// Writer the body to file
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		asset, _, err := models.NewProjectAsset(file.Name, project, out)
+		asset, nestedAssets, err := models.NewProjectAsset(file.Name, project, out)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		project.Assets[asset.ID] = asset
+		rtn = append(rtn, asset)
+		rtn = append(rtn, nestedAssets...)
 
 	}
 
 	log.Printf("Downloaded %d files\n", len(files))
 
-	return nil
+	return rtn, nil
 }
 
-func fetchImages(id string, project *models.Project, httpClient *http.Client) error {
+func fetchImages(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
@@ -173,16 +189,17 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var tImages []*ThingImage
 	if err := json.NewDecoder(res.Body).Decode(&tImages); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
+	rtn := make([]*models.ProjectAsset, 0)
 
 	for _, image := range tImages {
 
@@ -190,34 +207,35 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 			if size.Size == "large" && size.Type == "display" {
 				out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), image.Name)))
 				if err != nil {
-					return err
+					return nil, err
 				}
 				defer out.Close()
 
 				req.URL, _ = url.Parse(size.URL)
 				resp, err := httpClient.Do(req)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				defer resp.Body.Close()
 
 				// Check server response
 				if resp.StatusCode != http.StatusOK {
-					return fmt.Errorf("bad status: %s", resp.Status)
+					return nil, fmt.Errorf("bad status: %s", resp.Status)
 				}
 
 				// Writer the body to file
 				_, err = io.Copy(out, resp.Body)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
-				asset, _, err := models.NewProjectAsset(image.Name, project, out)
+				asset, nestedAssets, err := models.NewProjectAsset(image.Name, project, out)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
-				project.Assets[asset.ID] = asset
+				rtn = append(rtn, asset)
+				rtn = append(rtn, nestedAssets...)
 				project.DefaultImageID = asset.ID
 			}
 		}
@@ -226,7 +244,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 
 	log.Printf("Downloaded %d images\n", len(tImages))
 
-	return nil
+	return rtn, nil
 }
 
 type ThingImage struct {
