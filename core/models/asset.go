@@ -1,8 +1,8 @@
 package models
 
 import (
+	"crypto/sha1"
 	"fmt"
-	"log"
 	"mime"
 	"os"
 	"path/filepath"
@@ -14,10 +14,10 @@ import (
 )
 
 type ProjectAsset struct {
-	SHA1         string        `json:"sha1" toml:"sha1" form:"sha1" query:"sha1"`
+	ID           string        `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
 	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
 	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
-	Path         string        `json:"path" toml:"path" form:"path" query:"path"`
+	Project      *Project      `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
 	ModTime      time.Time     `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
 	AssetType    string        `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
@@ -29,7 +29,7 @@ type ProjectAsset struct {
 	Slice        *ProjectSlice `json:"slice" toml:"slice" form:"slice" query:"slice"`
 }
 
-func NewProjectAsset(fileName string, project *Project, file *os.File) (*ProjectAsset, error) {
+func NewProjectAsset(fileName string, project *Project, file *os.File) (*ProjectAsset, []*ProjectAsset, error) {
 	var asset = &ProjectAsset{
 		Name:        fileName,
 		ProjectUUID: project.UUID,
@@ -37,34 +37,41 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	fullFilePath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
 
 	var err error
-
+	var nestedAssets []*ProjectAsset
 	stat, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	asset.Size = stat.Size()
 	asset.ModTime = stat.ModTime()
 
 	asset.Extension = filepath.Ext(fileName)
 	asset.MimeType = mime.TypeByExtension(asset.Extension)
-	asset.SHA1, err = utils.GetFileSha1(fullFilePath)
+	asset.ID, err = assetSha1(project.UUID, fileName, fullFilePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if slices.Contains(ModelExtensions, strings.ToLower(asset.Extension)) {
 		asset.AssetType = ProjectModelType
-		asset.Model, err = NewProjectModel(fileName, asset, project, file)
+		asset.Model, nestedAssets, err = NewProjectModel(fileName, asset, project, file)
 	} else if slices.Contains(ImageExtensions, strings.ToLower(asset.Extension)) {
 		asset.AssetType = ProjectImageType
-		asset.ProjectImage, err = NewProjectImage(fileName, asset, project, file)
+		asset.ProjectImage, nestedAssets, err = NewProjectImage(fileName, asset, project, file)
 	} else if slices.Contains(SliceExtensions, strings.ToLower(asset.Extension)) {
 		asset.AssetType = ProjectSliceType
-		asset.Slice, err = NewProjectSlice(fileName, asset, project, file)
+		asset.Slice, nestedAssets, err = NewProjectSlice(fileName, asset, project, file)
 	} else {
 		asset.AssetType = ProjectFileType
-		asset.ProjectFile, err = NewProjectFile(fileName, asset, project, file)
+		asset.ProjectFile, nestedAssets, err = NewProjectFile(fileName, asset, project, file)
 	}
 
-	log.Println(asset.AssetType)
-	return asset, err
+	return asset, nestedAssets, err
+}
+
+func assetSha1(projectUuid string, assetName string, fullFilePath string) (string, error) {
+	fSha1, err := utils.GetFileSha1(fullFilePath)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%s%s%s", projectUuid, assetName, fSha1)))), nil
 }

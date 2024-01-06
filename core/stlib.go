@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/eduardooliveira/stLib/core/assets"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
@@ -15,6 +16,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/system"
+	"github.com/eduardooliveira/stLib/core/tags"
 	"github.com/eduardooliveira/stLib/core/tempfiles"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -32,9 +34,13 @@ func Run() {
 		log.SetOutput(wrt)
 	}
 
+	err := database.InitDatabase()
+	if err != nil {
+		log.Fatal("error initing database", err)
+	}
 	discovery.Run(runtime.Cfg.LibraryPath)
 	discovery.RunTempDiscovery()
-	err := state.LoadPrinters()
+	err = state.LoadPrinters()
 	if err != nil {
 		log.Fatal("error loading printers", err)
 	}
@@ -45,18 +51,19 @@ func Run() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	/*e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:   "frontend/dist",
 		Index:  "index.html",
 		Browse: false,
 		HTML5:  true,
-	}))
+	}))*/
 
 	slicer.Register(e.Group(""))
 
 	api := e.Group("/api")
 
 	projects.Register(api.Group("/projects"))
+	tags.Register(api.Group("/tags"))
 	assets.Register(api.Group("/assets"))
 	tempfiles.Register(api.Group("/tempfiles"))
 	printers.Register(api.Group("/printers"))

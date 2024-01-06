@@ -6,7 +6,7 @@ import (
 
 func Register(e *echo.Group) {
 
-	e.POST("/:sha1/delete", deleteAsset)
-	e.POST("/:sha1", save)
+	e.POST("/:id/delete", deleteAsset)
+	//e.POST("/:id", save) not in use
 	e.POST("", new)
 }

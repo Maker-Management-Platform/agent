@@ -2,6 +2,9 @@ package models
 
 import (
 	"archive/zip"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,8 +23,19 @@ const ProjectModelType = "model"
 var ModelExtensions = []string{".stl", ".3mf"}
 
 type ProjectModel struct {
-	*ProjectAsset
-	ImageSha1 string `json:"image_sha1"`
+	ImageID string `json:"image_id"`
+}
+
+func (n *ProjectModel) Scan(src interface{}) error {
+	str, ok := src.(string)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSON string:", src))
+	}
+	return json.Unmarshal([]byte(str), &n)
+}
+func (n ProjectModel) Value() (driver.Value, error) {
+	val, err := json.Marshal(n)
+	return string(val), err
 }
 
 type cacheJob struct {
@@ -40,24 +54,22 @@ func init() {
 	go renderWorker(cacheJobs)
 }
 
-func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, error) {
+func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, []*ProjectAsset, error) {
 	m := &ProjectModel{}
 
-	loadImage(m, asset, project)
-
-	return m, nil
+	return m, loadImage(m, asset, project), nil
 }
 
-func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
-
+func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
 	if strings.ToLower(parent.Extension) == ".stl" {
-		loadStlImage(model, parent, project)
+		return []*ProjectAsset{loadStlImage(model, parent, project)}
 	} else if strings.ToLower(parent.Extension) == ".3mf" {
-		load3MfImage(model, parent, project)
+		return load3MfImage(model, parent, project)
 	}
-
+	return nil
 }
-func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+
+func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) *ProjectAsset {
 	renderName := fmt.Sprintf("%s.render.png", parent.Name)
 	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
@@ -79,21 +91,22 @@ func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 	f, err := os.Open(renderPath)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 
-	asset, err := NewProjectAsset(renderName, project, f)
+	asset, _, err := NewProjectAsset(renderName, project, f)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 
-	project.Assets[asset.SHA1] = asset
-	model.ImageSha1 = asset.SHA1
-
+	project.Assets[asset.ID] = asset
+	model.ImageID = asset.ID
+	return asset
 }
 
-func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
+	rtn := make([]*ProjectAsset, 0)
 	projectPath := utils.ToLibPath(project.FullPath())
 	filePath := filepath.Join(projectPath, parent.Name)
 	log.Println(filePath)
@@ -101,14 +114,14 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 	tmpDir, err := os.MkdirTemp("", "tmp")
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	defer os.RemoveAll(tmpDir)
 
 	archive, err := zip.OpenReader(filePath)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	defer archive.Close()
 
@@ -148,18 +161,21 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
 			continue
 		}
 
-		asset, err := NewProjectAsset(filepath.Base(outputPath), project, dstFile)
+		asset, _, err := NewProjectAsset(filepath.Base(outputPath), project, dstFile)
 		if err != nil {
 			log.Println(err)
-			return
+			return nil
 		}
 
-		project.Assets[asset.SHA1] = asset
+		rtn = append(rtn, asset)
+
 		// Use first image as the default
-		if model.ImageSha1 == "" {
-			model.ImageSha1 = asset.SHA1
+		if model.ImageID == "" {
+			model.ImageID = asset.ID
 		}
 	}
+
+	return rtn
 }
 
 func renderWorker(jobs <-chan *cacheJob) {
@@ -167,7 +183,6 @@ func renderWorker(jobs <-chan *cacheJob) {
 		go func(job *cacheJob) {
 			log.Println("rendering", job.renderName)
 			err := render.RenderModel(job.renderName, job.parent.Name, job.project.FullPath())
-			log.Println(err)
 			job.err <- err
 			log.Println("rendered", job.renderName)
 		}(job)
