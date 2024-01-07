@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -37,7 +38,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 
 	project := models.NewProjectFromPath(path)
 
-	init, err := DiscoverProject(project)
+	init, _, err := DiscoverProject(project)
 	if err != nil {
 		return err
 	}
@@ -54,13 +55,13 @@ func walker(path string, d fs.DirEntry, err error) error {
 	return nil
 }
 
-func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
+func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.ProjectAsset, err error) {
 	projectPath := utils.ToLibPath(project.FullPath())
 
 	entries, err := os.ReadDir(projectPath)
 	if err != nil {
 		log.Println("failed to read path", projectPath)
-		return false, err
+		return false, nil, err
 	}
 
 	assets := make(map[string]*models.ProjectAsset, 0)
@@ -74,7 +75,7 @@ func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
 			err = loadProject(project)
 			if err != nil {
 				log.Printf("error loading the project %q: %v\n", project.Path, err)
-				return false, err
+				return false, nil, err
 			}
 			continue
 		}
@@ -126,7 +127,7 @@ func DiscoverProject(project *models.Project) (foundAssets bool, err error) {
 		}
 	}
 
-	return foundAssets, nil
+	return foundAssets, maputil.Values(assets), nil
 }
 
 func pathToTags(path string) []*models.Tag {

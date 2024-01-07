@@ -114,7 +114,25 @@ func getAsset(c echo.Context) error {
 }
 
 func save(c echo.Context) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		log.Println(err)
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	projectPayload := form.Value["payload"]
+	if len(projectPayload) != 1 {
+		log.Println("more payloads than expected")
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("more payloads than expected"))
+	}
+
 	pproject := &models.Project{}
+
+	err = json.Unmarshal([]byte(projectPayload[0]), pproject)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	if err := c.Bind(pproject); err != nil {
 		log.Println(err)
@@ -162,9 +180,10 @@ func save(c echo.Context) error {
 }
 
 type CreateProject struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Tags        []*models.Tag `json:"tags"`
+	Name             string        `json:"name"`
+	Description      string        `json:"description"`
+	DefaultImageName string        `json:"default_image_name"`
+	Tags             []*models.Tag `json:"tags"`
 }
 
 func new(c echo.Context) error {
@@ -184,14 +203,14 @@ func new(c echo.Context) error {
 
 	projectPayload := form.Value["payload"]
 	if len(projectPayload) != 1 {
-		fmt.Println("more payloads than expected")
+		log.Println("more payloads than expected")
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	createProject := &CreateProject{}
 	err = json.Unmarshal([]byte(projectPayload[0]), createProject)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return c.NoContent(http.StatusBadRequest)
 	}
 
@@ -232,7 +251,7 @@ func new(c echo.Context) error {
 
 	}
 
-	ok, err := discovery.DiscoverProject(project)
+	ok, assets, err := discovery.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err
@@ -243,10 +262,13 @@ func new(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	j, _ := json.Marshal(project)
-	log.Println(string(j))
-	m, _ := json.Marshal(project.Assets)
-	log.Println(string(m))
+	if createProject.DefaultImageName != "" {
+		for _, a := range assets {
+			if a.Name == createProject.DefaultImageName {
+				project.DefaultImageID = a.ID
+			}
+		}
+	}
 
 	err = database.InsertProject(project)
 

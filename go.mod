@@ -6,9 +6,9 @@ toolchain go1.21.4
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/duke-git/lancet/v2 v2.2.8
 	github.com/glebarez/sqlite v1.10.0
 	github.com/labstack/echo/v4 v4.10.0
-	github.com/lib/pq v1.10.9
 	github.com/morkid/paginate v1.1.7
 	github.com/spf13/viper v1.12.0
 	gorm.io/gorm v1.25.5
