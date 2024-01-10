@@ -1,34 +1,30 @@
 package models
 
 import (
+	"database/sql/driver"
 	"encoding/json"
-	"log"
+	"errors"
+	"fmt"
 	"os"
 )
 
 const ProjectFileType = "file"
 
 type ProjectFile struct {
-	*ProjectAsset
 }
 
-type marshalProjectFile struct {
-	SHA1        string `json:"sha1" toml:"sha1" form:"sha1" query:"sha1"`
-	Name        string `json:"name" toml:"name" form:"name" query:"name"`
-	ProjectUUID string `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
-	Path        string `json:"path" toml:"path" form:"path" query:"path"`
-	AssetType   string `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
-	Extension   string `json:"extension" toml:"extension" form:"extension" query:"extension"`
-	MimeType    string `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
+func (n *ProjectFile) Scan(src interface{}) error {
+	str, ok := src.(string)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSON string:", src))
+	}
+	return json.Unmarshal([]byte(str), &n)
+}
+func (n ProjectFile) Value() (driver.Value, error) {
+	val, err := json.Marshal(n)
+	return string(val), err
 }
 
-func NewProjectFile(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectFile, error) {
-	return &ProjectFile{
-		ProjectAsset: asset,
-	}, nil
-}
-
-func (p ProjectFile) MarshalJSON() ([]byte, error) {
-	log.Println("MarshalJson pf", p.SHA1)
-	return json.Marshal(marshalProjectFile{})
+func NewProjectFile(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectFile, []*ProjectAsset, error) {
+	return &ProjectFile{}, nil, nil
 }

@@ -1,27 +1,29 @@
 package assets
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/eduardooliveira/stLib/core/discovery"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
+/* not in use, needs to be migrated to database
 func save(c echo.Context) error {
-	sha1 := c.Param("sha1")
+	id := c.Param("id")
 
-	if sha1 == "" {
+	if id == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	asset, ok := state.Assets[sha1]
+	asset, ok := state.Assets[id]
 
 	if !ok {
 		return c.NoContent(http.StatusNotFound)
@@ -57,8 +59,8 @@ func save(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		delete(state.Assets, sha1)
-		delete(project.Assets, sha1)
+		delete(state.Assets, id)
+		delete(project.Assets, id)
 
 		f, err := os.Open(newPath)
 		if err != nil {
@@ -67,21 +69,15 @@ func save(c echo.Context) error {
 		}
 		defer f.Close()
 
-		asset, err := models.NewProjectAsset(pAsset.Name, newProject, f)
+		asset, _, err := models.NewProjectAsset(pAsset.Name, newProject, f)
 
 		if err != nil {
 			log.Println("new", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		if asset.AssetType == models.ProjectSliceType {
-			if asset.Slice.Image != nil {
-				newProject.Assets[asset.Slice.Image.SHA1] = asset.Slice.Image
-			}
-		}
-
-		newProject.Assets[asset.SHA1] = asset
-		state.Assets[asset.SHA1] = asset
+		newProject.Assets[asset.ID] = asset
+		state.Assets[asset.ID] = asset
 	}
 
 	if pAsset.Name != asset.Name {
@@ -97,18 +93,21 @@ func save(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
-}
+}*/
 
 func new(c echo.Context) error {
 
 	pAsset := &models.ProjectAsset{}
-	err := c.Bind(pAsset)
 
-	if err != nil {
+	if err := c.Bind(pAsset); err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	form, err := c.MultipartForm()
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	files := form.File["files"]
 
@@ -117,10 +116,13 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[pAsset.ProjectUUID]
-
-	if !ok {
-		return c.NoContent(http.StatusInternalServerError)
+	project, err := database.GetProject(pAsset.ProjectUUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), pAsset.Name))
@@ -129,7 +131,7 @@ func new(c echo.Context) error {
 	src, err := files[0].Open()
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	defer src.Close()
 
@@ -147,47 +149,63 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	err = discovery.DiscoverProjectAssets(project)
+	asset, nestedAssets, err := models.NewProjectAsset(files[0].Filename, project, dst)
 	if err != nil {
-		log.Printf("error loading the project %q: %v\n", path, err)
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	for _, a := range state.Projects[project.UUID].Assets {
-		if a.Name == files[0].Filename {
-			return c.JSON(http.StatusOK, a)
+	if err = database.InsertAsset(asset); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	for _, a := range nestedAssets {
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
+			if err := database.UpdateProject(project); err != nil {
+				log.Println(err)
+			}
+		}
+
+		err := database.InsertAsset(a)
+		if err != nil {
+			log.Println(err)
 		}
 	}
 
-	return c.NoContent(http.StatusInternalServerError)
+	return c.JSON(http.StatusOK, asset)
 }
 
 func deleteAsset(c echo.Context) error {
 
-	sha1 := c.Param("sha1")
+	id := c.Param("id")
 
-	if sha1 == "" {
+	if id == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
+	asset, err := database.GetAsset(id)
 
-	asset, ok := state.Assets[sha1]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
-	}
-	project, ok := state.Projects[asset.ProjectUUID]
-
-	if !ok {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	err := os.Remove(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))
 	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	delete(state.Assets, sha1)
-	delete(project.Assets, sha1)
+	project, err := database.GetProject(asset.ProjectUUID)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = os.Remove(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	if err := database.DeleteAsset(id); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
 	return c.NoContent(http.StatusOK)
 }

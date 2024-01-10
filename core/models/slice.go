@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha1"
+	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -30,13 +31,24 @@ type tmpImg struct {
 }
 
 type ProjectSlice struct {
-	*ProjectAsset
-	Image      *ProjectAsset `json:"image" toml:"image" form:"image" query:"image"`
-	Slicer     string        `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
-	Filament   *Filament     `json:"filament" toml:"filament" form:"filament" query:"filament"`
-	Cost       float64       `json:"cost" toml:"cost" form:"cost" query:"cost"`
-	LayerCount int           `json:"layer_count" toml:"layer_count" form:"layer_count" query:"layer_count"`
-	Duration   string        `json:"duration" toml:"duration" form:"duration" query:"duration"`
+	ImageID    string    `json:"image_id"`
+	Slicer     string    `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
+	Filament   *Filament `json:"filament" toml:"filament" form:"filament" query:"filament"`
+	Cost       float64   `json:"cost" toml:"cost" form:"cost" query:"cost"`
+	LayerCount int       `json:"layer_count" toml:"layer_count" form:"layer_count" query:"layer_count"`
+	Duration   string    `json:"duration" toml:"duration" form:"duration" query:"duration"`
+}
+
+func (n *ProjectSlice) Scan(src interface{}) error {
+	str, ok := src.(string)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSON string:", src))
+	}
+	return json.Unmarshal([]byte(str), &n)
+}
+func (n ProjectSlice) Value() (driver.Value, error) {
+	val, err := json.Marshal(n)
+	return string(val), err
 }
 
 type Filament struct {
@@ -45,40 +57,23 @@ type Filament struct {
 	Weight float64 `json:"weight" toml:"weight" form:"weight" query:"weight"`
 }
 
-type marshalProjectSlice struct {
-	Image      *ProjectAsset `json:"image" toml:"image" form:"image" query:"image"`
-	Slicer     string        `json:"slicer" toml:"slicer" form:"slicer" query:"slicer"`
-	Filament   *Filament     `json:"filament" toml:"filament" form:"filament" query:"filament"`
-	Cost       float64       `json:"cost" toml:"cost" form:"cost" query:"cost"`
-	LayerCount int           `json:"layer_count" toml:"layer_count" form:"layer_count" query:"layer_count"`
-	Duration   string        `json:"duration" toml:"duration" form:"duration" query:"duration"`
-}
-
-func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectSlice, error) {
+func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectSlice, []*ProjectAsset, error) {
 	s := &ProjectSlice{
-		ProjectAsset: asset,
-		Filament:     &Filament{},
+		Filament: &Filament{},
 	}
-	s.ParseGcode(project)
-	return s, nil
+	nestedAsset, err := parseGcode(s, asset, project)
+	if err != nil {
+		log.Println("Error parsing gecode for ", fileName, err)
+		return s, nil, nil
+	}
+	return s, []*ProjectAsset{nestedAsset}, nil
 }
 
-func (p ProjectSlice) MarshalJSON() ([]byte, error) {
-	return json.Marshal(marshalProjectSlice{
-		Image:      p.Image,
-		Slicer:     p.Slicer,
-		Filament:   p.Filament,
-		Cost:       p.Cost,
-		LayerCount: p.LayerCount,
-		Duration:   p.Duration,
-	})
-}
-
-func (s *ProjectSlice) ParseGcode(project *Project) error {
-	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), s.Name))
+func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*ProjectAsset, error) {
+	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), parent.Name))
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 	image := &tmpImg{
@@ -97,11 +92,11 @@ func (s *ProjectSlice) ParseGcode(project *Project) error {
 				header := strings.Split(line, " ")
 				length, err := strconv.Atoi(header[3])
 				if err != nil {
-					return err
+					return nil, err
 				}
 				i, err := parseThumbnail(scanner, header[2], length)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				if i.Width > image.Width || i.Height > image.Height {
 					image = i
@@ -118,30 +113,34 @@ func (s *ProjectSlice) ParseGcode(project *Project) error {
 		log.Fatal(err)
 	}
 
+	var img *ProjectAsset
+
 	if image.Data != nil {
-		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(s.Name, ".gcode"))
+		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(parent.Name, ".gcode"))
 		imgPath := fmt.Sprintf("%s/%s", project.FullPath(), imgName)
 
 		h := sha1.New()
 		_, err = h.Write(image.Data)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		f, err := storeImage(image, imgPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer f.Close()
 
-		s.Image, err = NewProjectAsset(filepath.Base(imgPath), project, f)
+		img, _, err = NewProjectAsset(filepath.Base(imgPath), project, f)
 		if err != nil {
-			return err
+			return nil, err
 		}
+
+		s.ImageID = img.ID
 
 	}
 
-	return nil
+	return img, nil
 }
 
 func parseComment(s *ProjectSlice, line string) {

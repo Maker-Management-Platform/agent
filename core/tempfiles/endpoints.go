@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/core/discovery"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -46,24 +46,50 @@ func move(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[tempFile.ProjectUUID]
+	project, err := database.GetProject(tempFile.ProjectUUID)
 
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	err := os.Rename(filepath.Clean(fmt.Sprintf("temp/%s", tempFile.Name)), fmt.Sprintf("%s/%s", utils.ToLibPath(project.FullPath()), tempFile.Name))
+	dst := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), tempFile.Name))
+
+	err = os.Rename(filepath.Clean(fmt.Sprintf("temp/%s", tempFile.Name)), dst)
 
 	if err != nil {
 		log.Println("Error moving temp file: ", err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	err = discovery.DiscoverProjectAssets(project)
+	f, err := os.Open(dst)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	asset, nestedAssets, err := models.NewProjectAsset(tempFile.Name, project, f)
 
 	if err != nil {
-		log.Println("Error discovering project assets: ", err)
-		return c.NoContent(http.StatusInternalServerError)
+		log.Println("error initializing asset: ", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err = database.InsertAsset(asset); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	for _, a := range nestedAssets {
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
+			if err := database.UpdateProject(project); err != nil {
+				log.Println(err)
+			}
+		}
+
+		err := database.InsertAsset(a)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	delete(state.TempFiles, uuid)
