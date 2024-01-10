@@ -1,4 +1,4 @@
-package downloader
+package thingiverse
 
 import (
 	"encoding/json"
@@ -13,13 +13,14 @@ import (
 	"time"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
-func fetchThing(url string) error {
+func Fetch(url string) error {
 
 	if runtime.Cfg.ThingiverseToken == "" {
 		return errors.New("missing Thingiverse api token")
@@ -139,32 +140,9 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]
 
 	for _, file := range files {
 
-		out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), file.Name)))
-		if err != nil {
-			return nil, err
-		}
-		defer out.Close()
-
-		log.Println(file.DownloadURL)
 		req.URL, _ = url.Parse(file.DownloadURL)
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
 
-		// Check server response
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("bad status: %s", resp.Status)
-		}
-
-		// Writer the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		asset, nestedAssets, err := models.NewProjectAsset(file.Name, project, out)
+		asset, nestedAssets, err := tools.DownloadAsset(file.Name, project, httpClient, req)
 		if err != nil {
 			return nil, err
 		}

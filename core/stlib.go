@@ -38,8 +38,8 @@ func Run() {
 	if err != nil {
 		log.Fatal("error initing database", err)
 	}
-	discovery.Run(runtime.Cfg.LibraryPath)
-	discovery.RunTempDiscovery()
+	go discovery.Run(runtime.Cfg.LibraryPath)
+	go discovery.RunTempDiscovery()
 	err = state.LoadPrinters()
 	if err != nil {
 		log.Fatal("error loading printers", err)
