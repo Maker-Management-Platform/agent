@@ -3,8 +3,6 @@ package thingiverse
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -183,37 +181,17 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) ([
 
 		for _, size := range image.Sizes {
 			if size.Size == "large" && size.Type == "display" {
-				out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), image.Name)))
-				if err != nil {
-					return nil, err
-				}
-				defer out.Close()
 
 				req.URL, _ = url.Parse(size.URL)
-				resp, err := httpClient.Do(req)
-				if err != nil {
-					return nil, err
-				}
-				defer resp.Body.Close()
 
-				// Check server response
-				if resp.StatusCode != http.StatusOK {
-					return nil, fmt.Errorf("bad status: %s", resp.Status)
-				}
-
-				// Writer the body to file
-				_, err = io.Copy(out, resp.Body)
-				if err != nil {
-					return nil, err
-				}
-
-				asset, nestedAssets, err := models.NewProjectAsset(image.Name, project, out)
+				asset, nestedAssets, err := tools.DownloadAsset(image.Name, project, httpClient, req)
 				if err != nil {
 					return nil, err
 				}
 
 				rtn = append(rtn, asset)
 				rtn = append(rtn, nestedAssets...)
+
 				project.DefaultImageID = asset.ID
 			}
 		}
