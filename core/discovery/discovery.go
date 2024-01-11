@@ -34,7 +34,6 @@ func walker(path string, d fs.DirEntry, err error) error {
 	if !d.IsDir() {
 		return nil
 	}
-	log.Printf("walking the path %q\n", path)
 
 	project := models.NewProjectFromPath(path)
 

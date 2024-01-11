@@ -27,8 +27,6 @@ func (p *Project) FullPath() string {
 func NewProjectFromPath(path string) *Project {
 	path, _ = filepath.Rel(runtime.Cfg.LibraryPath, path)
 	project := NewProject()
-	fmt.Println(filepath.Base(path))
-	fmt.Println(filepath.Dir(path))
 	project.Path = filepath.Clean(fmt.Sprintf("/%s", filepath.Dir(path)))
 	project.Name = filepath.Base(path)
 	return project
