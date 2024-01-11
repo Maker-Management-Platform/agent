@@ -16,8 +16,9 @@ WORKDIR /app
 COPY --from=go /app/main ./
 COPY --from=go /app/helpers/config.toml /config
 
-RUN mkdir /library
+RUN mkdir /app/library
 RUN mkdir /app/cache
+RUN mkdir /app/temp
 RUN ls -la /config
 RUN pwd
 RUN chmod +x main
