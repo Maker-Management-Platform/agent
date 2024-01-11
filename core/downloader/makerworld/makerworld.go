@@ -32,6 +32,8 @@ type mwClient struct {
 	metadata  *makerWorldMetaData
 }
 
+const failedToFech3MF = "failed downloading 3mf"
+
 func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 
 	jar, err := cookiejar.New(nil)
@@ -76,13 +78,6 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	}
 	assets = append(assets, as...)
 
-	as, err = mwc.fetchPictures()
-	if err != nil {
-		log.Println("error fetching pictures")
-		return err
-	}
-	assets = append(assets, as...)
-
 	as, err = mwc.fetchModels()
 	if err != nil {
 		log.Println("error fetching models")
@@ -93,6 +88,13 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	as, err = mwc.fetchInstances()
 	if err != nil {
 		log.Println("error fetching models")
+		return err
+	}
+	assets = append(assets, as...)
+
+	as, err = mwc.fetchPictures()
+	if err != nil {
+		log.Println("error fetching pictures")
 		return err
 	}
 	assets = append(assets, as...)
@@ -121,7 +123,8 @@ func (mwc *mwClient) fetchCover() (assets []*models.ProjectAsset, err error) {
 	assets = make([]*models.ProjectAsset, 0)
 	asset, nestedAssets, err := tools.DownloadAsset(path.Base(mwc.metadata.Props.PageProps.Design.CoverURL), mwc.project, mwc.client, req)
 	if err != nil {
-		return nil, err
+		log.Println("Error fetchig cover, skiping: ", err)
+		return
 	}
 	assets = append(assets, asset)
 	assets = append(assets, nestedAssets...)
@@ -141,7 +144,8 @@ func (mwc *mwClient) fetchPictures() (assets []*models.ProjectAsset, err error) 
 		assets = make([]*models.ProjectAsset, 0)
 		asset, nestedAssets, err := tools.DownloadAsset(p.Name, mwc.project, mwc.client, req)
 		if err != nil {
-			return nil, err
+			log.Println("Error fetchig image, skiping: ", err)
+			continue
 		}
 		assets = append(assets, asset)
 		assets = append(assets, nestedAssets...)
@@ -161,7 +165,8 @@ func (mwc *mwClient) fetchModels() (assets []*models.ProjectAsset, err error) {
 		assets = make([]*models.ProjectAsset, 0)
 		asset, nestedAssets, err := tools.DownloadAsset(m.ModelName, mwc.project, mwc.client, req)
 		if err != nil {
-			return nil, err
+			log.Println("Error fetchig model, skiping: ", err)
+			continue
 		}
 		assets = append(assets, asset)
 		assets = append(assets, nestedAssets...)
@@ -174,12 +179,13 @@ func (mwc *mwClient) fetchInstances() (assets []*models.ProjectAsset, err error)
 
 	assets = make([]*models.ProjectAsset, 0)
 	for _, m := range mwc.metadata.Props.PageProps.Design.Instances {
-		sl := rand.Intn(4000-1000) + 1000
+		sl := rand.Intn(6000-3000) + 3000
 		log.Println("sleeping: ", sl)
 		time.Sleep(time.Duration(sl) * time.Millisecond)
 		mfData, err := mwc.fetch3MFData(m.ID)
 		if err != nil {
-			return nil, err
+			log.Println("Failed to download 3MFData, skipping")
+			continue
 		}
 		req, err := http.NewRequest("GET", mfData.URL, nil)
 		if err != nil {
@@ -191,12 +197,13 @@ func (mwc *mwClient) fetchInstances() (assets []*models.ProjectAsset, err error)
 		name := strings.TrimSuffix(mfData.Name, filepath.Ext(mfData.Name))
 		name = fmt.Sprintf("%s%d%s", name, m.ID, ext)
 
-		sl = rand.Intn(4000-1000) + 1000
+		sl = rand.Intn(6000-3000) + 3000
 		log.Println("sleeping: ", sl)
 		time.Sleep(time.Duration(sl) * time.Millisecond)
 		asset, nestedAssets, err := tools.DownloadAsset(name, mwc.project, mwc.client, req)
 		if err != nil {
-			return nil, err
+			log.Println("Failed to download 3MF File, skipping")
+			continue
 		}
 		assets = append(assets, asset)
 		assets = append(assets, nestedAssets...)
@@ -218,15 +225,19 @@ func (mwc *mwClient) fetch3MFData(id int) (*mf, error) {
 		return nil, err
 	}
 
-	qwe, _ = httputil.DumpResponse(resp, true)
-	log.Println(string(qwe))
-
-	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, errors.New(failedToFech3MF)
+	}
 
 	mfData := &mf{}
 	if err = json.NewDecoder(resp.Body).Decode(mfData); err != nil {
 		return nil, err
 	}
+
+	if mfData.Name == "" {
+		return nil, errors.New(failedToFech3MF)
+	}
+
 	return mfData, nil
 }
 
