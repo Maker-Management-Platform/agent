@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -47,12 +48,18 @@ func DiscoverTempFile(name string) (*models.TempFile, error) {
 
 	token := strings.Split(strings.ToLower(name), "_")[0]
 
-	for _, p := range state.Projects {
+	projects, err := database.GetProjects()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for _, p := range projects {
 		if strings.Contains(strings.ToLower(p.Name), token) {
 			tempFile.AddMatch(p.UUID)
 		}
 		for _, tag := range p.Tags {
-			if strings.Contains(strings.ToLower(tag), token) {
+			if strings.Contains(strings.ToLower(tag.Value), token) {
 				tempFile.AddMatch(p.UUID)
 			}
 		}

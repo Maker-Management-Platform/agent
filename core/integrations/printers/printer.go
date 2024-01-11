@@ -19,7 +19,7 @@ func Register(e *echo.Group) {
 	group.GET("/:uuid", show)
 	group.POST("/:uuid", edit)
 	group.POST("/:uuid/delete", deleteHandler)
-	group.GET("/:uuid/send/:sha1", sendHandler)
+	group.GET("/:uuid/send/:id", sendHandler)
 	group.POST("/test", testConnection)
 
 	go checkConnection()

@@ -2,66 +2,107 @@ package projects
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/morkid/paginate"
+	"gorm.io/gorm"
 )
 
 func index(c echo.Context) error {
-	rtn := make([]*models.Project, 0)
-	for _, p := range state.Projects {
-		rtn = append(rtn, p)
+	config := paginate.Config{
+		FieldSelectorEnabled: true,
+	}
+	pg := paginate.New(config)
+
+	q := database.DB.Debug().Model(&models.Project{}).Preload("Tags")
+
+	if c.QueryParams().Has("name") {
+		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", c.QueryParam("name")))
+	}
+	if c.QueryParams().Has("tags") {
+		for i, t := range strings.Split(c.QueryParam("tags"), ",") {
+			q.Joins(fmt.Sprintf("LEFT JOIN project_tags as project_tags%d on project_tags%d.project_uuid = projects.uuid", i, i)).
+				Where(fmt.Sprintf("project_tags%d.tag_value = ?", i), t)
+		}
+
+	}
+	page := pg.With(q).Request(c.Request()).Response(&[]models.Project{})
+	if page.RawError != nil {
+		log.Println(page.RawError)
+		return echo.NewHTTPError(http.StatusInternalServerError, page.RawError.Error())
+	}
+	return c.JSON(http.StatusOK, page)
+}
+
+func list(c echo.Context) error {
+	rtn, err := database.GetProjectNames()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, rtn)
 }
 
 func show(c echo.Context) error {
 	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	rtn, err := database.GetProject(uuid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, project)
+	return c.JSON(http.StatusOK, rtn)
 }
 
 func showAssets(c echo.Context) error {
 	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
-	}
-	rtn := make([]*models.ProjectAsset, 0)
-	for _, a := range project.Assets {
-		rtn = append(rtn, a)
+	rtn, err := database.GetAssetsByProject(uuid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, rtn)
 }
 
 func getAsset(c echo.Context) error {
-	uuid := c.Param("uuid")
-	project, ok := state.Projects[uuid]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(c.Param("uuid"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	asset, ok := project.Assets[c.Param("sha1")]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	asset, err := database.GetProjectAsset(project.UUID, c.Param("id"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if c.QueryParam("download") != "" {
@@ -73,24 +114,43 @@ func getAsset(c echo.Context) error {
 }
 
 func save(c echo.Context) error {
-	pproject := &models.Project{}
-
-	if err := c.Bind(pproject); err != nil {
+	form, err := c.MultipartForm()
+	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusBadRequest)
 	}
 
+	projectPayload := form.Value["payload"]
+	if len(projectPayload) != 1 {
+		log.Println("more payloads than expected")
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("more payloads than expected"))
+	}
+
+	pproject := &models.Project{}
+
+	err = json.Unmarshal([]byte(projectPayload[0]), pproject)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Bind(pproject); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	if pproject.UUID != c.Param("uuid") {
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("parameter mismatch"))
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(c.Param("uuid"))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
-	pproject.Assets = project.Assets
 
 	if pproject.Name != project.Name {
 
@@ -98,20 +158,32 @@ func save(c echo.Context) error {
 
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
 
-	state.Projects[pproject.UUID] = pproject
-
-	err := state.PersistProject(pproject)
+	err = state.PersistProject(pproject)
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(pproject)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, pproject)
+}
+
+type CreateProject struct {
+	Name             string        `json:"name"`
+	Description      string        `json:"description"`
+	DefaultImageName string        `json:"default_image_name"`
+	Tags             []*models.Tag `json:"tags"`
 }
 
 func new(c echo.Context) error {
@@ -129,13 +201,29 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	uuid := uuid.New().String()
+	projectPayload := form.Value["payload"]
+	if len(projectPayload) != 1 {
+		log.Println("more payloads than expected")
+		return c.NoContent(http.StatusBadRequest)
+	}
 
-	path := fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, uuid)
+	createProject := &CreateProject{}
+	err = json.Unmarshal([]byte(projectPayload[0]), createProject)
+	if err != nil {
+		log.Println(err)
+		return c.NoContent(http.StatusBadRequest)
+	}
 
+	project := models.NewProject()
+	project.Name = createProject.Name
+	project.Path = "/"
+	project.Description = createProject.Description
+	project.Tags = createProject.Tags
+
+	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	for _, file := range files {
@@ -143,7 +231,7 @@ func new(c echo.Context) error {
 		src, err := file.Open()
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		defer src.Close()
 
@@ -151,31 +239,49 @@ func new(c echo.Context) error {
 		dst, err := os.Create(fmt.Sprintf("%s/%s", path, file.Filename))
 		if err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
 			log.Println(err)
-			return c.NoContent(http.StatusInternalServerError)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 
 	}
-	project := models.NewProjectFromPath(path)
 
-	err = discovery.DiscoverProjectAssets(project)
+	ok, assets, err := discovery.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return err
 	}
+	if !ok {
+		err = errors.New("failed to find assets")
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
-	j, _ := json.Marshal(project)
-	log.Println(string(j))
-	m, _ := json.Marshal(project.Assets)
-	log.Println(string(m))
+	if createProject.DefaultImageName != "" {
+		for _, a := range assets {
+			if a.Name == createProject.DefaultImageName {
+				project.DefaultImageID = a.ID
+			}
+		}
+	}
 
-	state.Projects[project.UUID] = project
+	err = database.InsertProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = state.PersistProject(project)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
@@ -194,15 +300,18 @@ func moveHandler(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(pproject.UUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	pproject.Path = filepath.Clean(pproject.Path)
 	pproject.Name = project.Name
-	err := utils.Move(project.FullPath(), pproject.FullPath())
+	err = utils.Move(project.FullPath(), pproject.FullPath())
 
 	if err != nil {
 		log.Println(err)
@@ -215,7 +324,14 @@ func moveHandler(c echo.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, struct {
@@ -236,25 +352,35 @@ func setMainImageHandler(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project, ok := state.Projects[pproject.UUID]
-
-	if !ok {
-		return c.NoContent(http.StatusNotFound)
+	project, err := database.GetProject(pproject.UUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if pproject.DefaultImagePath != project.DefaultImagePath {
-		project.DefaultImagePath = pproject.DefaultImagePath
+	if pproject.DefaultImageID != project.DefaultImageID {
+		project.DefaultImageID = pproject.DefaultImageID
 	}
 
-	err := state.PersistProject(project)
+	err = state.PersistProject(project)
 
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = database.UpdateProject(project)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
 		Path string `json:"path"`
-	}{project.UUID, project.DefaultImagePath})
+	}{project.UUID, project.DefaultImageID})
 }
