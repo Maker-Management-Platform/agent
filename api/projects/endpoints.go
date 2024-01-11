@@ -7,14 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/models"
-	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/projects"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
@@ -214,70 +212,29 @@ func new(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	project := models.NewProject()
-	project.Name = createProject.Name
-	project.Path = "/"
-	project.Description = createProject.Description
-	project.Tags = createProject.Tags
-
-	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
-	if err := os.Mkdir(path, os.ModePerm); err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
+	fileMap := make(map[string]io.ReadCloser)
 	for _, file := range files {
-		// Source
-		src, err := file.Open()
+		f, err := file.Open()
+
 		if err != nil {
 			log.Println(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		defer src.Close()
+		defer f.Close()
 
-		// Destination
-		dst, err := os.Create(fmt.Sprintf("%s/%s", path, file.Filename))
-		if err != nil {
-			log.Println(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		defer dst.Close()
-
-		// Copy
-		if _, err = io.Copy(dst, src); err != nil {
-			log.Println(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
+		fileMap[file.Filename] = f
 	}
 
-	ok, assets, err := discovery.DiscoverProject(project)
-	if err != nil {
-		log.Printf("error loading the project %q: %v\n", path, err)
-		return err
-	}
-	if !ok {
-		err = errors.New("failed to find assets")
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	command := projects.NewCreateProjectCommand(
+		createProject.Name,
+		"/",
+		createProject.Description,
+		createProject.Tags,
+		fileMap,
+		createProject.DefaultImageName,
+	)
 
-	if createProject.DefaultImageName != "" {
-		for _, a := range assets {
-			if a.Name == createProject.DefaultImageName {
-				project.DefaultImageID = a.ID
-			}
-		}
-	}
-
-	err = database.InsertProject(project)
-
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	err = state.PersistProject(project)
+	project, err := projects.CreateProject(command)
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
