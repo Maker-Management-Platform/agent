@@ -75,6 +75,9 @@ func show(c echo.Context) error {
 
 func showAssets(c echo.Context) error {
 	uuid := c.Param("uuid")
+	if uuid == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("missing project uuid"))
+	}
 	rtn, err := database.GetAssetsByProject(uuid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
