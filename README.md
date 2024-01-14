@@ -1,7 +1,6 @@
 # stLib
 A platform that allows the viewing and management of 3d printing related projects and assets
 
-
 ## Problem
 Many of us hoard a tone of STL's from public sites, patreon and so forth. Keeping a tidy library easy to access and search proved difficult (at least for me).
 

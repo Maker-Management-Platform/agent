@@ -1,11 +1,10 @@
 .vscode
 static/node_modules
 testdata
-temp
 main
 main.exe
 release-*
 cache
 *.log
 __debug*
-/data/data.db
+/data
