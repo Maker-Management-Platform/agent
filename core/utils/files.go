@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -29,14 +28,13 @@ func GetFileSha1(path string) (string, error) {
 }
 
 func ToLibPath(path string) string {
-	if strings.HasPrefix(path, filepath.Clean(runtime.Cfg.LibraryPath)) {
+	if strings.HasPrefix(path, runtime.Cfg.LibraryPath) {
 		return path
 	}
-	return filepath.Clean(fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path))
+	return fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path)
 }
 
 func Move(src, dst string) error {
-	dst = ToLibPath(dst)
 	log.Print(path.Dir(dst))
 	if err := os.MkdirAll(path.Dir(dst), os.ModePerm); err != nil {
 		return err
@@ -51,7 +49,7 @@ func CreateFolder(name string) error {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-		if err := os.Mkdir("data", 0666); err != nil {
+		if err := os.Mkdir("data", os.ModePerm); err != nil {
 			if !errors.Is(err, os.ErrExist) {
 				return err
 			}
