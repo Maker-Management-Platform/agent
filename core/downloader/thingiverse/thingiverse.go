@@ -1,9 +1,8 @@
-package downloader
+package thingiverse
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,60 +10,83 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
-func fetchThing(url string) error {
+func Fetch(url string) error {
+
+	if runtime.Cfg.ThingiverseToken == "" {
+		return errors.New("missing Thingiverse api token")
+	}
 
 	r := regexp.MustCompile(`thing:(\d+)`)
 	matches := r.FindStringSubmatch(url)
 
-	if len(matches) > 0 {
-		id := matches[1]
-		log.Println("Processing thing: ", id)
-
-		httpClient := &http.Client{}
-
-		tempPath := utils.ToLibPath(id)
-
-		project := models.NewProjectFromPath(tempPath)
-		_ = os.Mkdir(utils.ToLibPath(project.Path), os.ModePerm)
-
-		err := fetchDetails(id, project, httpClient)
-		if err != nil {
-			return err
-		}
-		err = fetchFiles(id, project, httpClient)
-		if err != nil {
-			return err
-		}
-		err = fetchImages(id, project, httpClient)
-		if err != nil {
-			return err
-		}
-
-		err = utils.Move(utils.ToLibPath(project.Path), utils.ToLibPath(project.Name))
-		if err != nil {
-			return err
-		}
-		project.Path = project.Name
-
-		j, _ := json.Marshal(project)
-		fmt.Println(string(j))
-
-		state.Projects[project.UUID] = project
-
+	if len(matches) == 0 {
+		return errors.New("url doesn't match thingiverse schema")
 	}
-	return nil
+
+	id := matches[1]
+	log.Println("Processing thing: ", id)
+
+	httpClient := &http.Client{}
+
+	project := models.NewProject()
+
+	err := fetchDetails(id, project, httpClient)
+	if err != nil {
+		return err
+	}
+
+	if err = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm); err != nil {
+		log.Println("error creating project folder")
+		return err
+	}
+
+	files, err := fetchFiles(id, project, httpClient)
+	if err != nil {
+		log.Println("error fetching files")
+		return err
+	}
+	images, err := fetchImages(id, project, httpClient)
+	if err != nil {
+		log.Println("error fetching images")
+		return err
+	}
+
+	for _, a := range files {
+		if err := database.InsertAsset(a); err != nil {
+			log.Println(err)
+		}
+	}
+
+	for _, a := range images {
+		if err := database.InsertAsset(a); err != nil {
+			log.Println(err)
+		}
+	}
+
+	project.Initialized = true
+
+	if err = state.PersistProject(project); err != nil {
+		return err
+	}
+
+	return database.InsertProject(project)
 }
 
 func fetchDetails(id string, project *models.Project, httpClient *http.Client) error {
+	u := &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id}
+	project.ExternalLink = u.String()
+
 	req := &http.Request{
 		Method: "GET",
-		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id},
+		URL:    u,
 		Header: http.Header{
 			"Authorization": []string{"Bearer " + runtime.Cfg.ThingiverseToken},
 		},
@@ -84,7 +106,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	project.Description = thing.Description
 
 	for _, tag := range thing.Tags {
-		project.Tags = append(project.Tags, tag.Name)
+		project.Tags = append(project.Tags, models.StringToTag(tag.Name))
 	}
 
 	log.Println("Downloading details for thing: ", thing.Name)
@@ -92,7 +114,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	return nil
 }
 
-func fetchFiles(id string, project *models.Project, httpClient *http.Client) error {
+func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
@@ -102,58 +124,38 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) err
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var files []*ThingFile
 	if err := json.NewDecoder(res.Body).Decode(&files); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
+	rtn := make([]*models.ProjectAsset, 0)
 
 	for _, file := range files {
 
-		out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, file.Name)))
+		req.URL, _ = url.Parse(file.DownloadURL)
+
+		asset, nestedAssets, err := tools.DownloadAsset(file.Name, project, httpClient, req)
 		if err != nil {
-			return err
-		}
-		defer out.Close()
-
-		req.URL, _ = url.Parse(file.DirectURL)
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		// Check server response
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("bad status: %s", resp.Status)
+			return nil, err
 		}
 
-		// Writer the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			return err
-		}
-
-		asset, err := models.NewProjectAsset(file.Name, project, out)
-		if err != nil {
-			return err
-		}
-
-		project.Assets[asset.SHA1] = asset
+		rtn = append(rtn, asset)
+		rtn = append(rtn, nestedAssets...)
 
 	}
 
 	log.Printf("Downloaded %d files\n", len(files))
 
-	return nil
+	return rtn, nil
 }
 
-func fetchImages(id string, project *models.Project, httpClient *http.Client) error {
+func fetchImages(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
@@ -163,52 +165,34 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var tImages []*ThingImage
 	if err := json.NewDecoder(res.Body).Decode(&tImages); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
+	rtn := make([]*models.ProjectAsset, 0)
 
 	for _, image := range tImages {
 
 		for _, size := range image.Sizes {
 			if size.Size == "large" && size.Type == "display" {
-				out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, image.Name)))
-				if err != nil {
-					return err
-				}
-				defer out.Close()
 
 				req.URL, _ = url.Parse(size.URL)
-				resp, err := httpClient.Do(req)
+
+				asset, nestedAssets, err := tools.DownloadAsset(image.Name, project, httpClient, req)
 				if err != nil {
-					return err
-				}
-				defer resp.Body.Close()
-
-				// Check server response
-				if resp.StatusCode != http.StatusOK {
-					return fmt.Errorf("bad status: %s", resp.Status)
+					return nil, err
 				}
 
-				// Writer the body to file
-				_, err = io.Copy(out, resp.Body)
-				if err != nil {
-					return err
-				}
+				rtn = append(rtn, asset)
+				rtn = append(rtn, nestedAssets...)
 
-				asset, err := models.NewProjectAsset(image.Name, project, out)
-				if err != nil {
-					return err
-				}
-
-				project.Assets[asset.SHA1] = asset
-				project.DefaultImagePath = asset.SHA1
+				project.DefaultImageID = asset.ID
 			}
 		}
 
@@ -216,7 +200,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) er
 
 	log.Printf("Downloaded %d images\n", len(tImages))
 
-	return nil
+	return rtn, nil
 }
 
 type ThingImage struct {

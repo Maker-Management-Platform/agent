@@ -1,15 +1,4 @@
-FROM node:18-alpine3.15 AS n
-
-RUN mkdir app
-WORKDIR /app
-COPY . .
-WORKDIR /app/frontend
-RUN pwd
-RUN ls -la
-RUN npm install
-RUN npm run build
-
-FROM golang:1.19 AS go
+FROM golang:1.21 AS go
 
 RUN mkdir app
 WORKDIR /app
@@ -20,16 +9,19 @@ RUN ls -la helpers
 RUN pwd
 
 FROM debian:latest
-RUN mkdir -p app/frontend/dist
+
+RUN apt-get update && apt-get install -y ca-certificates && apt-get clean
+
 RUN mkdir /config
 
 WORKDIR /app
 
 COPY --from=go /app/main ./
 COPY --from=go /app/helpers/config.toml /config
-COPY --from=n /app/frontend/dist ./frontend/dist
+
 RUN mkdir /library
 RUN mkdir /app/cache
+RUN mkdir /app/temp
 RUN ls -la /config
 RUN pwd
 RUN chmod +x main

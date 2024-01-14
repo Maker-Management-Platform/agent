@@ -1,4 +1,4 @@
-package downloader
+package system
 
 import (
 	"github.com/labstack/echo/v4"
@@ -7,7 +7,6 @@ import (
 var group *echo.Group
 
 func Register(e *echo.Group) {
-
 	group = e
-	group.POST("/fetch", fetch)
+	group.GET("/paths", paths)
 }

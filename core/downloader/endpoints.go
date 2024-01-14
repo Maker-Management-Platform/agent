@@ -5,20 +5,29 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/downloader/makerworld"
+	"github.com/eduardooliveira/stLib/core/downloader/thingiverse"
 	"github.com/labstack/echo/v4"
 )
 
 type urls struct {
-	Url  string   `json:"url"`
-	Urls []string `json:"urls"`
+	Url     string    `json:"url"`
+	Urls    []string  `json:"urls"`
+	Cookies []*cookie `json:"cookies"`
+}
+type cookie struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 func fetch(c echo.Context) error {
 
-	payload := &urls{}
+	payload := &urls{
+		Cookies: make([]*cookie, 0),
+	}
 	if err := c.Bind(payload); err != nil {
-		log.Panicln(err)
-		return c.NoContent(http.StatusBadRequest)
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if payload.Url != "" {
@@ -28,10 +37,26 @@ func fetch(c echo.Context) error {
 	for _, url := range payload.Urls {
 		log.Println(url)
 		if strings.Contains(url, "thingiverse.com") || strings.Contains(url, "thing:") {
-			err := fetchThing(url)
+			err := thingiverse.Fetch(url)
 			if err != nil {
 				log.Println(err)
-				return c.NoContent(http.StatusInternalServerError)
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			}
+		} else if strings.Contains(url, "makerworld.com") {
+			cookies := make([]*http.Cookie, 0)
+
+			for _, c := range payload.Cookies {
+				cookies = append(cookies, &http.Cookie{
+					Name:  c.Name,
+					Value: c.Value,
+					Path:  "/",
+				})
+			}
+			agent := c.Request().UserAgent()
+			err := makerworld.Fetch(url, cookies, agent)
+			if err != nil {
+				log.Println(err)
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
 		}
 	}

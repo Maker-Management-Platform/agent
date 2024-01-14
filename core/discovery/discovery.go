@@ -1,21 +1,20 @@
 package discovery
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/duke-git/lancet/v2/maputil"
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
-	"golang.org/x/exp/slices"
 )
 
 func Run(path string) {
@@ -24,8 +23,6 @@ func Run(path string) {
 		fmt.Printf("error walking the path %q: %v\n", path, err)
 		return
 	}
-	j, _ := json.Marshal(state.Projects)
-	log.Println(string(j))
 }
 
 func walker(path string, d fs.DirEntry, err error) error {
@@ -33,97 +30,58 @@ func walker(path string, d fs.DirEntry, err error) error {
 		fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 		return err
 	}
-	log.Println(path)
+
 	if !d.IsDir() {
 		return nil
 	}
-	log.Printf("walking the path %q\n", path)
 
 	project := models.NewProjectFromPath(path)
 
-	err = DiscoverProjectAssets(project)
+	init, _, err := DiscoverProject(project)
 	if err != nil {
 		return err
 	}
 
-	if len(project.Assets) > 0 {
-		state.Projects[project.UUID] = project
-	}
-	return nil
-}
+	if init {
+		project.Initialized = true
 
-func DiscoverProjectAssets(project *models.Project) error {
-	libPath := utils.ToLibPath(project.Path)
-	files, err := ioutil.ReadDir(libPath)
-	if err != nil {
-		return err
-	}
-	fNames, err := getDirFileSlice(files)
-	if err != nil {
-		log.Printf("error reading the directory %q: %v\n", libPath, err)
-		return err
-	}
-
-	if slices.Contains(fNames, ".project.stlib") {
-		log.Println("found project", project.Path)
-		err = initProject(project)
+		database.InsertProject(project)
+		err := state.PersistProject(project)
 		if err != nil {
-			log.Printf("error loading the project %q: %v\n", project.Path, err)
-			return err
-		}
-		if !project.Initialized {
-			project.Tags = pathToTags(project.Path)
+			log.Println(err)
 		}
 	}
-
-	err = initProjectAssets(project, files)
-	if err != nil {
-		log.Printf("error loading the project %q: %v\n", project.Path, err)
-		return err
-	}
-
-	if project.DefaultImagePath == "" {
-		for _, asset := range project.Assets {
-			if asset.AssetType == models.ProjectImageType {
-				project.DefaultImagePath = asset.SHA1
-				break
-			}
-		}
-	}
-
 	return nil
 }
 
-func pathToTags(path string) []string {
-	log.Println("pathToTags", path)
-	tags := strings.Split(path, "/")
-	if len(tags) > 1 {
-		tags = tags[1:]
-	} else {
-		tags = make([]string, 0)
-	}
-	log.Println("pathToTags", tags)
-	return tags
-}
+func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.ProjectAsset, err error) {
+	projectPath := utils.ToLibPath(project.FullPath())
 
-func initProject(project *models.Project) error {
-	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.Path)), &project)
+	entries, err := os.ReadDir(projectPath)
 	if err != nil {
-		log.Printf("error decoding the project %q: %v\n", project.Path, err)
-		return err
+		log.Println("failed to read path", projectPath)
+		return false, nil, err
 	}
 
-	return nil
-}
+	assets := make(map[string]*models.ProjectAsset, 0)
 
-func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
-	for _, file := range files {
-		if file.IsDir() {
+	for _, e := range entries {
+		if e.IsDir() {
 			continue
 		}
+		if e.Name() == ".project.stlib" {
+			log.Println("found project", project.FullPath())
+			err = loadProject(project)
+			if err != nil {
+				log.Printf("error loading the project %q: %v\n", project.Path, err)
+				return false, nil, err
+			}
+			continue
+		}
+
 		blacklisted := false
 		for _, blacklist := range runtime.Cfg.FileBlacklist {
-			if strings.HasSuffix(file.Name(), blacklist) {
+			if strings.HasSuffix(e.Name(), blacklist) {
 				blacklisted = true
 				break
 			}
@@ -131,37 +89,73 @@ func initProjectAssets(project *models.Project, files []fs.FileInfo) error {
 		if blacklisted {
 			continue
 		}
-		f, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.Path, file.Name())))
+
+		f, err := os.Open(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), e.Name())))
 		if err != nil {
-			return err
+			log.Println("failed to open file", err)
+			continue
 		}
 		defer f.Close()
-		asset, err := models.NewProjectAsset(file.Name(), project, f)
-
+		asset, nestedAssets, err := models.NewProjectAsset(e.Name(), project, f)
 		if err != nil {
-			return err
+			log.Println("failed create asset", err)
+			continue
 		}
 
-		if asset.AssetType == models.ProjectSliceType {
-			if asset.Slice.Image != nil {
-				project.Assets[asset.Slice.Image.SHA1] = asset.Slice.Image
-			}
+		assets[asset.ID] = asset
+		for _, a := range nestedAssets {
+			assets[a.ID] = a
 		}
 
-		project.Assets[asset.SHA1] = asset
-		state.Assets[asset.SHA1] = asset
+		foundAssets = true
+	}
 
+	if !project.Initialized {
+		project.Tags = append(project.Tags, pathToTags(project.Path)...)
+	}
+
+	for _, a := range assets {
+		if project.DefaultImageID == "" && a.AssetType == "image" {
+			project.DefaultImageID = a.ID
+		}
+
+		err := database.InsertAsset(a)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+	}
+
+	return foundAssets, maputil.Values(assets), nil
+}
+
+func pathToTags(path string) []*models.Tag {
+
+	path = strings.Trim(path, "/")
+	tags := strings.Split(path, "/")
+	tagSet := make(map[string]bool)
+	for _, t := range tags {
+		if t != "" {
+			tagSet[t] = true
+		}
+
+	}
+	rtn := make([]*models.Tag, len(tagSet))
+	i := 0
+	for k := range tagSet {
+		rtn[i] = models.StringToTag(k)
+		i++
+	}
+
+	return rtn
+}
+
+func loadProject(project *models.Project) error {
+	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.FullPath())), &project)
+	if err != nil {
+		log.Printf("error decoding the project %q: %v\n", project.FullPath(), err)
+		return err
 	}
 
 	return nil
-}
-
-func getDirFileSlice(files []fs.FileInfo) ([]string, error) {
-
-	fNames := make([]string, 0)
-	for _, file := range files {
-		fNames = append(fNames, file.Name())
-	}
-
-	return fNames, nil
 }

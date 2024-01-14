@@ -117,4 +117,3 @@ Join discord if you need any support https://discord.gg/SqxKE3Ve4Z
 - [x] Add frontend configuration
 - [x] Add a build & release system
 - [x] Add backend configuration
- 
