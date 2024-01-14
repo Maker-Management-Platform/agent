@@ -45,7 +45,7 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	asset.Size = stat.Size()
 	asset.ModTime = stat.ModTime()
 
-	asset.Extension = filepath.Ext(fileName)
+	asset.Extension = strings.ToLower(filepath.Ext(fileName))
 	asset.MimeType = mime.TypeByExtension(asset.Extension)
 	asset.ID, err = assetSha1(project.UUID, fileName, fullFilePath)
 	if err != nil {
