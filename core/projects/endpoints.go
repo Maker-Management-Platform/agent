@@ -40,6 +40,7 @@ func index(c echo.Context) error {
 		}
 
 	}
+	q.Order("name ASC")
 	page := pg.With(q).Request(c.Request()).Response(&[]models.Project{})
 	if page.RawError != nil {
 		log.Println(page.RawError)

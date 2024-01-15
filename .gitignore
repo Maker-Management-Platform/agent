@@ -1,6 +1,6 @@
 .vscode
 static/node_modules
-testdata
+testdata*
 main
 main.exe
 release-*
