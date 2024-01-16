@@ -17,5 +17,6 @@ func Register(e *echo.Group) {
 	group.POST("/:uuid", save)
 	group.POST("/:uuid/move", moveHandler)
 	group.POST("/:uuid/image", setMainImageHandler)
+	group.POST("/:uuid/delete", deleteHandler)
 	group.POST("", new)
 }
