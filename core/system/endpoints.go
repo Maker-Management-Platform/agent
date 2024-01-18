@@ -44,3 +44,7 @@ func paths(c echo.Context) error {
 	})
 	return c.JSON(http.StatusOK, s)
 }
+
+func settings(c echo.Context) error {
+	return c.JSON(http.StatusOK, runtime.Cfg)
+}
