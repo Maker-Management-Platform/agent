@@ -55,7 +55,7 @@ func move(c echo.Context) error {
 
 	dst := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), tempFile.Name))
 
-	err = os.Rename(filepath.Clean(fmt.Sprintf("temp/%s", tempFile.Name)), dst)
+	err = utils.Move(filepath.Clean(fmt.Sprintf("temp/%s", tempFile.Name)), dst, false)
 
 	if err != nil {
 		log.Println("Error moving temp file: ", err)
