@@ -10,6 +10,7 @@ require (
 	github.com/glebarez/sqlite v1.10.0
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/morkid/paginate v1.1.7
+	github.com/otiai10/copy v1.14.0
 	github.com/spf13/viper v1.12.0
 	gorm.io/gorm v1.25.5
 )
@@ -41,6 +42,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/valyala/fasthttp v1.22.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -63,7 +65,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.17.0
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
