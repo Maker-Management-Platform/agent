@@ -62,14 +62,20 @@ func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, fil
 
 func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
 	if strings.ToLower(parent.Extension) == ".stl" {
-		return []*ProjectAsset{loadStlImage(model, parent, project)}
+		img, err := loadStlImage(model, parent, project)
+		if err != nil {
+			log.Println(err)
+			return []*ProjectAsset{}
+		} else {
+			return []*ProjectAsset{img}
+		}
 	} else if strings.ToLower(parent.Extension) == ".3mf" {
 		return load3MfImage(model, parent, project)
 	}
 	return nil
 }
 
-func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) *ProjectAsset {
+func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) (*ProjectAsset, error) {
 	renderName := fmt.Sprintf("%s.render.png", parent.Name)
 	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
@@ -84,25 +90,26 @@ func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) *
 		}
 		log.Println("produced", renderName)
 		if err := <-errChan; err != nil {
-			log.Println(err)
+			log.Println("error rendering ", err)
+			return nil, err
 		}
 		log.Println("terminated", renderName)
 	}
 	f, err := os.Open(renderPath)
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
 
 	asset, _, err := NewProjectAsset(renderName, project, f)
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, err
 	}
 
 	project.Assets[asset.ID] = asset
 	model.ImageID = asset.ID
-	return asset
+	return asset, nil
 }
 
 func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
@@ -185,9 +192,8 @@ func renderWorker(jobs <-chan *cacheJob) {
 			err := render.RenderModel(job.renderName, job.parent.Name, job.project.FullPath())
 			if err != nil {
 				log.Println("error rendering image", err)
-				job.err <- err
 			}
-			log.Println("rendered", job.renderName)
+			job.err <- err
 		}(job)
 	}
 }
