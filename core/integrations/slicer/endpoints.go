@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
-	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
 )
@@ -38,7 +37,7 @@ func info(c echo.Context) error {
 	}{
 		State:           "ready",
 		StateMessage:    "Printer is ready",
-		Hostname:        runtime.Cfg.ServerHostname,
+		Hostname:        "mmp",
 		SoftwareVersion: "v0.9.xxx",
 		CPUInfo:         "xxx",
 		KlipperPath:     "/root/klipper", // This are mock values, do not run stuff as root....

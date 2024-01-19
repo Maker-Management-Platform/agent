@@ -21,7 +21,7 @@ func RunTempDiscovery() {
 
 	for _, e := range entries {
 		blacklisted := false
-		for _, blacklist := range runtime.Cfg.FileBlacklist {
+		for _, blacklist := range runtime.Cfg.Library.Blacklist {
 			if strings.HasSuffix(e.Name(), blacklist) {
 				blacklisted = true
 				break

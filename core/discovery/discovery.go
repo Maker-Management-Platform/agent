@@ -80,7 +80,7 @@ func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.Pro
 		}
 
 		blacklisted := false
-		for _, blacklist := range runtime.Cfg.FileBlacklist {
+		for _, blacklist := range runtime.Cfg.Library.Blacklist {
 			if strings.HasSuffix(e.Name(), blacklist) {
 				blacklisted = true
 				break
