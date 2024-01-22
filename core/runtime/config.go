@@ -44,18 +44,19 @@ func init() {
 	if viper.GetString("DATA_FOLDER") == "" {
 		log.Panic("data folder not defined")
 	}
-	viper.BindEnv("PORT")
-	viper.BindEnv("LIBRARY_PATH")
+
+	bindEnv()
+
 	viper.SetDefault("server.port", viper.GetInt("PORT"))
 	viper.SetDefault("server.hostname", "localhost")
 	viper.SetDefault("library.path", viper.GetString("LIBRARY_PATH"))
 	viper.SetDefault("library.blacklist", []string{})
 	viper.SetDefault("library.ignore_dot_files", true)
 	viper.SetDefault("render.max_workers", 5)
-	viper.SetDefault("render.model_color", "#ffffff")
-	viper.SetDefault("render.background_color", "#000000")
-	viper.SetDefault("integrations.thingiverse.token", "")
-	viper.SetDefault("core.log.path", "./log")
+	viper.SetDefault("render.model_color", viper.GetString("MODEL_RENDER_COLOR"))
+	viper.SetDefault("render.background_color", viper.GetString("MODEL_BACKGROUND_COLOR"))
+	viper.SetDefault("integrations.thingiverse.token", viper.GetString("THINGIVERSE_TOKEN"))
+	viper.SetDefault("core.log.path", viper.GetString("LOG_PATH"))
 	viper.SetDefault("core.log.enable_file", false)
 
 	viper.SetConfigName("config")
@@ -84,6 +85,16 @@ func init() {
 	}
 
 	Cfg = cfg
+}
+
+func bindEnv() {
+	viper.BindEnv("PORT")
+	viper.BindEnv("LIBRARY_PATH")
+	viper.BindEnv("MAX_RENDER_WORKERS")
+	viper.BindEnv("MODEL_RENDER_COLOR")
+	viper.BindEnv("MODEL_BACKGROUND_COLOR")
+	viper.BindEnv("LOG_PATH")
+	viper.BindEnv("THINGIVERSE_TOKEN")
 }
 
 func GetDataFolder() string {
