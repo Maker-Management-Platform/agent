@@ -61,6 +61,5 @@ func RenderModel(renderName, modelName, projectPath string) error {
 	image := context.Image()
 	image = resize.Resize(width, height, image, resize.Bilinear)
 
-	fauxgl.SavePNG(utils.ToLibPath(fmt.Sprintf("%s/%s", projectPath, renderName)), image)
-	return err
+	return fauxgl.SavePNG(utils.ToLibPath(fmt.Sprintf("%s/%s", projectPath, renderName)), image)
 }

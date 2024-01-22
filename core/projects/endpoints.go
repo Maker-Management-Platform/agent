@@ -158,7 +158,7 @@ func save(c echo.Context) error {
 
 	if pproject.Name != project.Name {
 
-		err := utils.Move(project.FullPath(), pproject.FullPath())
+		err := utils.Move(project.FullPath(), pproject.FullPath(), true)
 
 		if err != nil {
 			log.Println(err)
@@ -315,7 +315,7 @@ func moveHandler(c echo.Context) error {
 
 	pproject.Path = filepath.Clean(pproject.Path)
 	pproject.Name = project.Name
-	err = utils.Move(project.FullPath(), pproject.FullPath())
+	err = utils.Move(project.FullPath(), pproject.FullPath(), true)
 
 	if err != nil {
 		log.Println(err)

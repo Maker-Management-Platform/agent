@@ -7,10 +7,11 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
+	cp "github.com/otiai10/copy"
 )
 
 func GetFileSha1(path string) (string, error) {
@@ -34,13 +35,18 @@ func ToLibPath(path string) string {
 	return fmt.Sprintf("%s/%s", runtime.Cfg.Library.Path, path)
 }
 
-func Move(src, dst string) error {
-	log.Print(path.Dir(dst))
-	if err := os.MkdirAll(path.Dir(dst), os.ModePerm); err != nil {
+func Move(src, dst string, toLibPath bool) error {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+	if toLibPath {
+		src = ToLibPath(src)
+		dst = ToLibPath(dst)
+	}
+	log.Print(dst)
+	if err := cp.Copy(src, dst); err != nil {
 		return err
 	}
-
-	return os.Rename(ToLibPath(src), dst)
+	return os.RemoveAll(src)
 }
 
 func CreateFolder(name string) error {
@@ -49,7 +55,7 @@ func CreateFolder(name string) error {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-		if err := os.Mkdir("data", os.ModePerm); err != nil {
+		if err := os.Mkdir(name, os.ModePerm); err != nil {
 			if !errors.Is(err, os.ErrExist) {
 				return err
 			}
