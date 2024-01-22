@@ -76,17 +76,13 @@ func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.Pro
 				log.Printf("error loading the project %q: %v\n", project.Path, err)
 				return false, nil, err
 			}
+			for _, a := range assets {
+				a.ProjectUUID = project.UUID
+			}
 			continue
 		}
 
-		blacklisted := false
-		for _, blacklist := range runtime.Cfg.Library.Blacklist {
-			if strings.HasSuffix(e.Name(), blacklist) {
-				blacklisted = true
-				break
-			}
-		}
-		if blacklisted {
+		if shouldSkipFile(e.Name()) {
 			continue
 		}
 
@@ -127,6 +123,23 @@ func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.Pro
 	}
 
 	return foundAssets, maputil.Values(assets), nil
+}
+
+func shouldSkipFile(name string) bool {
+
+	if strings.HasPrefix(name, ".") {
+		if runtime.Cfg.Library.IgnoreDotFiles {
+			return true
+		}
+	}
+
+	for _, blacklist := range runtime.Cfg.Library.Blacklist {
+		if strings.HasSuffix(name, blacklist) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func pathToTags(path string) []*models.Tag {
