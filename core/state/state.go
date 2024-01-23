@@ -27,7 +27,7 @@ func PersistProject(project *models.Project) error {
 	return err
 }
 
-func PercistPrinters() error {
+func PersistPrinters() error {
 	f, err := os.OpenFile("data/printers.toml", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println(err)

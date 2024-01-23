@@ -2,7 +2,7 @@ package klipper
 
 import "github.com/eduardooliveira/stLib/core/models"
 
-type KipplerPrinter struct {
+type KlipperPrinter struct {
 	*models.Printer
 }
 

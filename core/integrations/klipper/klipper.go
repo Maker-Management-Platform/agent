@@ -2,8 +2,8 @@ package klipper
 
 import "github.com/eduardooliveira/stLib/core/models"
 
-func ConntectionStatus(printer *models.Printer) error {
-	kp := &KipplerPrinter{printer}
+func ConnectionStatus(printer *models.Printer) error {
+	kp := &KlipperPrinter{printer}
 
 	r, err := kp.serverInfo()
 
@@ -20,7 +20,7 @@ func ConntectionStatus(printer *models.Printer) error {
 }
 
 func UploadFile(printer *models.Printer, asset *models.ProjectAsset) error {
-	kp := &KipplerPrinter{printer}
+	kp := &KlipperPrinter{printer}
 
 	return kp.ServerFilesUpload(asset)
 }

@@ -17,6 +17,7 @@ func Register(e *echo.Group) {
 	group.POST("", new)
 	group.GET("", index)
 	group.GET("/:uuid", show)
+	group.GET("/:uuid/stream", stream)
 	group.POST("/:uuid", edit)
 	group.POST("/:uuid/delete", deleteHandler)
 	group.GET("/:uuid/send/:id", sendHandler)
@@ -31,7 +32,7 @@ func checkConnection() {
 		for _, p := range state.Printers {
 			switch p.Type {
 			case "klipper":
-				klipper.ConntectionStatus(p)
+				klipper.ConnectionStatus(p)
 			}
 		}
 		time.Sleep(10 * time.Second)
