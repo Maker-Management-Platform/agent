@@ -1,6 +1,7 @@
 package printers
 
 import (
+	"github.com/eduardooliveira/stLib/core/integrations/octorpint"
 	"log"
 	"net/http"
 
@@ -66,6 +67,11 @@ func sendHandler(c echo.Context) error {
 	if printer.Type == "klipper" {
 		err = klipper.UploadFile(printer, asset)
 	}
+
+	if printer.Type == "octoPrint" {
+		err = octorpint.UploadFile(printer, asset)
+	}
+
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -133,6 +139,10 @@ func testConnection(c echo.Context) error {
 
 	if pPrinter.Type == "klipper" {
 		err = klipper.ConntectionStatus(pPrinter)
+		log.Println(err)
+		return c.JSON(http.StatusOK, pPrinter)
+	} else if pPrinter.Type == "octoPrint" {
+		err = octorpint.ConnectionStatus(pPrinter)
 		log.Println(err)
 		return c.JSON(http.StatusOK, pPrinter)
 	}
