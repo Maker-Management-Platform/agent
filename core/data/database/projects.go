@@ -18,7 +18,10 @@ func InsertProject(p *models.Project) error {
 }
 
 func UpdateProject(p *models.Project) error {
-	return DB.Save(p).Error
+	if err := DB.Save(p).Error; err != nil {
+		return err
+	}
+	return DB.Model(p).Association("Tags").Replace(p.Tags)
 }
 
 func GetProjects() (rtn []*models.Project, err error) {
