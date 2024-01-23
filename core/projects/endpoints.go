@@ -195,27 +195,27 @@ func new(c echo.Context) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	files := form.File["files"]
 
 	if len(files) == 0 {
 		log.Println("No files")
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("no files uploaded").Error())
 	}
 
 	projectPayload := form.Value["payload"]
 	if len(projectPayload) != 1 {
 		log.Println("more payloads than expected")
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("more payloads than expected").Error())
 	}
 
 	createProject := &CreateProject{}
 	err = json.Unmarshal([]byte(projectPayload[0]), createProject)
 	if err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	project := models.NewProject()
@@ -258,7 +258,7 @@ func new(c echo.Context) error {
 	ok, assets, err := discovery.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if !ok {
 		err = errors.New("failed to find assets")
