@@ -16,6 +16,7 @@ import (
 type ProjectAsset struct {
 	ID           string        `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
 	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
+	Generated    bool          `json:"generated" toml:"generated" form:"generated" query:"generated"`
 	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
 	Project      *Project      `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
@@ -29,9 +30,12 @@ type ProjectAsset struct {
 	Slice        *ProjectSlice `json:"slice" toml:"slice" form:"slice" query:"slice"`
 }
 
+var generatedExtensions = []string{".thumb.png", ".render.png"}
+
 func NewProjectAsset(fileName string, project *Project, file *os.File) (*ProjectAsset, []*ProjectAsset, error) {
 	var asset = &ProjectAsset{
 		Name:        fileName,
+		Generated:   false,
 		ProjectUUID: project.UUID,
 	}
 	fullFilePath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
@@ -63,6 +67,16 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	} else {
 		asset.AssetType = ProjectFileType
 		asset.ProjectFile, nestedAssets, err = NewProjectFile(fileName, asset, project, file)
+	}
+	for _, ext := range generatedExtensions {
+		if strings.HasSuffix(asset.Name, ext) {
+			asset.Generated = true
+		}
+		for _, nestedAsset := range nestedAssets {
+			if strings.HasSuffix(nestedAsset.Name, ext) {
+				nestedAsset.Generated = true
+			}
+		}
 	}
 
 	return asset, nestedAssets, err
