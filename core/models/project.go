@@ -8,12 +8,18 @@ import (
 	"github.com/google/uuid"
 )
 
+type Link struct {
+	Name string `json:"name" toml:"name" form:"name" query:"name"`
+	URL  string `json:"url" toml:"url" form:"url" query:"url"`
+}
+
 type Project struct {
 	UUID           string                   `json:"uuid" toml:"uuid" form:"uuid" query:"uuid" gorm:"primaryKey"`
 	Name           string                   `json:"name" toml:"name" form:"name" query:"name"`
 	Description    string                   `json:"description,omitempty" toml:"description" form:"description" query:"description"`
 	Path           string                   `json:"path,omitempty" toml:"path" form:"path" query:"path"`
 	ExternalLink   string                   `json:"external_link,omitempty" toml:"external_link" form:"external_link" query:"external_link"`
+	Links          []*Link                  `json:"links,omitempty" toml:"links" form:"links" query:"links" gorm:"serializer:json"`
 	Assets         map[string]*ProjectAsset `json:"-" toml:"-" form:"assets" query:"assets" gorm:"-"`
 	Tags           []*Tag                   `json:"tags,omitempty" toml:"tags" form:"tags" query:"tags" gorm:"many2many:project_tags"`
 	DefaultImageID string                   `json:"default_image_id,omitempty" toml:"default_image_id" form:"default_image_id" query:"default_image_id"`
@@ -38,6 +44,7 @@ func NewProject() *Project {
 		Initialized: false,
 		Tags:        make([]*Tag, 0),
 		Assets:      make(map[string]*ProjectAsset),
+		Links:       make([]*Link, 0),
 	}
 	return project
 }
