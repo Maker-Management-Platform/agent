@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	scale  = 1    // optional supersampling
-	width  = 1920 // output width in pixels
-	height = 1080 // output height in pixels
-	fovy   = 30   // vertical field of view in degrees
-	near   = 1    // near clipping plane
-	far    = 10   // far clipping plane
+	scale  = 1   // optional supersampling
+	width  = 280 // output width in pixels
+	height = 280 // output height in pixels
+	fovy   = 30  // vertical field of view in degrees
+	near   = 1   // near clipping plane
+	far    = 10  // far clipping plane
 )
 
 var (
