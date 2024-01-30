@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 
 	"github.com/eduardooliveira/stLib/core/assets"
 	"github.com/eduardooliveira/stLib/core/data/database"
@@ -25,7 +26,10 @@ import (
 func Run() {
 
 	if logPath := runtime.Cfg.LogPath; logPath != "" {
-		f, err := os.OpenFile("stlib.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if _, err := os.Stat(logPath); os.IsNotExist(err) {
+			log.Fatalf("log_path %s does not exist", logPath)
+		}
+		f, err := os.OpenFile(path.Join(logPath, "stlib.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
 		}
