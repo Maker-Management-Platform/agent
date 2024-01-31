@@ -16,7 +16,7 @@ import (
 )
 
 func (p *OctoPrintPrinter) serverInfo() (*OctoPrintResponse, error) {
-	bearer := "Bearer "
+	bearer := "Bearer " + p.ApiKey
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/server", p.Address), nil)
 
 	if err != nil {
@@ -27,7 +27,7 @@ func (p *OctoPrintPrinter) serverInfo() (*OctoPrintResponse, error) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-
+	//TODO add error if forbidden
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (p *OctoPrintPrinter) ServerFilesUpload(asset *models.ProjectAsset) error {
 		return err
 	}
 
-	bearer := "Bearer "
+	bearer := "Bearer " + p.ApiKey
 	// location could be local or sdcard, can also create new folders by adding path
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/files/local", p.Address), body)
 
