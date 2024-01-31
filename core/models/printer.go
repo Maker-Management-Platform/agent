@@ -13,6 +13,11 @@ type Printer struct {
 	Version   string `json:"version" toml:"version" form:"version" query:"version"`
 }
 
+type PrinterStatus struct {
+	Name  string `json:"name"`
+	State any    `json:"state"`
+}
+
 func NewPrinter() *Printer {
 	printer := &Printer{
 		UUID: uuid.New().String(),

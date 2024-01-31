@@ -1,6 +1,8 @@
 package klipper
 
-import "github.com/eduardooliveira/stLib/core/models"
+import (
+	"github.com/eduardooliveira/stLib/core/models"
+)
 
 func ConnectionStatus(printer *models.Printer) error {
 	kp := &KlipperPrinter{printer}

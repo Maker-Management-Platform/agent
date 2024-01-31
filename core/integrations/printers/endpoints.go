@@ -1,6 +1,8 @@
 package printers
 
 import (
+	"bufio"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -129,11 +131,34 @@ func stream(c echo.Context) error {
 	}
 	defer res.Body.Close()
 
-	c.Response().Writer.WriteHeader(res.StatusCode)
-	buffer := make([]byte, 64*1024) // 64KB buffer size
-	io.CopyBuffer(c.Response().Writer, res.Body, buffer)
+	for h, vs := range res.Header {
+		for _, v := range vs {
+			c.Response().Writer.Header().Add(h, v)
+		}
+	}
 
-	return nil
+	r := bufio.NewReader(res.Body)
+	buf := make([]byte, 0, 64*1024)
+	for {
+		select {
+		case <-c.Request().Context().Done():
+			return c.NoContent(http.StatusOK)
+		default:
+			n, err := io.ReadFull(r, buf[:cap(buf)])
+			buf = buf[:n]
+			if err != nil {
+				if err == io.EOF {
+					return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+				}
+				if err != io.ErrUnexpectedEOF {
+					return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+				}
+			}
+			c.Response().Write(buf)
+			c.Response().Flush()
+		}
+
+	}
 }
 
 func edit(c echo.Context) error {
@@ -180,4 +205,34 @@ func testConnection(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusInternalServerError)
+}
+
+func statusHandler(c echo.Context) error {
+
+	uuid := c.Param("uuid")
+	printer, ok := state.Printers[uuid]
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
+	}
+	sm, err := GetStateManager(printer)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	stateChan := sm.Subscribe(c.Request().Context())
+
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().WriteHeader(http.StatusOK)
+
+	enc := json.NewEncoder(c.Response())
+	for s := range stateChan {
+		c.Response().Write([]byte("data: "))
+		if err := enc.Encode(s); err != nil {
+			return err
+		}
+		c.Response().Write([]byte("\n\n"))
+		c.Response().Flush()
+	}
+
+	return c.JSON(http.StatusOK, printer)
 }

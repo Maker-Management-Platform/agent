@@ -8,9 +8,11 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/duke-git/lancet/v2 v2.2.8
 	github.com/glebarez/sqlite v1.10.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/morkid/paginate v1.1.7
 	github.com/otiai10/copy v1.14.0
+	github.com/sfotiadis/broadcast v1.0.2
 	github.com/spf13/viper v1.12.0
 	gorm.io/gorm v1.25.5
 )
@@ -39,7 +41,6 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/valyala/fasthttp v1.22.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect

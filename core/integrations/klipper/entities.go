@@ -22,3 +22,17 @@ type Result struct {
 	APIVersion                []int         `json:"api_version"`
 	APIVersionString          string        `json:"api_version_string"`
 }
+
+type statusUpdate struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Method  string `json:"method"`
+	Params  []any  `json:"params"`
+}
+type result struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Result  struct {
+		Status    map[string]any `json:"status"`
+		EventTime float64        `json:"eventtime"`
+	} `json:"result"`
+	ID int `json:"id"`
+}

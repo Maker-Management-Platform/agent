@@ -1,7 +1,6 @@
 package printers
 
 import (
-	"log"
 	"time"
 
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
@@ -18,6 +17,7 @@ func Register(e *echo.Group) {
 	group.GET("", index)
 	group.GET("/:uuid", show)
 	group.GET("/:uuid/stream", stream)
+	group.GET("/:uuid/status", statusHandler)
 	group.POST("/:uuid", edit)
 	group.POST("/:uuid/delete", deleteHandler)
 	group.GET("/:uuid/send/:id", sendHandler)
@@ -28,7 +28,6 @@ func Register(e *echo.Group) {
 
 func checkConnection() {
 	for {
-		log.Println("Checking printer connectivity")
 		for _, p := range state.Printers {
 			switch p.Type {
 			case "klipper":
