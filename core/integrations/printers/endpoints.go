@@ -100,6 +100,7 @@ func new(c echo.Context) error {
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
+	printer.ApiKey = pPrinter.ApiKey
 
 	state.Printers[printer.UUID] = printer
 	state.PersistPrinters()
@@ -190,6 +191,7 @@ func edit(c echo.Context) error {
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
+	printer.ApiKey = pPrinter.ApiKey
 
 	state.Printers[printer.UUID] = printer
 	state.PersistPrinters()

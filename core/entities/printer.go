@@ -11,6 +11,7 @@ type Printer struct {
 	Status    string `json:"status" toml:"status" form:"status" query:"status"`
 	State     string `json:"state" toml:"state" form:"state" query:"state"`
 	Version   string `json:"version" toml:"version" form:"version" query:"version"`
+	ApiKey    string `json:"apiKey" toml:"apiKey" form:"apiKey" query:"apiKey"`
 }
 
 type PrinterStatus struct {
