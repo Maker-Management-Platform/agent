@@ -6,8 +6,10 @@ import (
 	"errors"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
@@ -215,24 +217,43 @@ func statusHandler(c echo.Context) error {
 	if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
 	}
-	sm, err := GetStateManager(printer)
+
+	stateChan, unSub, err := GetStateManager(printer)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	stateChan := sm.Subscribe(c.Request().Context())
 
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().WriteHeader(http.StatusOK)
 
 	enc := json.NewEncoder(c.Response())
-	for s := range stateChan {
-		c.Response().Write([]byte("data: "))
-		if err := enc.Encode(s); err != nil {
-			return err
-		}
-		c.Response().Write([]byte("\n\n"))
-		c.Response().Flush()
-	}
+	var count int
+	for {
+		select {
+		case <-c.Request().Context().Done():
+			unSub()
+			return nil
+		case s, ok := <-stateChan:
+			if !ok {
+				log.Println("State chan closed, closing client")
+				return nil
+			}
+			c.Response().Write([]byte("id: "))
+			c.Response().Write([]byte(strconv.Itoa(count)))
+			c.Response().Write([]byte("\nevent: "))
+			c.Response().Write([]byte(s.Name))
+			c.Response().Write([]byte("\ndata: "))
+			if err := enc.Encode(s.State); err != nil {
+				return err
+			}
+			c.Response().Write([]byte("\n\n"))
+			c.Response().Flush()
+			if count == math.MaxInt {
+				count = 0
+			} else {
+				count++
+			}
 
-	return c.JSON(http.StatusOK, printer)
+		}
+	}
 }

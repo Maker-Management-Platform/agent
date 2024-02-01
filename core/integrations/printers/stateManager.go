@@ -1,65 +1,82 @@
 package printers
 
 import (
-	"context"
 	"log"
 
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
 	"github.com/eduardooliveira/stLib/core/models"
+	"github.com/google/uuid"
 )
 
 type Publisher interface {
 	Start() error
-	Out() <-chan []*models.PrinterStatus
+	Close()
+	Produce() ([]*models.PrinterStatus, error)
 	OnNewSub()
-	Stop()
 }
 
 type stateManager struct {
 	printer     *models.Printer
 	publisher   Publisher
-	subscribers []chan []*models.PrinterStatus
-	sub         chan chan []*models.PrinterStatus
-	unsub       chan (<-chan []*models.PrinterStatus)
+	subscribers *maputil.ConcurrentMap[string, *subscriber]
+	sub         chan *subscriber
+	unSub       chan string
+	done        chan struct{}
 }
 
-func (s *stateManager) Subscribe(ctx context.Context) chan []*models.PrinterStatus {
-	c := make(chan []*models.PrinterStatus, 10)
-	s.sub <- c
-	go func() {
-		<-ctx.Done()
-		s.Unsubscribe(c)
-	}()
-	return c
-}
-func (s *stateManager) Unsubscribe(channel chan []*models.PrinterStatus) {
-	s.unsub <- channel
+type subscriber struct {
+	id     string
+	status chan *models.PrinterStatus
 }
 
-func (s *stateManager) run() {
-	out := s.publisher.Out()
+func (s *stateManager) managerRoutine() {
+	defer log.Println(s.printer.Name, " managerRoutine Goodbye")
 	for {
 		select {
-		case status := <-out:
-			for _, c := range s.subscribers {
-				c <- status
-			}
-		case channel := <-s.sub:
-			s.subscribers = append(s.subscribers, channel)
+
+		case sub := <-s.sub:
+			s.subscribers.Set(sub.id, sub)
 			go s.publisher.OnNewSub()
-			log.Println(s.printer.Name, " +Subs len: ", len(s.subscribers))
-		case channel := <-s.unsub:
-			for i, c := range s.subscribers {
-				if c == channel {
-					s.subscribers = append(s.subscribers[:i], s.subscribers[i+1:]...)
-				}
-			}
-			log.Println(s.printer.Name, " -Subs len: ", len(s.subscribers))
-			if len(s.subscribers) == 0 {
-				s.publisher.Stop()
+			log.Println(s.printer.Name, " +Subs")
+
+		case id := <-s.unSub:
+			s.subscribers.Delete(id)
+			log.Println(s.printer.Name, " -Subs")
+			len := 0
+			s.subscribers.Range(func(_ string, _ *subscriber) bool {
+				len++
+				return true
+			})
+			if len == 0 {
 				stateManagers.Delete(s.printer.UUID)
-				return
+				close(s.done)
+			}
+
+		case <-s.done:
+			s.publisher.Close()
+			s.subscribers.Range(func(_ string, sub *subscriber) bool {
+				close(sub.status)
+				return true
+			})
+			stateManagers.Delete(s.printer.UUID)
+			return
+
+		default:
+			statusList, err := s.publisher.Produce()
+			if err != nil {
+				close(s.done)
+				continue
+			}
+			for _, status := range statusList {
+				s.subscribers.Range(func(_ string, sub *subscriber) bool {
+					select {
+					case sub.status <- status:
+					default:
+						log.Println(s.printer.Name, " broadcasterRoutine status chan full")
+					}
+					return true
+				})
 			}
 		}
 	}
@@ -67,26 +84,38 @@ func (s *stateManager) run() {
 
 var stateManagers = maputil.NewConcurrentMap[string, *stateManager](100)
 
-func GetStateManager(p *models.Printer) (*stateManager, error) {
-	if sm, ok := stateManagers.Get(p.UUID); ok {
-		return sm, nil
-	} else {
-		sm := &stateManager{
-			printer:     p,
-			sub:         make(chan chan []*models.PrinterStatus),
-			unsub:       make(chan (<-chan []*models.PrinterStatus)),
-			subscribers: make([]chan []*models.PrinterStatus, 0),
-		}
-		stateManagers.Set(p.UUID, sm)
-		if sm.publisher == nil {
-			if sm.printer.Type == "klipper" {
-				sm.publisher = klipper.GetStatePublisher(sm.printer)
-				if err := sm.publisher.Start(); err != nil {
-					return nil, err
-				}
-			}
-		}
-		go sm.run()
-		return sm, nil
+func GetStateManager(p *models.Printer) (<-chan *models.PrinterStatus, func(), error) {
+	sub := &subscriber{
+		id:     uuid.New().String(),
+		status: make(chan *models.PrinterStatus, 10),
 	}
+	sm, ok := stateManagers.Get(p.UUID)
+	if !ok {
+		var publisher Publisher
+		if p.Type == "klipper" {
+			publisher = klipper.GetStatePublisher(p)
+
+		}
+		if err := publisher.Start(); err != nil {
+			return nil, nil, err
+		}
+
+		sm = &stateManager{
+			printer:     p,
+			publisher:   publisher,
+			sub:         make(chan *subscriber),
+			unSub:       make(chan string),
+			done:        make(chan struct{}),
+			subscribers: maputil.NewConcurrentMap[string, *subscriber](10),
+		}
+
+		stateManagers.Set(p.UUID, sm)
+
+		go sm.managerRoutine()
+	}
+	sm.sub <- sub
+
+	return sub.status, func() {
+		sm.unSub <- sub.id
+	}, nil
 }
