@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/eduardooliveira/stLib/core/models"
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -28,7 +30,8 @@ func PersistProject(project *models.Project) error {
 }
 
 func PercistPrinters() error {
-	f, err := os.OpenFile("data/printers.toml", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	dataPath := runtime.Cfg.DataPath
+	f, err := os.OpenFile(path.Join(dataPath, "printers.toml"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println(err)
 	}
@@ -42,22 +45,25 @@ func PercistPrinters() error {
 }
 
 func LoadPrinters() error {
+	var err error
 
-	err := utils.CreateFolder("data")
-
-	if err != nil {
-		return err
-	}
-
-	_, err = os.Stat("data/printers.toml")
-
-	if err != nil {
-		if _, err = os.Create("data/printers.toml"); err != nil {
+	dataPath := runtime.Cfg.DataPath
+	if _, err = os.Stat(dataPath); os.IsNotExist(err) {
+		err = utils.CreateFolder(dataPath)
+		if err != nil {
 			return err
 		}
 	}
 
-	_, err = toml.DecodeFile("data/printers.toml", &Printers)
+	_, err = os.Stat(path.Join(dataPath, "printers.toml"))
+
+	if err != nil {
+		if _, err = os.Create(path.Join(dataPath, "printers.toml")); err != nil {
+			return err
+		}
+	}
+
+	_, err = toml.DecodeFile(path.Join(dataPath, "printers.toml"), &Printers)
 	if err != nil {
 		log.Println("error loading printers")
 	}

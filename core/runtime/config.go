@@ -16,6 +16,7 @@ type Config struct {
 	ModelBackgroundColor string   `toml:"model_background_color"`
 	ThingiverseToken     string   `toml:"thingiverse_token"`
 	LogPath              string   `toml:"log_path"`
+	DataPath             string   `toml:"data_path"`
 }
 
 var Cfg *Config
@@ -31,6 +32,7 @@ func init() {
 	viper.SetDefault("model_background_color", "#000000")
 	viper.SetDefault("thingiverse_token", "")
 	viper.SetDefault("log_path", "./log")
+	viper.SetDefault("data_path", "./data")
 
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
@@ -54,5 +56,6 @@ func init() {
 		ModelBackgroundColor: viper.GetString("model_background_color"),
 		ThingiverseToken:     viper.GetString("thingiverse_token"),
 		LogPath:              viper.GetString("log_path"),
+		DataPath:             viper.GetString("data_path"),
 	}
 }
