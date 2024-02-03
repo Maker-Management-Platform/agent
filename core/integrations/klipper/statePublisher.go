@@ -2,29 +2,31 @@ package klipper
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/gorilla/websocket"
 )
 
 type statePublisher struct {
-	printer    *KlipperPrinter
-	out        chan *models.PrinterStatus
-	onNewSub   chan struct{}
-	onShutdown chan struct{}
-	conn       *websocket.Conn
+	printer  *KlipperPrinter
+	out      chan *models.PrinterStatus
+	onNewSub chan struct{}
+	done     chan struct{}
+	conn     *websocket.Conn
 }
 
 func GetStatePublisher(printer *models.Printer) *statePublisher {
 	kp := &KlipperPrinter{printer}
 	return &statePublisher{
-		printer:    kp,
-		out:        make(chan *models.PrinterStatus),
-		onNewSub:   make(chan struct{}),
-		onShutdown: make(chan struct{}),
+		printer:  kp,
+		out:      make(chan *models.PrinterStatus),
+		onNewSub: make(chan struct{}),
+		done:     make(chan struct{}),
 	}
 }
 
@@ -48,35 +50,75 @@ func (p *statePublisher) Start() error {
 
 	return nil
 }
+func (p *statePublisher) Read() chan *events.Message {
+	rtn := make(chan *events.Message, 10)
+	go func() {
+		for {
+			select {
+			case <-p.done:
+				return
+			case <-p.onNewSub:
+				p.conn.WriteMessage(websocket.TextMessage, []byte("{\"jsonrpc\": \"2.0\",\"method\": \"printer.objects.query\",\"params\": {\"objects\": {\"extruder\": null,\"heater_bed\": null, \"display_status\": null}},\"id\": 2}"))
+			default:
+				_, message, err := p.conn.ReadMessage()
+				if err != nil {
+					log.Println("read:", err)
+					//TODO: implement reconnect
+					close(rtn)
+					return
+				}
 
-func (p *statePublisher) Produce() ([]*models.PrinterStatus, error) {
-	select {
-	case <-p.onNewSub:
-		p.conn.WriteMessage(websocket.TextMessage, []byte("{\"jsonrpc\": \"2.0\",\"method\": \"printer.objects.query\",\"params\": {\"objects\": {\"extruder\": null,\"heater_bed\": null, \"display_status\": null}},\"id\": 2}"))
-	default:
-		_, message, err := p.conn.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			//TODO: implement reconnect
-			return nil, err
+				kpStatusString := string(message)
+
+				if strings.Contains(kpStatusString, "notify_proc_stat_update") {
+					continue
+				}
+
+				//log.Println(p.printer.Name, "status update:", kpStatusString)
+
+				if strings.Contains(kpStatusString, "notify_status_update") {
+					for _, e := range p.parseNotifyStatusUpdate(message) {
+						select {
+						case rtn <- &events.Message{
+							Event: fmt.Sprintf("%s.%s", p.printer.UUID, e.Name),
+							Data:  e,
+						}:
+						default:
+							log.Println("status update channel full")
+						}
+
+					}
+				}
+				if strings.Contains(kpStatusString, "result") {
+					for _, e := range p.parseResult(message) {
+						select {
+						case rtn <- &events.Message{
+							Event: fmt.Sprintf("%s.%s", p.printer.UUID, e.Name),
+							Data:  e,
+						}:
+						default:
+							log.Println("status update channel full")
+						}
+
+					}
+				}
+			}
 		}
+	}()
 
-		kpStatusString := string(message)
+	return rtn
+}
 
-		if strings.Contains(kpStatusString, "notify_proc_stat_update") {
-			return nil, nil
-		}
+func (p *statePublisher) OnNewSub() error {
+	p.onNewSub <- struct{}{}
+	return nil
+}
 
-		//log.Println(p.printer.Name, "status update:", kpStatusString)
-
-		if strings.Contains(kpStatusString, "notify_status_update") {
-			return p.parseNotifyStatusUpdate(message), nil
-		}
-		if strings.Contains(kpStatusString, "result") {
-			return p.parseResult(message), nil
-		}
-	}
-	return nil, nil
+func (p *statePublisher) Stop() error {
+	log.Println("state publisher Stop")
+	p.done <- struct{}{}
+	p.conn.Close()
+	return nil
 }
 
 func (p *statePublisher) parseNotifyStatusUpdate(message []byte) []*models.PrinterStatus {
@@ -117,13 +159,4 @@ func (p *statePublisher) parseResult(message []byte) []*models.PrinterStatus {
 		})
 	}
 	return status
-}
-
-func (p *statePublisher) OnNewSub() {
-	p.onNewSub <- struct{}{}
-}
-
-func (p *statePublisher) Close() {
-	log.Println("state publisher Stop")
-	p.conn.Close()
 }

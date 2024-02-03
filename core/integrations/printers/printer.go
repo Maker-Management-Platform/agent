@@ -21,6 +21,8 @@ func Register(e *echo.Group) {
 	group.POST("/:uuid", edit)
 	group.POST("/:uuid/delete", deleteHandler)
 	group.GET("/:uuid/send/:id", sendHandler)
+	group.GET("/:uuid/subscribe/:session", subscribe)
+	group.GET("/:uuid/unsubscribe/:session", unSubscribe)
 	group.POST("/test", testConnection)
 
 	go checkConnection()

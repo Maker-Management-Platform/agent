@@ -2,16 +2,15 @@ package printers
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -212,48 +211,88 @@ func testConnection(c echo.Context) error {
 func statusHandler(c echo.Context) error {
 
 	uuid := c.Param("uuid")
+	_, ok := state.Printers[uuid]
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
+	}
+	/*
+		stateChan, unSub, err := GetStateManager(printer)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+		c.Response().WriteHeader(http.StatusOK)
+
+		enc := json.NewEncoder(c.Response())
+		var count int
+		for {
+			select {
+			case <-c.Request().Context().Done():
+				unSub()
+				return nil
+			case s, ok := <-stateChan:
+				if !ok {
+					log.Println("State chan closed, closing client")
+					return nil
+				}
+				c.Response().Write([]byte("id: "))
+				c.Response().Write([]byte(strconv.Itoa(count)))
+				c.Response().Write([]byte("\nevent: "))
+				c.Response().Write([]byte(s.Name))
+				c.Response().Write([]byte("\ndata: "))
+				if err := enc.Encode(s.State); err != nil {
+					return err
+				}
+				c.Response().Write([]byte("\n\n"))
+				c.Response().Flush()
+				if count == math.MaxInt {
+					count = 0
+				} else {
+					count++
+				}
+
+			}
+		}*/
+	return nil
+}
+
+func subscribe(c echo.Context) error {
+
+	session := c.Param("session")
+	if session == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("no session provided").Error())
+	}
+
+	uuid := c.Param("uuid")
 	printer, ok := state.Printers[uuid]
 
 	if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
 	}
+	if printer.Type == "klipper" {
+		events.Subscribe(session, fmt.Sprintf("printer.%s", printer.UUID), klipper.GetStatePublisher(printer))
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("printer type not supported").Error())
+	}
+	return c.NoContent(http.StatusOK)
+}
 
-	stateChan, unSub, err := GetStateManager(printer)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+func unSubscribe(c echo.Context) error {
+
+	session := c.Param("session")
+	if session == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("no session provided").Error())
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-	c.Response().WriteHeader(http.StatusOK)
+	uuid := c.Param("uuid")
+	printer, ok := state.Printers[uuid]
 
-	enc := json.NewEncoder(c.Response())
-	var count int
-	for {
-		select {
-		case <-c.Request().Context().Done():
-			unSub()
-			return nil
-		case s, ok := <-stateChan:
-			if !ok {
-				log.Println("State chan closed, closing client")
-				return nil
-			}
-			c.Response().Write([]byte("id: "))
-			c.Response().Write([]byte(strconv.Itoa(count)))
-			c.Response().Write([]byte("\nevent: "))
-			c.Response().Write([]byte(s.Name))
-			c.Response().Write([]byte("\ndata: "))
-			if err := enc.Encode(s.State); err != nil {
-				return err
-			}
-			c.Response().Write([]byte("\n\n"))
-			c.Response().Flush()
-			if count == math.MaxInt {
-				count = 0
-			} else {
-				count++
-			}
-
-		}
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
 	}
+	events.UnSubscribe(session, fmt.Sprintf("printer.%s", printer.UUID))
+
+	return c.NoContent(http.StatusOK)
 }

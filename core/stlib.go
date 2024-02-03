@@ -10,6 +10,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
+	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
 	"github.com/eduardooliveira/stLib/core/projects"
@@ -61,7 +62,7 @@ func Run() {
 	slicer.Register(e.Group(""))
 
 	api := e.Group("/api")
-
+	events.Register(api.Group("/events"))
 	projects.Register(api.Group("/projects"))
 	tags.Register(api.Group("/tags"))
 	assets.Register(api.Group("/assets"))
