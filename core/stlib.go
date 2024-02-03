@@ -27,15 +27,17 @@ func Run() {
 
 	if logPath := runtime.Cfg.LogPath; logPath != "" {
 		if _, err := os.Stat(logPath); os.IsNotExist(err) {
-			log.Fatalf("log_path %s does not exist", logPath)
+			log.Printf("log_path %s does not exist, skipping file logging\n", logPath)
+		} else {
+			f, err := os.OpenFile(path.Join(logPath, "stlib.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+			if err != nil {
+				log.Fatalf("error opening file: %v", err)
+			}
+			defer f.Close()
+			wrt := io.MultiWriter(os.Stdout, f)
+			log.SetOutput(wrt)
 		}
-		f, err := os.OpenFile(path.Join(logPath, "stlib.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		defer f.Close()
-		wrt := io.MultiWriter(os.Stdout, f)
-		log.SetOutput(wrt)
+
 	}
 
 	err := database.InitDatabase()
