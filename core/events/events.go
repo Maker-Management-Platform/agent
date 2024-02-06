@@ -2,15 +2,13 @@ package events
 
 import (
 	"encoding/json"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
 
 type Message struct {
-	Id    int
-	Event string
-	Data  any
+	Event string `json:"event"`
+	Data  any    `json:"data"`
 }
 
 type sseSender struct {
@@ -27,12 +25,8 @@ func NewSSESender(response *echo.Response) *sseSender {
 
 func (sender *sseSender) send(message *Message) error {
 
-	sender.response.Write([]byte("id: "))
-	sender.response.Write([]byte(strconv.Itoa(message.Id)))
-	sender.response.Write([]byte("\nevent: "))
-	sender.response.Write([]byte(message.Event))
-	sender.response.Write([]byte("\ndata: "))
-	if err := sender.enc.Encode(message.Data); err != nil {
+	sender.response.Write([]byte("data: "))
+	if err := sender.enc.Encode(message); err != nil {
 		return err
 	}
 	sender.response.Write([]byte("\n\n"))

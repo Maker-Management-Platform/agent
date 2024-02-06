@@ -1,6 +1,7 @@
 package events
 
 import (
+	"errors"
 	"log"
 	"sync"
 )
@@ -12,12 +13,10 @@ type session struct {
 }
 
 type stateType struct {
-	sessions          map[string]*session
-	sessionsLock      sync.Mutex
-	subscriptions     map[string][]*session
-	subscriptionsLock sync.Mutex
-	publishers        map[string]Publisher
-	publishersLock    sync.Mutex
+	sessions      map[string]*session
+	subscriptions map[string]map[string]*session
+	publishers    map[string]Publisher
+	globalLock    sync.Mutex
 }
 
 type Publisher interface {
@@ -31,107 +30,86 @@ var state *stateType
 
 func init() {
 	state = &stateType{
-		sessions:          make(map[string]*session),
-		sessionsLock:      sync.Mutex{},
-		subscriptions:     make(map[string][]*session),
-		subscriptionsLock: sync.Mutex{},
-		publishers:        make(map[string]Publisher),
-		publishersLock:    sync.Mutex{},
+		sessions:      make(map[string]*session),
+		subscriptions: make(map[string]map[string]*session),
+		publishers:    make(map[string]Publisher),
+		globalLock:    sync.Mutex{},
 	}
 }
 
 func RegisterSession(id string) (chan *Message, func()) {
-	state.sessionsLock.Lock()
-	defer state.sessionsLock.Unlock()
+	state.globalLock.Lock()
+	defer state.globalLock.Unlock()
 	state.sessions[id] = &session{
 		ID:            id,
 		Out:           make(chan *Message, 100),
 		subscriptions: make(map[string]struct{}, 0),
 	}
-
 	return state.sessions[id].Out, func() {
-		state.sessionsLock.Lock()
-		state.subscriptionsLock.Lock()
+		state.globalLock.Lock()
+		defer state.globalLock.Unlock()
+
 		for topic := range state.sessions[id].subscriptions {
-			for i, sub := range state.subscriptions[topic] {
-				if sub.ID == id {
-					state.subscriptions[topic] = append(state.subscriptions[topic][:i], state.subscriptions[topic][i+1:]...)
-				}
-				if len(state.subscriptions[topic]) == 0 {
-					delete(state.subscriptions, topic)
-					state.publishers[topic].Stop()
-					state.publishersLock.Lock()
-					delete(state.publishers, topic)
-					state.publishersLock.Unlock()
-				}
+			delete(state.subscriptions[topic], id)
+			if len(state.subscriptions[topic]) == 0 {
+				delete(state.subscriptions, topic)
+
+				delete(state.publishers, topic)
 			}
 		}
-		state.subscriptionsLock.Unlock()
 		delete(state.sessions, id)
-		state.sessionsLock.Unlock()
 	}
 }
 
-func Subscribe(sessionId string, topic string, publisher Publisher) {
+func Subscribe(sessionId string, topic string, publisher Publisher) error {
+	state.globalLock.Lock()
+	defer state.globalLock.Unlock()
 
-	state.sessionsLock.Lock()
 	sess, ok := state.sessions[sessionId]
-	state.sessionsLock.Unlock()
 	if !ok {
 		log.Println("session not found :", sessionId)
-		return
+		return errors.New("session not found")
 	}
 
-	state.publishersLock.Lock()
 	_, ok = state.publishers[topic]
-	state.publishersLock.Unlock()
 	if !ok {
-		state.publishersLock.Lock()
-		state.publishers[topic] = publisher
-		state.publishersLock.Unlock()
-
 		err := publisher.Start()
 		if err != nil {
 			log.Println("failed to start topic :", topic)
-			return
+			return err
 		}
+		state.publishers[topic] = publisher
 	}
-	state.subscriptionsLock.Lock()
-	defer state.subscriptionsLock.Unlock()
+
 	if _, ok := state.subscriptions[topic]; !ok {
-		state.subscriptions[topic] = make([]*session, 0)
-		state.subscriptions[topic] = append(state.subscriptions[topic], sess)
+		state.subscriptions[topic] = make(map[string]*session, 0)
+		state.subscriptions[topic][sess.ID] = sess
 		go runSubscription(topic)
 	} else {
-		state.subscriptions[topic] = append(state.subscriptions[topic], sess)
+		state.subscriptions[topic][sess.ID] = sess
 	}
-	state.sessionsLock.Lock()
-	state.sessions[sessionId].subscriptions[topic] = struct{}{}
-	state.sessionsLock.Unlock()
-	state.publishers[topic].OnNewSub()
 
+	state.sessions[sessionId].subscriptions[topic] = struct{}{}
+
+	state.publishers[topic].OnNewSub()
+	return nil
 }
 
 func UnSubscribe(sessionId string, topic string) {
-	state.subscriptionsLock.Lock()
-	sessions, ok := state.subscriptions[topic]
+	state.globalLock.Lock()
+	defer state.globalLock.Unlock()
+
+	_, ok := state.subscriptions[topic]
 	if !ok {
-		state.subscriptionsLock.Unlock()
+
 		return
 	}
-	for i, sess := range sessions {
-		if sess.ID == sessionId {
-			sessions = append(sessions[:i], sessions[i+1:]...)
-			state.sessionsLock.Lock()
-			delete(state.sessions[sessionId].subscriptions, topic)
-			state.sessionsLock.Unlock()
-			break
-		}
-	}
-	state.subscriptions[topic] = sessions
-	if len(sessions) == 0 {
+	delete(state.subscriptions[topic], sessionId)
+
+	delete(state.sessions[sessionId].subscriptions, topic)
+
+	if len(state.subscriptions[topic]) == 0 {
 		delete(state.subscriptions, topic)
-		state.publishersLock.Lock()
 		pub, ok := state.publishers[topic]
 		if ok {
 			if err := pub.Stop(); err != nil {
@@ -139,9 +117,7 @@ func UnSubscribe(sessionId string, topic string) {
 			}
 			delete(state.publishers, topic)
 		}
-		state.publishersLock.Unlock()
 	}
-	state.subscriptionsLock.Unlock()
 }
 
 func runSubscription(topic string) {
@@ -152,13 +128,13 @@ func runSubscription(topic string) {
 	}
 	for msg := range publisher.Read() {
 		subCount := 0
-		state.sessionsLock.Lock()
+
 		for _, sess := range state.subscriptions[topic] {
 			subCount++
 			sess.Out <- msg
 
 		}
-		state.sessionsLock.Unlock()
+
 		if subCount == 0 {
 			log.Println("no subscribers found for topic :", topic)
 			log.Println("publisher stopped :", topic)
@@ -169,18 +145,13 @@ func runSubscription(topic string) {
 			return
 		}
 	}
-	state.publishersLock.Lock()
+	state.globalLock.Lock()
+	defer state.globalLock.Unlock()
 	delete(state.publishers, topic)
-	state.publishersLock.Unlock()
 
-	state.subscriptionsLock.Lock()
-
-	state.sessionsLock.Lock()
 	for _, sess := range state.subscriptions[topic] {
 		delete(sess.subscriptions, topic)
 	}
-	state.sessionsLock.Unlock()
 
 	delete(state.subscriptions, topic)
-	state.subscriptionsLock.Unlock()
 }

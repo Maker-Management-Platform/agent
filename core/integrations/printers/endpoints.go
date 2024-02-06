@@ -272,7 +272,11 @@ func subscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, errors.New("printer not found").Error())
 	}
 	if printer.Type == "klipper" {
-		events.Subscribe(session, fmt.Sprintf("printer.%s", printer.UUID), klipper.GetStatePublisher(printer))
+		err := events.Subscribe(session, fmt.Sprintf("printer.%s", printer.UUID), klipper.GetStatePublisher(printer))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
 	} else {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("printer type not supported").Error())
 	}

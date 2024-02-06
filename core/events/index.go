@@ -3,6 +3,7 @@ package events
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -16,18 +17,19 @@ func index(c echo.Context) error {
 	//uuid := "batata"
 	sender := NewSSESender(c.Response())
 
-	var count int
-	err := sender.send(&Message{
-		Id:    count,
-		Event: "connect",
-		Data: map[string]string{
-			"uuid": uuid,
-		},
-	})
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+	go func() {
+
+		time.Sleep(500 * time.Millisecond)
+		err := sender.send(&Message{
+			Event: "connect",
+			Data: map[string]string{
+				"uuid": uuid,
+			},
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	eventChan, unregister := RegisterSession(uuid)
 
