@@ -58,7 +58,7 @@ func (p *statePublisher) Read() chan *events.Message {
 			case <-p.done:
 				return
 			case <-p.onNewSub:
-				p.conn.WriteMessage(websocket.TextMessage, []byte("{\"jsonrpc\": \"2.0\",\"method\": \"printer.objects.query\",\"params\": {\"objects\": {\"extruder\": null,\"heater_bed\": null, \"display_status\": null}},\"id\": 2}"))
+				p.conn.WriteMessage(websocket.TextMessage, []byte("{\"jsonrpc\": \"2.0\",\"method\": \"printer.objects.query\",\"params\": {\"objects\": {\"extruder\": null,\"heater_bed\": null, \"print_stats\":null, \"display_status\": null}},\"id\": 2}"))
 			default:
 				_, message, err := p.conn.ReadMessage()
 				if err != nil {
