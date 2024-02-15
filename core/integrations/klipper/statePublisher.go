@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/events"
+	printerModels "github.com/eduardooliveira/stLib/core/integrations/models"
 	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/gorilla/websocket"
 )
@@ -52,6 +54,7 @@ func (p *statePublisher) Start() error {
 }
 func (p *statePublisher) Read() chan *events.Message {
 	rtn := make(chan *events.Message, 10)
+	eventName := fmt.Sprintf("printer.update.%s", p.printer.UUID)
 	go func() {
 		for {
 			select {
@@ -77,29 +80,25 @@ func (p *statePublisher) Read() chan *events.Message {
 				//log.Println(p.printer.Name, "status update:", kpStatusString)
 
 				if strings.Contains(kpStatusString, "notify_status_update") {
-					for _, e := range p.parseNotifyStatusUpdate(message) {
-						select {
-						case rtn <- &events.Message{
-							Event: fmt.Sprintf("%s.%s", p.printer.UUID, e.Name),
-							Data:  e,
-						}:
-						default:
-							log.Println("status update channel full")
-						}
-
+					//log.Println(p.printer.Name, "status update:", kpStatusString)
+					select {
+					case rtn <- &events.Message{
+						Event: eventName,
+						Data:  p.parseNotifyStatusUpdate(message),
+					}:
+					default:
+						log.Println("status update channel full")
 					}
 				}
 				if strings.Contains(kpStatusString, "result") {
-					for _, e := range p.parseResult(message) {
-						select {
-						case rtn <- &events.Message{
-							Event: fmt.Sprintf("%s.%s", p.printer.UUID, e.Name),
-							Data:  e,
-						}:
-						default:
-							log.Println("status update channel full")
-						}
-
+					log.Println(p.printer.Name, "status update:", kpStatusString)
+					select {
+					case rtn <- &events.Message{
+						Event: eventName,
+						Data:  p.parseResult(message),
+					}:
+					default:
+						log.Println("status update channel full")
 					}
 				}
 			}
@@ -121,6 +120,70 @@ func (p *statePublisher) Stop() error {
 	return nil
 }
 
+func addToStatus(name string, state map[string]any, status map[string]*models.PrinterStatus) {
+
+	switch name {
+	case "heater_bed":
+		status["bed"] = &models.PrinterStatus{
+			Name:  "bed",
+			State: &printerModels.TemperatureStatus{},
+		}
+		handleThermalValue("bed", state, status)
+	case "extruder":
+		status["extruder"] = &models.PrinterStatus{
+			Name:  "extruder",
+			State: &printerModels.TemperatureStatus{},
+		}
+		handleThermalValue("extruder", state, status)
+	case "print_stats":
+		var ok bool
+		_, ok = status["job_status"]
+		if !ok {
+			status["job_status"] = &models.PrinterStatus{
+				Name:  "job_status",
+				State: &printerModels.JobStatus{},
+			}
+		}
+		current := status["job_status"].State.(*printerModels.JobStatus)
+		if v, ok := state["total_duration"].(float64); ok {
+			current.TotalDuration = v
+		}
+		if v, ok := state["filename"].(string); ok {
+			current.FileName = v
+		}
+	case "display_status":
+		var ok bool
+		_, ok = status["job_status"]
+		if !ok {
+			status["job_status"] = &models.PrinterStatus{
+				Name:  "job_status",
+				State: &printerModels.JobStatus{},
+			}
+		}
+		current := status["job_status"].State.(*printerModels.JobStatus)
+		if v, ok := state["message"].(string); ok {
+			current.Message = v
+		}
+		if v, ok := state["progress"].(float64); ok {
+			current.Progress = v
+		}
+
+	}
+
+}
+
+func handleThermalValue(key string, values map[string]any, status map[string]*models.PrinterStatus) {
+	if v, ok := values["temperature"].(float64); ok {
+		status[key].State.(*printerModels.TemperatureStatus).Temperature = v
+	}
+	if v, ok := values["target"].(float64); ok {
+		status[key].State.(*printerModels.TemperatureStatus).Target = v
+	}
+	if v, ok := values["power"].(float64); ok {
+		status[key].State.(*printerModels.TemperatureStatus).Power = v
+	}
+}
+
 func (p *statePublisher) parseNotifyStatusUpdate(message []byte) []*models.PrinterStatus {
 	var kpStatusUpdate *statusUpdate
 	err := json.Unmarshal(message, &kpStatusUpdate)
@@ -129,18 +192,15 @@ func (p *statePublisher) parseNotifyStatusUpdate(message []byte) []*models.Print
 		return nil
 	}
 
-	status := make([]*models.PrinterStatus, 0)
+	status := make(map[string]*models.PrinterStatus, 0)
 	for _, p := range kpStatusUpdate.Params {
 		if param, ok := p.(map[string]any); ok {
 			for k, v := range param {
-				status = append(status, &models.PrinterStatus{
-					Name:  k,
-					State: v,
-				})
+				addToStatus(k, v.(map[string]any), status)
 			}
 		}
 	}
-	return status
+	return maputil.Values(status)
 }
 
 func (p *statePublisher) parseResult(message []byte) []*models.PrinterStatus {
@@ -151,12 +211,9 @@ func (p *statePublisher) parseResult(message []byte) []*models.PrinterStatus {
 		return nil
 	}
 
-	status := make([]*models.PrinterStatus, 0)
+	status := make(map[string]*models.PrinterStatus, 0)
 	for k, v := range pkResult.Result.Status {
-		status = append(status, &models.PrinterStatus{
-			Name:  k,
-			State: v,
-		})
+		addToStatus(k, v, status)
 	}
-	return status
+	return maputil.Values(status)
 }

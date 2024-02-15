@@ -1,6 +1,8 @@
 package klipper
 
-import "github.com/eduardooliveira/stLib/core/models"
+import (
+	"github.com/eduardooliveira/stLib/core/models"
+)
 
 type KlipperPrinter struct {
 	*models.Printer
@@ -31,8 +33,23 @@ type statusUpdate struct {
 type result struct {
 	Jsonrpc string `json:"jsonrpc"`
 	Result  struct {
-		Status    map[string]any `json:"status"`
-		EventTime float64        `json:"eventtime"`
+		Status    map[string]map[string]any `json:"status"`
+		EventTime float64                   `json:"eventtime"`
 	} `json:"result"`
 	ID int `json:"id"`
+}
+
+type thermalStatus struct {
+	Temperature float64 `json:"temperature"`
+	Target      float64 `json:"target"`
+}
+
+type printStatsStatus struct {
+	TotalDuration float64 `json:"total_duration"`
+	FilamentUsed  float64 `json:"filament_used"`
+}
+
+type displayStatus struct {
+	Message  string  `json:"message"`
+	Progress float64 `json:"progress"`
 }
