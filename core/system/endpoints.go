@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/exp/maps"
@@ -47,4 +48,9 @@ func paths(c echo.Context) error {
 
 func settings(c echo.Context) error {
 	return c.JSON(http.StatusOK, runtime.Cfg)
+}
+
+func runDiscovery(c echo.Context) error {
+	go discovery.Run(runtime.Cfg.LibraryPath)
+	return c.NoContent(http.StatusOK)
 }

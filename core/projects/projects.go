@@ -14,6 +14,7 @@ func Register(e *echo.Group) {
 	group.GET("/:uuid", show)
 	group.GET("/:uuid/assets", showAssets)
 	group.GET("/:uuid/assets/:id", getAsset)
+	group.GET("/:uuid/discover", discoverHandler)
 	group.POST("/:uuid", save)
 	group.POST("/:uuid/move", moveHandler)
 	group.POST("/:uuid/image", setMainImageHandler)
