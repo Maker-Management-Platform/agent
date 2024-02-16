@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/exp/maps"
@@ -58,4 +59,10 @@ func saveSettings(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, cfg)
+
+}
+
+func runDiscovery(c echo.Context) error {
+	go discovery.Run(runtime.Cfg.Library.Path)
+	return c.NoContent(http.StatusOK)
 }

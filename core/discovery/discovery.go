@@ -45,9 +45,10 @@ func walker(path string, d fs.DirEntry, err error) error {
 	if init {
 		project.Initialized = true
 
-		database.InsertProject(project)
-		err := state.PersistProject(project)
-		if err != nil {
+		if err := database.InsertProject(project); err != nil {
+			log.Println(err)
+		}
+		if err := state.PersistProject(project); err != nil {
 			log.Println(err)
 		}
 	}
@@ -71,7 +72,7 @@ func DiscoverProject(project *models.Project) (foundAssets bool, a []*models.Pro
 		}
 		if e.Name() == ".project.stlib" {
 			log.Println("found project", project.FullPath())
-			err = loadProject(project)
+			err := loadProject(project)
 			if err != nil {
 				log.Printf("error loading the project %q: %v\n", project.Path, err)
 				return false, nil, err
@@ -164,11 +165,18 @@ func pathToTags(path string) []*models.Tag {
 }
 
 func loadProject(project *models.Project) error {
-	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.FullPath())), &project)
+	p := models.NewProject()
+	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", project.FullPath())), &p)
 	if err != nil {
 		log.Printf("error decoding the project %q: %v\n", project.FullPath(), err)
 		return err
 	}
+	project.UUID = p.UUID
+	project.Description = p.Description
+	project.Tags = p.Tags
+	project.Assets = p.Assets
+	project.DefaultImageID = p.DefaultImageID
+	project.Initialized = true
 
 	return nil
 }

@@ -1,13 +1,14 @@
 package slicer
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
 )
@@ -72,7 +73,7 @@ func upload(c echo.Context) error {
 	defer src.Close()
 
 	// Destination
-	dst, err := os.Create(fmt.Sprintf("%s/%s", "temp", name))
+	dst, err := os.Create(path.Join(runtime.GetDataPath(), "temp", name))
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
