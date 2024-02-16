@@ -10,5 +10,6 @@ func Register(e *echo.Group) {
 	group = e
 	group.GET("/paths", paths)
 	group.GET("/settings", settings)
+	group.POST("/settings", saveSettings)
 	group.GET("/discovery", runDiscovery)
 }

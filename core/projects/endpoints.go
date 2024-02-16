@@ -224,7 +224,7 @@ func new(c echo.Context) error {
 	project.Description = createProject.Description
 	project.Tags = createProject.Tags
 
-	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
+	path := fmt.Sprintf("%s%s", runtime.Cfg.Library.Path, project.FullPath()) //TODO: Replace with utils.ToLibPath
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

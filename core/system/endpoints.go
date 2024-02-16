@@ -19,7 +19,7 @@ type void struct{}
 func paths(c echo.Context) error {
 
 	rtn := make(map[string]void, 0)
-	filepath.WalkDir(runtime.Cfg.LibraryPath, func(path string, d fs.DirEntry, err error) error {
+	filepath.WalkDir(runtime.Cfg.Library.Path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ func paths(c echo.Context) error {
 				return nil
 			}
 		}
-		path = strings.TrimLeft(path, runtime.Cfg.LibraryPath)
+		path = strings.TrimLeft(path, runtime.Cfg.Library.Path)
 		rtn[path] = void{}
 
 		return nil
@@ -50,7 +50,19 @@ func settings(c echo.Context) error {
 	return c.JSON(http.StatusOK, runtime.Cfg)
 }
 
+func saveSettings(c echo.Context) error {
+	cfg := &runtime.Config{}
+	if err := c.Bind(cfg); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err := runtime.SaveConfig(cfg); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, cfg)
+
+}
+
 func runDiscovery(c echo.Context) error {
-	go discovery.Run(runtime.Cfg.LibraryPath)
+	go discovery.Run(runtime.Cfg.Library.Path)
 	return c.NoContent(http.StatusOK)
 }

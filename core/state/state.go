@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/eduardooliveira/stLib/core/models"
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
 var TempFiles = make(map[string]*models.TempFile)
 var Printers = make(map[string]*models.Printer)
+var printersFile string
 
 func PersistProject(project *models.Project) error {
 	f, err := os.OpenFile(fmt.Sprintf("%s/.project.stlib", utils.ToLibPath(project.FullPath())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
@@ -28,7 +31,7 @@ func PersistProject(project *models.Project) error {
 }
 
 func PercistPrinters() error {
-	f, err := os.OpenFile("data/printers.toml", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println(err)
 	}
@@ -42,22 +45,17 @@ func PercistPrinters() error {
 }
 
 func LoadPrinters() error {
+	printersFile = path.Join(runtime.GetDataPath(), "printers.toml")
 
-	err := utils.CreateFolder("data")
-
-	if err != nil {
-		return err
-	}
-
-	_, err = os.Stat("data/printers.toml")
+	_, err := os.Stat(printersFile)
 
 	if err != nil {
-		if _, err = os.Create("data/printers.toml"); err != nil {
+		if _, err = os.Create(printersFile); err != nil {
 			return err
 		}
 	}
 
-	_, err = toml.DecodeFile("data/printers.toml", &Printers)
+	_, err = toml.DecodeFile(printersFile, &Printers)
 	if err != nil {
 		log.Println("error loading printers")
 	}
