@@ -51,10 +51,6 @@ func init() {
 		if err != nil {
 			log.Panic(err)
 		}
-		err = os.MkdirAll(path.Join(dataPath, "temp"), os.ModePerm)
-		if err != nil {
-			log.Panic(err)
-		}
 	}
 
 	bindEnv()
