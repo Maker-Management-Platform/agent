@@ -5,9 +5,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/eduardooliveira/stLib/core/assets"
 	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
@@ -23,9 +25,8 @@ import (
 )
 
 func Run() {
-
-	if logPath := runtime.Cfg.LogPath; logPath != "" {
-		f, err := os.OpenFile("stlib.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if runtime.Cfg.Core.Log.EnableFile && runtime.Cfg.Core.Log.Path != "" {
+		f, err := os.OpenFile(filepath.Join(runtime.Cfg.Core.Log.Path, "log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("error opening file: %v", err)
 		}
@@ -38,8 +39,9 @@ func Run() {
 	if err != nil {
 		log.Fatal("error initing database", err)
 	}
-	//go discovery.Run(runtime.Cfg.LibraryPath)
-	//go discovery.RunTempDiscovery()
+
+	go discovery.Run(runtime.Cfg.Library.Path)
+	go discovery.RunTempDiscovery()
 	err = state.LoadPrinters()
 	if err != nil {
 		log.Fatal("error loading printers", err)
@@ -69,5 +71,5 @@ func Run() {
 	printers.Register(api.Group("/printers"))
 	downloader.Register(api.Group("/downloader"))
 	system.Register(api.Group("/system"))
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", runtime.Cfg.Port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", runtime.Cfg.Server.Port)))
 }

@@ -29,10 +29,10 @@ func GetFileSha1(path string) (string, error) {
 }
 
 func ToLibPath(path string) string {
-	if strings.HasPrefix(path, runtime.Cfg.LibraryPath) {
+	if strings.HasPrefix(path, runtime.Cfg.Library.Path) {
 		return path
 	}
-	return fmt.Sprintf("%s/%s", runtime.Cfg.LibraryPath, path)
+	return fmt.Sprintf("%s/%s", runtime.Cfg.Library.Path, path)
 }
 
 func Move(src, dst string, toLibPath bool) error {

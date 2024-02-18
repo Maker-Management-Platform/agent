@@ -1,11 +1,11 @@
 package slicer
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -38,7 +38,7 @@ func info(c echo.Context) error {
 	}{
 		State:           "ready",
 		StateMessage:    "Printer is ready",
-		Hostname:        runtime.Cfg.ServerHostname,
+		Hostname:        "mmp",
 		SoftwareVersion: "v0.9.xxx",
 		CPUInfo:         "xxx",
 		KlipperPath:     "/root/klipper", // This are mock values, do not run stuff as root....
@@ -73,7 +73,7 @@ func upload(c echo.Context) error {
 	defer src.Close()
 
 	// Destination
-	dst, err := os.Create(fmt.Sprintf("%s/%s", "temp", name))
+	dst, err := os.Create(path.Join(runtime.GetDataPath(), "temp", name))
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)

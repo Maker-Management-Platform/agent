@@ -49,8 +49,8 @@ type cacheJob struct {
 var cacheJobs chan *cacheJob
 
 func init() {
-	log.Println("Starting", runtime.Cfg.MaxRenderWorkers, "render workers")
-	cacheJobs = make(chan *cacheJob, runtime.Cfg.MaxRenderWorkers)
+	log.Println("Starting", runtime.Cfg.Render.MaxWorkers, "render workers")
+	cacheJobs = make(chan *cacheJob, runtime.Cfg.Render.MaxWorkers)
 	go renderWorker(cacheJobs)
 }
 
