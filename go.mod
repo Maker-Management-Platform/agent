@@ -8,6 +8,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/duke-git/lancet/v2 v2.2.8
 	github.com/glebarez/sqlite v1.10.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/morkid/paginate v1.1.7
 	github.com/otiai10/copy v1.14.0

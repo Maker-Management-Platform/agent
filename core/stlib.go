@@ -11,6 +11,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
+	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
 	"github.com/eduardooliveira/stLib/core/projects"
@@ -38,6 +39,7 @@ func Run() {
 	if err != nil {
 		log.Fatal("error initing database", err)
 	}
+
 	go discovery.Run(runtime.Cfg.Library.Path)
 	go discovery.RunTempDiscovery()
 	err = state.LoadPrinters()
@@ -61,7 +63,7 @@ func Run() {
 	slicer.Register(e.Group(""))
 
 	api := e.Group("/api")
-
+	events.Register(api.Group("/events"))
 	projects.Register(api.Group("/projects"))
 	tags.Register(api.Group("/tags"))
 	assets.Register(api.Group("/assets"))

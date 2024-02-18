@@ -1,8 +1,10 @@
 package klipper
 
-import "github.com/eduardooliveira/stLib/core/models"
+import (
+	"github.com/eduardooliveira/stLib/core/models"
+)
 
-type KipplerPrinter struct {
+type KlipperPrinter struct {
 	*models.Printer
 }
 
@@ -21,4 +23,33 @@ type Result struct {
 	MissingKlippyRequirements []interface{} `json:"missing_klippy_requirements"`
 	APIVersion                []int         `json:"api_version"`
 	APIVersionString          string        `json:"api_version_string"`
+}
+
+type statusUpdate struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Method  string `json:"method"`
+	Params  []any  `json:"params"`
+}
+type result struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Result  struct {
+		Status    map[string]map[string]any `json:"status"`
+		EventTime float64                   `json:"eventtime"`
+	} `json:"result"`
+	ID int `json:"id"`
+}
+
+type thermalStatus struct {
+	Temperature float64 `json:"temperature"`
+	Target      float64 `json:"target"`
+}
+
+type printStatsStatus struct {
+	TotalDuration float64 `json:"total_duration"`
+	FilamentUsed  float64 `json:"filament_used"`
+}
+
+type displayStatus struct {
+	Message  string  `json:"message"`
+	Progress float64 `json:"progress"`
 }

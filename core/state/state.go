@@ -30,7 +30,7 @@ func PersistProject(project *models.Project) error {
 	return err
 }
 
-func PercistPrinters() error {
+func PersistPrinters() error {
 	f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println(err)
