@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
-	"github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
 )
 
