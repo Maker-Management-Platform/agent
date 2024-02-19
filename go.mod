@@ -6,6 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/Maker-Management-Platform/fauxgl v0.0.0-20211115080205-6c8aff01c6a9
 	github.com/duke-git/lancet/v2 v2.2.8
 	github.com/glebarez/sqlite v1.10.0
 	github.com/labstack/echo/v4 v4.10.0
@@ -54,7 +55,6 @@ require (
 )
 
 require (
-	github.com/fogleman/fauxgl v0.0.0-20200818143847-27cddc103802
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0
 	github.com/labstack/gommon v0.4.0 // indirect
