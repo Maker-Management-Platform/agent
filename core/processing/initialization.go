@@ -13,10 +13,11 @@ import (
 )
 
 type DiscoverableAsset struct {
-	name    string
-	path    string
-	project *entities.Project
-	parent  *entities.ProjectAsset
+	name       string
+	path       string
+	project    *entities.Project
+	parent     *entities.ProjectAsset
+	skipInsert bool
 }
 
 type initialize struct {
@@ -52,11 +53,12 @@ func (i *initialize) Run() {
 			}
 		}
 	}
-
-	err = database.InsertAsset(asset)
-	if err != nil {
-		log.Println(err)
-		return
+	if !i.da.skipInsert {
+		err = database.InsertAsset(asset)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }
 
@@ -110,9 +112,10 @@ func (r *renderableAsset) Asset() *entities.ProjectAsset {
 
 func (r *renderableAsset) OnComplete(path string, err error) {
 	Enqueue(&DiscoverableAsset{
-		name:    path,
-		path:    path,
-		project: r.project,
-		parent:  r.asset,
+		name:       path,
+		path:       path,
+		project:    r.project,
+		parent:     r.asset,
+		skipInsert: err != nil && err.Error() == "already exists",
 	})
 }

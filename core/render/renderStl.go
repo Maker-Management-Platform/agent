@@ -1,8 +1,10 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path"
 
 	"github.com/Maker-Management-Platform/fauxgl"
@@ -31,6 +33,13 @@ var (
 )
 
 func (s *stlRenderer) render(job RenderJob) (string, error) {
+	renderName := fmt.Sprintf("%s.render.png", job.Asset().Name)
+	renderSavePath := utils.ToLibPath(path.Join(job.Project().FullPath(), renderName))
+
+	if _, err := os.Stat(renderSavePath); err == nil {
+		return renderName, errors.New("already exists")
+	}
+
 	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name)))
 	if err != nil {
 		log.Println(err)
@@ -63,7 +72,5 @@ func (s *stlRenderer) render(job RenderJob) (string, error) {
 	image := context.Image()
 	image = resize.Resize(width, height, image, resize.Bilinear)
 
-	renderName := fmt.Sprintf("%s.render.png", job.Asset().Name)
-	renderSavePath := utils.ToLibPath(path.Join(job.Project().FullPath(), renderName))
 	return renderName, fauxgl.SavePNG(renderSavePath, image)
 }
