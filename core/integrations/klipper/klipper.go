@@ -1,10 +1,8 @@
 package klipper
 
-import (
-	"github.com/eduardooliveira/stLib/core/models"
-)
+import "github.com/eduardooliveira/stLib/core/entities"
 
-func ConnectionStatus(printer *models.Printer) error {
+func ConnectionStatus(printer *entities.Printer) error {
 	kp := &KlipperPrinter{printer}
 
 	r, err := kp.serverInfo()
@@ -21,7 +19,7 @@ func ConnectionStatus(printer *models.Printer) error {
 	return nil
 }
 
-func UploadFile(printer *models.Printer, asset *models.ProjectAsset) error {
+func UploadFile(printer *entities.Printer, asset *entities.ProjectAsset) error {
 	kp := &KlipperPrinter{printer}
 
 	return kp.ServerFilesUpload(asset)

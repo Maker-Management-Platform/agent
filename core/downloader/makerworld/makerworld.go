@@ -19,7 +19,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"golang.org/x/net/html"

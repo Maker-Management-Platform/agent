@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/eduardooliveira/stLib/core/discovery"
+	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
@@ -86,7 +86,7 @@ func upload(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	tempFile, _ := discovery.DiscoverTempFile(name)
+	tempFile, _ := processing.DiscoverTempFile(name)
 
 	state.TempFiles[tempFile.UUID] = tempFile
 

@@ -12,8 +12,7 @@ import (
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	"github.com/eduardooliveira/stLib/core/discovery"
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -255,7 +254,7 @@ func new(c echo.Context) error {
 
 	}
 
-	ok, assets, err := discovery.DiscoverProject(project)
+	/*ok, assets, err := processing.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -285,7 +284,7 @@ func new(c echo.Context) error {
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	}*/
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
@@ -425,7 +424,7 @@ func discoverHandler(c echo.Context) error {
 	if uuid == "" {
 		return c.NoContent(http.StatusBadRequest)
 	}
-	project, err := database.GetProject(uuid)
+	/*project, err := database.GetProject(uuid)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -435,7 +434,7 @@ func discoverHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	ok, _, err := discovery.DiscoverProject(project)
+	ok, _, err := processing.DiscoverProject(project)
 	if err != nil {
 		log.Printf("error discovering the project %q: %v\n", project.FullPath(), err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -445,7 +444,7 @@ func discoverHandler(c echo.Context) error {
 		err = errors.New("failed to find assets")
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	}*/
 
 	return c.NoContent(http.StatusOK)
 }

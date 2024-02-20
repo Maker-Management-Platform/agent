@@ -1,4 +1,4 @@
-package models
+package entities
 
 import (
 	"database/sql/driver"
@@ -28,5 +28,11 @@ func (n ProjectImage) Value() (driver.Value, error) {
 }
 
 func NewProjectImage(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectImage, []*ProjectAsset, error) {
+	asset.AssetType = ProjectImageType
 	return &ProjectImage{}, nil, nil
+}
+
+func NewProjectImage2(asset *ProjectAsset, project *Project) (*ProjectImage, error) {
+	asset.AssetType = ProjectImageType
+	return &ProjectImage{}, nil
 }

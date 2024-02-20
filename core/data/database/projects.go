@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"gorm.io/gorm"
 )
 
@@ -38,4 +38,8 @@ func GetProject(uuid string) (rtn *models.Project, err error) {
 
 func DeleteProject(uuid string) (err error) {
 	return DB.Where(&models.Project{UUID: uuid}).Delete(&models.Project{}).Error
+}
+
+func SetProjectDefaultImage(uuid string, imageId string) (err error) {
+	return DB.Model(&models.Project{UUID: uuid}).Update("default_image_id", imageId).Error
 }

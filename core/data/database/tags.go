@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"gorm.io/gorm"
 )
 

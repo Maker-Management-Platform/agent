@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 

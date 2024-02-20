@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/duke-git/lancet/v2/maputil"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
-	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/google/uuid"
 )
 

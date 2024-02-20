@@ -1,4 +1,4 @@
-package models
+package entities
 
 type Tag struct {
 	Value    string     `json:"value" gorm:"primaryKey"`

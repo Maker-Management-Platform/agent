@@ -1,4 +1,4 @@
-package models
+package entities
 
 import (
 	"bufio"
@@ -72,6 +72,18 @@ func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, fil
 	}
 
 	return s, []*ProjectAsset{nestedAsset}, nil
+}
+func NewProjectSlice2(asset *ProjectAsset, project *Project) (*ProjectSlice, error) {
+	s := &ProjectSlice{
+		Filament: &Filament{},
+	}
+	_, err := parseGcode(s, asset, project)
+	if err != nil {
+		log.Println("Error parsing gecode for ", asset.Name, err)
+		return s, nil
+	}
+
+	return s, nil
 }
 
 func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*ProjectAsset, error) {

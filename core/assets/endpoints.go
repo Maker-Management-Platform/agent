@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	"github.com/eduardooliveira/stLib/core/models"
+	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"

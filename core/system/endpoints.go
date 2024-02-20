@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/eduardooliveira/stLib/core/discovery"
+	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/exp/maps"
@@ -63,6 +63,6 @@ func saveSettings(c echo.Context) error {
 }
 
 func runDiscovery(c echo.Context) error {
-	go discovery.Run(runtime.Cfg.Library.Path)
+	go processing.Run(runtime.Cfg.Library.Path)
 	return c.NoContent(http.StatusOK)
 }
