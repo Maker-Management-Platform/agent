@@ -1,6 +1,7 @@
 package slicer
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -64,6 +65,11 @@ func upload(c echo.Context) error {
 	}
 	name := files[0].Filename
 
+	var isNewFile = false
+	if _, err := os.Stat(path.Join(runtime.GetDataPath(), "temp", name)); errors.Is(err, os.ErrNotExist) {
+		isNewFile = true
+	}
+
 	// Source
 	src, err := files[0].Open()
 	if err != nil {
@@ -86,9 +92,10 @@ func upload(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	tempFile, _ := discovery.DiscoverTempFile(name)
-
-	state.TempFiles[tempFile.UUID] = tempFile
+	if isNewFile {
+		tempFile, _ := discovery.DiscoverTempFile(name)
+		state.TempFiles[tempFile.UUID] = tempFile
+	}
 
 	return c.NoContent(http.StatusOK)
 }
