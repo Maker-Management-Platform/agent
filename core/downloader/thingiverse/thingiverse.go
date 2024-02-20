@@ -3,6 +3,7 @@ package thingiverse
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -42,6 +43,7 @@ func Fetch(url string) error {
 	if err != nil {
 		return err
 	}
+	project.Name = fmt.Sprintf("%s %s", id, project.Name)
 
 	if err = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm); err != nil {
 		log.Println("error creating project folder")
