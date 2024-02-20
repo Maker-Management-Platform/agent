@@ -7,7 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -28,14 +28,16 @@ func GetFileSha1(path string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func ToLibPath(p string) string {
-	if strings.HasPrefix(p, runtime.Cfg.Library.Path) {
-		return p
+func ToLibPath(path string) string {
+	if strings.HasPrefix(path, runtime.Cfg.Library.Path) {
+		return path
 	}
-	return path.Clean(path.Join(runtime.Cfg.Library.Path, p))
+	return fmt.Sprintf("%s/%s", runtime.Cfg.Library.Path, path)
 }
 
 func Move(src, dst string, toLibPath bool) error {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
 	if toLibPath {
 		src = ToLibPath(src)
 		dst = ToLibPath(dst)

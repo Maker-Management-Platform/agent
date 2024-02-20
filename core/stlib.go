@@ -9,11 +9,11 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/assets"
 	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/discovery"
 	"github.com/eduardooliveira/stLib/core/downloader"
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
-	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/projects"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -40,8 +40,8 @@ func Run() {
 		log.Fatal("error initing database", err)
 	}
 
-	go processing.Run(runtime.Cfg.Library.Path)
-	go processing.RunTempDiscovery()
+	go discovery.Run(runtime.Cfg.Library.Path)
+	go discovery.RunTempDiscovery()
 	err = state.LoadPrinters()
 	if err != nil {
 		log.Fatal("error loading printers", err)

@@ -10,7 +10,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/data/database"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"

@@ -10,9 +10,9 @@ import (
 	"net/url"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	models "github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
+	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
 )

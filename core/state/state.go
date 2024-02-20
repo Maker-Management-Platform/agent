@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/BurntSushi/toml"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/models"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
 )

@@ -1,4 +1,4 @@
-package entities
+package models
 
 import (
 	"archive/zip"
@@ -9,11 +9,12 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/render"
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -37,11 +38,20 @@ func (n ProjectModel) Value() (driver.Value, error) {
 	return string(val), err
 }
 
-type renderJob struct {
-	project    *Project
+type cacheJob struct {
 	renderName string
-	renderPath string
-	modelPath  string
+	parent     *ProjectAsset
+	model      *ProjectModel
+	project    *Project
+	err        chan error
+}
+
+var cacheJobs chan *cacheJob
+
+func init() {
+	log.Println("Starting", runtime.Cfg.Render.MaxWorkers, "render workers")
+	cacheJobs = make(chan *cacheJob, runtime.Cfg.Render.MaxWorkers)
+	go renderWorker(cacheJobs)
 }
 
 func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, file *os.File) (*ProjectModel, []*ProjectAsset, error) {
@@ -49,34 +59,58 @@ func NewProjectModel(fileName string, asset *ProjectAsset, project *Project, fil
 
 	return m, loadImage(m, asset, project), nil
 }
-func NewProjectModel2(asset *ProjectAsset, project *Project) (*ProjectModel, error) {
-	m := &ProjectModel{}
-
-	return m, nil
-}
 
 func loadImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
 	if strings.ToLower(parent.Extension) == ".stl" {
-		loadStlImage(model, parent, project)
-		return []*ProjectAsset{}
+		img, err := loadStlImage(model, parent, project)
+		if err != nil {
+			log.Println(err)
+			return []*ProjectAsset{}
+		} else {
+			return []*ProjectAsset{img}
+		}
 	} else if strings.ToLower(parent.Extension) == ".3mf" {
 		return load3MfImage(model, parent, project)
 	}
 	return nil
 }
 
-func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) {
+func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) (*ProjectAsset, error) {
 	renderName := fmt.Sprintf("%s.render.png", parent.Name)
-	renderPath := utils.ToLibPath(path.Join(project.FullPath(), renderName))
+	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
 	if _, err := os.Stat(renderPath); err != nil {
-		/*render.QueueJob(&renderJob{
-			project:    project,
+		/*errChan := make(chan error, 1)
+		cacheJobs <- &cacheJob{
 			renderName: renderName,
-			renderPath: renderPath,
-			modelPath:  utils.ToLibPath(path.Join(project.FullPath(), parent.Name)),
-		})*/
+			parent:     parent,
+			model:      model,
+			project:    project,
+			err:        errChan,
+		}*/
+		log.Println("produced", renderName)
+		err := render.RenderModel(renderName, parent.Name, project.FullPath())
+		if err != nil {
+			log.Println("error rendering ", err)
+			return nil, err
+		}
+		log.Println("terminated", renderName)
 	}
+	f, err := os.Open(renderPath)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	asset, _, err := NewProjectAsset(renderName, project, f)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	project.Assets[asset.ID] = asset
+	model.ImageID = asset.ID
+	return asset, nil
 }
 
 func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) []*ProjectAsset {
@@ -152,23 +186,15 @@ func load3MfImage(model *ProjectModel, parent *ProjectAsset, project *Project) [
 	return rtn
 }
 
-func (job *renderJob) ModelPath() string {
-	return job.modelPath
-}
-
-func (job *renderJob) RenderPath() string {
-	return job.renderPath
-}
-
-func (job *renderJob) OnComplete(err error) {
-	f, err := os.Open(job.renderPath)
-	if err != nil {
-		log.Println(err)
+func renderWorker(jobs <-chan *cacheJob) {
+	for job := range jobs {
+		go func(job *cacheJob) {
+			log.Println("rendering", job.renderName)
+			err := render.RenderModel(job.renderName, job.parent.Name, job.project.FullPath())
+			if err != nil {
+				log.Println("error rendering image", err)
+			}
+			job.err <- err
+		}(job)
 	}
-
-	asset, _, err := NewProjectAsset(job.renderName, job.project, f)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("rendering complete : ", asset.Name)
 }

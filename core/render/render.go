@@ -3,7 +3,6 @@ package render
 import (
 	"fmt"
 	"log"
-	"path"
 
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -28,11 +27,12 @@ var (
 	color  = fauxgl.HexColor(runtime.Cfg.Render.ModelColor) // object color
 )
 
-func renderStl(job RenderJob) (string, error) {
-	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name)))
+func RenderModel(renderName, modelName, projectPath string) error {
+
+	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(fmt.Sprintf("%s/%s", projectPath, modelName)))
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return err
 	}
 
 	// fit mesh in a bi-unit cube centered at the origin
@@ -61,7 +61,5 @@ func renderStl(job RenderJob) (string, error) {
 	image := context.Image()
 	image = resize.Resize(width, height, image, resize.Bilinear)
 
-	renderName := fmt.Sprintf("%s.render.png", job.Asset().Name)
-	renderSavePath := utils.ToLibPath(path.Join(job.Project().FullPath(), renderName))
-	return renderName, fauxgl.SavePNG(renderSavePath, image)
+	return fauxgl.SavePNG(utils.ToLibPath(fmt.Sprintf("%s/%s", projectPath, renderName)), image)
 }

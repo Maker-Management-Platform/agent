@@ -1,9 +1,11 @@
 package klipper
 
-import "github.com/eduardooliveira/stLib/core/entities"
+import (
+	"github.com/eduardooliveira/stLib/core/models"
+)
 
 type KlipperPrinter struct {
-	*entities.Printer
+	*models.Printer
 }
 
 type MoonRakerResponse struct {

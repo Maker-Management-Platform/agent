@@ -1,13 +1,10 @@
-package entities
+package models
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/google/uuid"
 )
 
@@ -24,28 +21,15 @@ type Project struct {
 }
 
 func (p *Project) FullPath() string {
-	return filepath.Clean(path.Join(p.Path, p.Name))
+	return filepath.Clean(fmt.Sprintf("%s/%s", p.Path, p.Name))
 }
 
 func NewProjectFromPath(path string) *Project {
-	if p := tryLoadFromFile(path); p != nil {
-		return p
-	}
 	path, _ = filepath.Rel(runtime.Cfg.Library.Path, path)
 	project := NewProject()
 	project.Path = filepath.Clean(fmt.Sprintf("/%s", filepath.Dir(path)))
 	project.Name = filepath.Base(path)
 	return project
-}
-
-func tryLoadFromFile(path string) *Project {
-	p := NewProject()
-	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", path)), &p)
-	if err != nil {
-		return nil
-	}
-	p.Initialized = true
-	return p
 }
 
 func NewProject() *Project {
