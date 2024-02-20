@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -34,7 +34,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 		return nil
 	}
 
-	project := models.NewProjectFromPath(path)
+	project := entities.NewProjectFromPath(path)
 
 	dAssets, err := DiscoverAssets(project)
 	if err != nil {
@@ -61,7 +61,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 	return nil
 }
 
-func DiscoverAssets(project *models.Project) (assets []*DiscoverableAsset, err error) {
+func DiscoverAssets(project *entities.Project) (assets []*DiscoverableAsset, err error) {
 	projectPath := utils.ToLibPath(project.FullPath())
 
 	entries, err := os.ReadDir(projectPath)
@@ -106,7 +106,7 @@ func shouldSkipFile(name string) bool {
 	return false
 }
 
-func pathToTags(path string) []*models.Tag {
+func pathToTags(path string) []*entities.Tag {
 
 	path = strings.Trim(path, "/")
 	tags := strings.Split(path, "/")
@@ -117,10 +117,10 @@ func pathToTags(path string) []*models.Tag {
 		}
 
 	}
-	rtn := make([]*models.Tag, len(tagSet))
+	rtn := make([]*entities.Tag, len(tagSet))
 	i := 0
 	for k := range tagSet {
-		rtn[i] = models.StringToTag(k)
+		rtn[i] = entities.StringToTag(k)
 		i++
 	}
 

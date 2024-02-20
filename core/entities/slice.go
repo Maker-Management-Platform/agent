@@ -2,18 +2,13 @@ package entities
 
 import (
 	"bufio"
-	"bytes"
-	"crypto/sha1"
 	"database/sql/driver"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
-	"image/png"
 	"log"
 	"os"
-	"path/filepath"
+	"path"
 	"strconv"
 	"strings"
 
@@ -61,23 +56,21 @@ func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, fil
 	s := &ProjectSlice{
 		Filament: &Filament{},
 	}
-	nestedAsset, err := parseGcode(s, asset, project)
+	err := parseGcode(s, asset, project)
 	if err != nil {
 		log.Println("Error parsing gecode for ", fileName, err)
 		return s, nil, nil
 	}
 
-	if nestedAsset == nil {
-		return s, []*ProjectAsset{}, nil
-	}
-
-	return s, []*ProjectAsset{nestedAsset}, nil
+	return s, []*ProjectAsset{}, nil
 }
+
 func NewProjectSlice2(asset *ProjectAsset, project *Project) (*ProjectSlice, error) {
+	asset.AssetType = ProjectSliceType
 	s := &ProjectSlice{
 		Filament: &Filament{},
 	}
-	_, err := parseGcode(s, asset, project)
+	err := parseGcode(s, asset, project)
 	if err != nil {
 		log.Println("Error parsing gecode for ", asset.Name, err)
 		return s, nil
@@ -86,17 +79,13 @@ func NewProjectSlice2(asset *ProjectAsset, project *Project) (*ProjectSlice, err
 	return s, nil
 }
 
-func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*ProjectAsset, error) {
-	path := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), parent.Name))
+func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) error {
+	path := utils.ToLibPath(path.Join(project.FullPath(), parent.Name))
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
-	image := &tmpImg{
-		Height: 0,
-		Width:  0,
-	}
 
 	scanner := bufio.NewScanner(f)
 
@@ -104,22 +93,7 @@ func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*Proje
 		if strings.HasPrefix(strings.TrimSpace(scanner.Text()), ";") {
 			line := strings.Trim(scanner.Text(), " ;")
 
-			if strings.HasPrefix(line, "thumbnail begin") {
-
-				header := strings.Split(line, " ")
-				length, err := strconv.Atoi(header[3])
-				if err != nil {
-					return nil, err
-				}
-				i, err := parseThumbnail(scanner, header[2], length)
-				if err != nil {
-					return nil, err
-				}
-				if i.Width > image.Width || i.Height > image.Height {
-					image = i
-				}
-
-			} else {
+			if !strings.HasPrefix(line, "thumbnail begin") {
 				parseComment(s, line)
 			}
 
@@ -127,37 +101,9 @@ func parseGcode(s *ProjectSlice, parent *ProjectAsset, project *Project) (*Proje
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return errors.Join(err, errors.New("error reading gcode"))
 	}
-
-	var img *ProjectAsset
-
-	if image.Data != nil {
-		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(parent.Name, ".gcode"))
-		imgPath := fmt.Sprintf("%s/%s", project.FullPath(), imgName)
-
-		h := sha1.New()
-		_, err = h.Write(image.Data)
-		if err != nil {
-			return nil, err
-		}
-
-		f, err := storeImage(image, imgPath)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		img, _, err = NewProjectAsset(filepath.Base(imgPath), project, f)
-		if err != nil {
-			return nil, err
-		}
-
-		s.ImageID = img.ID
-
-	}
-
-	return img, nil
+	return nil
 }
 
 func parseComment(s *ProjectSlice, line string) {
@@ -218,55 +164,4 @@ func parseGcodeParamFloat(line string) float64 {
 	}
 
 	return f
-}
-
-func parseThumbnail(scanner *bufio.Scanner, size string, length int) (*tmpImg, error) {
-	sb := strings.Builder{}
-	for scanner.Scan() {
-		line := strings.Trim(scanner.Text(), " ;")
-		if strings.HasPrefix(line, "thumbnail end") {
-			break
-		}
-		sb.WriteString(line)
-
-	}
-	if sb.Len() != length {
-		return nil, errors.New("thumbnail length mismatch")
-	}
-
-	b, err := base64.StdEncoding.DecodeString(sb.String())
-	if err != nil {
-		return nil, err
-	}
-
-	dimensions := strings.Split(size, "x")
-
-	img := &tmpImg{
-		Data: b,
-	}
-	img.Height, err = strconv.Atoi(dimensions[0])
-	if err != nil {
-		return nil, err
-	}
-
-	img.Width, err = strconv.Atoi(dimensions[0])
-	if err != nil {
-		return nil, err
-	}
-	return img, nil
-}
-
-func storeImage(img *tmpImg, name string) (*os.File, error) {
-	i, _, err := image.Decode(bytes.NewReader(img.Data))
-	if err != nil {
-		return nil, err
-	}
-	out, _ := os.Create(utils.ToLibPath(name))
-
-	err = png.Encode(out, i)
-
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }

@@ -33,6 +33,6 @@ func DeleteAsset(id string) (err error) {
 	return DB.Where(&models.ProjectAsset{ID: id}).Delete(&models.ProjectAsset{}).Error
 }
 
-func SetModelImage(id string, imageId string) (err error) {
-	return DB.Model(&models.ProjectAsset{ID: id}).Update("model.image_id", imageId).Error
+func UpdateAssetImage(id string, imageID string) (err error) {
+	return DB.Model(&models.ProjectAsset{ID: id}).Update("image_id", imageID).Error
 }

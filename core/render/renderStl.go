@@ -11,6 +11,8 @@ import (
 	"github.com/nfnt/resize"
 )
 
+type stlRenderer struct{}
+
 const (
 	scale  = 1    // optional supersampling
 	width  = 1920 // output width in pixels
@@ -28,7 +30,7 @@ var (
 	color  = fauxgl.HexColor(runtime.Cfg.Render.ModelColor) // object color
 )
 
-func renderStl(job RenderJob) (string, error) {
+func (s *stlRenderer) render(job RenderJob) (string, error) {
 	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name)))
 	if err != nil {
 		log.Println(err)

@@ -12,6 +12,9 @@ type RenderJob interface {
 	Asset() *entities.ProjectAsset
 	OnComplete(name string, err error)
 }
+type renderer interface {
+	render(job RenderJob) (string, error)
+}
 
 var queue = make(chan RenderJob, 256)
 
@@ -20,7 +23,9 @@ func init() {
 		for {
 			job := <-queue
 			if job.Asset().Extension == ".stl" {
-				go job.OnComplete(renderStl(job))
+				go job.OnComplete((&stlRenderer{}).render(job))
+			} else if job.Asset().Extension == ".gcode" {
+				go job.OnComplete((&gcodeRenderer{}).render(job))
 			}
 			log.Println("render queue size: ", len(queue), " - ", job.Name())
 		}

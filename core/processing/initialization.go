@@ -46,12 +46,9 @@ func (i *initialize) Run() {
 			}
 		}
 		if i.da.parent != nil {
-			if i.da.parent.AssetType == entities.ProjectModelType {
-				i.da.parent.Model.ImageID = asset.ID
-				err = database.SetModelImage(i.da.parent.ID, asset.ID)
-				if err != nil {
-					log.Println(err)
-				}
+			err = database.UpdateAssetImage(i.da.parent.ID, asset.ID)
+			if err != nil {
+				log.Println(err)
 			}
 		}
 	}
@@ -76,11 +73,12 @@ func processType(asset *entities.ProjectAsset, project *entities.Project) error 
 	if slices.Contains(entities.ModelExtensions, strings.ToLower(asset.Extension)) {
 		asset.AssetType = entities.ProjectModelType
 		asset.Model, err = entities.NewProjectModel2(asset, project)
-		render.QueueJob(&renderableAsset{asset: asset, project: project})
+		if err == nil {
+			render.QueueJob(&renderableAsset{asset: asset, project: project})
+		}
 	} else if slices.Contains(entities.ImageExtensions, strings.ToLower(asset.Extension)) {
 		asset.ProjectImage, err = entities.NewProjectImage2(asset, project)
 	} else if slices.Contains(entities.SliceExtensions, strings.ToLower(asset.Extension)) {
-		asset.AssetType = entities.ProjectSliceType
 		asset.Slice, err = entities.NewProjectSlice2(asset, project)
 	} else {
 		asset.AssetType = entities.ProjectFileType
