@@ -3,6 +3,7 @@ package processing
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -24,6 +25,8 @@ type initialize struct {
 	da *DiscoverableAsset
 }
 
+var parentRegex = regexp.MustCompile(`^(?P<parent>.*)\.(?:thumb|render)`)
+
 func (i *initialize) Run() {
 	if i.da.parent != nil {
 		log.Println(i.da.parent.Name)
@@ -44,6 +47,16 @@ func (i *initialize) Run() {
 			err = database.SetProjectDefaultImage(i.da.project.UUID, asset.ID)
 			if err != nil {
 				log.Println(err)
+			}
+		}
+		if i.da.parent == nil {
+			match := parentRegex.FindStringSubmatch(i.da.name)
+			if len(match) == 2 {
+				i.da.parent, err = database.GetAssetByProjectAndName(i.da.project.UUID, match[1])
+				if err != nil {
+					log.Println(err)
+				}
+				log.Println(match[1])
 			}
 		}
 		if i.da.parent != nil {
@@ -82,6 +95,9 @@ func processType(asset *entities.ProjectAsset, project *entities.Project) error 
 		asset.ProjectImage, err = entities.NewProjectImage2(asset, project)
 	} else if slices.Contains(entities.SliceExtensions, strings.ToLower(asset.Extension)) {
 		asset.Slice, err = entities.NewProjectSlice2(asset, project)
+		if err == nil {
+			render.QueueJob(&renderableAsset{asset: asset, project: project})
+		}
 	} else {
 		asset.AssetType = entities.ProjectFileType
 		asset.ProjectFile, err = entities.NewProjectFile2(asset, project)

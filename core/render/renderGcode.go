@@ -25,6 +25,12 @@ type tmpImg struct {
 }
 
 func (g *gcodeRenderer) render(job RenderJob) (string, error) {
+	imgName := fmt.Sprintf("%s.thumb.png", job.Asset().Name)
+	imgPath := utils.ToLibPath(path.Join(job.Project().FullPath(), imgName))
+	if _, err := os.Stat(imgPath); err == nil {
+		return imgPath, errors.New("already exists")
+	}
+
 	path := utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name))
 	f, err := os.Open(path)
 	if err != nil {
@@ -67,8 +73,6 @@ func (g *gcodeRenderer) render(job RenderJob) (string, error) {
 	}
 
 	if image.Data != nil {
-		imgName := fmt.Sprintf("%s.thumb.png", strings.TrimSuffix(job.Asset().Name, ".gcode"))
-		imgPath := fmt.Sprintf("%s/%s", job.Project().FullPath(), imgName)
 
 		h := sha1.New()
 		_, err = h.Write(image.Data)
@@ -123,12 +127,12 @@ func (g *gcodeRenderer) parseThumbnail(scanner *bufio.Scanner, size string, leng
 	return img, nil
 }
 
-func (g *gcodeRenderer) storeImage(img *tmpImg, name string) (*os.File, error) {
+func (g *gcodeRenderer) storeImage(img *tmpImg, path string) (*os.File, error) {
 	i, _, err := image.Decode(bytes.NewReader(img.Data))
 	if err != nil {
 		return nil, err
 	}
-	out, _ := os.Create(utils.ToLibPath(name))
+	out, _ := os.Create(path)
 
 	err = png.Encode(out, i)
 
