@@ -16,7 +16,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
-func (p *KipplerPrinter) serverInfo() (*Result, error) {
+func (p *KlipperPrinter) serverInfo() (*Result, error) {
 	res, err := http.Get(fmt.Sprintf("%s/server/info", p.Address))
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (p *KipplerPrinter) serverInfo() (*Result, error) {
 	return r.Result, nil
 }
 
-func (p *KipplerPrinter) ServerFilesUpload(asset *models.ProjectAsset) error {
+func (p *KlipperPrinter) ServerFilesUpload(asset *models.ProjectAsset) error {
 
 	project, err := database.GetProject(asset.ProjectUUID)
 

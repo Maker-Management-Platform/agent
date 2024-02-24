@@ -49,8 +49,8 @@ type cacheJob struct {
 var cacheJobs chan *cacheJob
 
 func init() {
-	log.Println("Starting", runtime.Cfg.MaxRenderWorkers, "render workers")
-	cacheJobs = make(chan *cacheJob, runtime.Cfg.MaxRenderWorkers)
+	log.Println("Starting", runtime.Cfg.Render.MaxWorkers, "render workers")
+	cacheJobs = make(chan *cacheJob, runtime.Cfg.Render.MaxWorkers)
 	go renderWorker(cacheJobs)
 }
 
@@ -80,16 +80,17 @@ func loadStlImage(model *ProjectModel, parent *ProjectAsset, project *Project) (
 	renderPath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), renderName))
 
 	if _, err := os.Stat(renderPath); err != nil {
-		errChan := make(chan error, 1)
+		/*errChan := make(chan error, 1)
 		cacheJobs <- &cacheJob{
 			renderName: renderName,
 			parent:     parent,
 			model:      model,
 			project:    project,
 			err:        errChan,
-		}
+		}*/
 		log.Println("produced", renderName)
-		if err := <-errChan; err != nil {
+		err := render.RenderModel(renderName, parent.Name, project.FullPath())
+		if err != nil {
 			log.Println("error rendering ", err)
 			return nil, err
 		}

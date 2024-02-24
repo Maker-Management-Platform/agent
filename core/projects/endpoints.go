@@ -224,7 +224,7 @@ func new(c echo.Context) error {
 	project.Description = createProject.Description
 	project.Tags = createProject.Tags
 
-	path := fmt.Sprintf("%s%s", runtime.Cfg.LibraryPath, project.FullPath())
+	path := fmt.Sprintf("%s%s", runtime.Cfg.Library.Path, project.FullPath()) //TODO: Replace with utils.ToLibPath
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -413,6 +413,38 @@ func deleteHandler(c echo.Context) error {
 
 	if err := database.DeleteProject(uuid); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func discoverHandler(c echo.Context) error {
+
+	uuid := c.Param("uuid")
+
+	if uuid == "" {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	project, err := database.GetProject(uuid)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	ok, _, err := discovery.DiscoverProject(project)
+	if err != nil {
+		log.Printf("error discovering the project %q: %v\n", project.FullPath(), err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if !ok {
+		err = errors.New("failed to find assets")
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.NoContent(http.StatusOK)

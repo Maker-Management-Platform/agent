@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
-	"github.com/fogleman/fauxgl"
 	"github.com/nfnt/resize"
 )
 
@@ -20,11 +20,11 @@ const (
 )
 
 var (
-	eye    = fauxgl.V(-3, -3, -0.75)                       // camera position
-	center = fauxgl.V(0, -0.07, 0)                         // view center position
-	up     = fauxgl.V(0, 0, 1)                             // up vector
-	light  = fauxgl.V(-0.75, -5, 0.25).Normalize()         // light direction
-	color  = fauxgl.HexColor(runtime.Cfg.ModelRenderColor) // object color
+	eye    = fauxgl.V(-3, -3, -0.75)                        // camera position
+	center = fauxgl.V(0, -0.07, 0)                          // view center position
+	up     = fauxgl.V(0, 0, 1)                              // up vector
+	light  = fauxgl.V(-0.75, -5, 0.25).Normalize()          // light direction
+	color  = fauxgl.HexColor(runtime.Cfg.Render.ModelColor) // object color
 )
 
 func RenderModel(renderName, modelName, projectPath string) error {
@@ -43,7 +43,7 @@ func RenderModel(renderName, modelName, projectPath string) error {
 
 	// create a rendering context
 	context := fauxgl.NewContext(width*scale, height*scale)
-	context.ClearColorBufferWith(fauxgl.HexColor(runtime.Cfg.ModelBackgroundColor))
+	context.ClearColorBufferWith(fauxgl.HexColor(runtime.Cfg.Render.BackgroundColor))
 
 	// create transformation matrix and light direction
 	aspect := float64(width) / float64(height)

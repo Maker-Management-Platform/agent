@@ -1,7 +1,9 @@
 package database
 
 import (
-	"github.com/eduardooliveira/stLib/core/utils"
+	"path"
+
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -9,12 +11,9 @@ import (
 var DB *gorm.DB
 
 func InitDatabase() error {
-	err := utils.CreateFolder("data")
-	if err != nil {
-		return err
-	}
+	var err error
 
-	DB, err = gorm.Open(sqlite.Open("data/data.db"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(path.Join(runtime.GetDataPath(), "data.db")), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

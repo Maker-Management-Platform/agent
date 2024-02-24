@@ -6,8 +6,10 @@ toolchain go1.21.4
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/Maker-Management-Platform/fauxgl v0.0.0-20211115080205-6c8aff01c6a9
 	github.com/duke-git/lancet/v2 v2.2.8
 	github.com/glebarez/sqlite v1.10.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/morkid/paginate v1.1.7
 	github.com/otiai10/copy v1.14.0
@@ -16,7 +18,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.1 // indirect
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fogleman/simplify v0.0.0-20170216171241-d32f302d5046 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -26,7 +28,7 @@ require (
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.11.12 // indirect
+	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -41,7 +43,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
-	github.com/valyala/fasthttp v1.22.0 // indirect
+	github.com/valyala/fasthttp v1.34.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -54,7 +56,6 @@ require (
 )
 
 require (
-	github.com/fogleman/fauxgl v0.0.0-20200818143847-27cddc103802
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0
 	github.com/labstack/gommon v0.4.0 // indirect
@@ -63,7 +64,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
 	golang.org/x/net v0.17.0
 	golang.org/x/sys v0.15.0 // indirect
