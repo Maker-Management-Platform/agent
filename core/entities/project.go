@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/google/uuid"
 )
@@ -31,7 +30,7 @@ func NewProjectFromPath(path string) *Project {
 	if p := tryLoadFromFile(path); p != nil {
 		return p
 	}
-	path, _ = filepath.Rel(runtime.Cfg.Library.Path, path)
+
 	project := NewProject()
 	project.Path = filepath.Clean(fmt.Sprintf("/%s", filepath.Dir(path)))
 	project.Name = filepath.Base(path)

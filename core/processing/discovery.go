@@ -34,6 +34,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 		return nil
 	}
 
+	path, _ = filepath.Rel(runtime.Cfg.Library.Path, path)
 	project := entities.NewProjectFromPath(path)
 
 	dAssets, err := DiscoverAssets(project)

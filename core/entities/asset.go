@@ -16,21 +16,23 @@ import (
 )
 
 type ProjectAsset struct {
-	ID           string        `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
-	Name         string        `json:"name" toml:"name" form:"name" query:"name"`
-	Generated    bool          `json:"generated" toml:"generated" form:"generated" query:"generated"`
-	ProjectUUID  string        `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
-	project      *Project      `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
-	Size         int64         `json:"size" toml:"size" form:"size" query:"size"`
-	ModTime      time.Time     `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
-	AssetType    string        `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
-	Extension    string        `json:"extension" toml:"extension" form:"extension" query:"extension"`
-	MimeType     string        `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
-	ImageID      string        `json:"image_id" toml:"image_id" form:"image_id" query:"image_id"`
-	Model        *ProjectModel `json:"model" toml:"model" form:"model" query:"model"`
-	ProjectImage *ProjectImage `json:"project_image" toml:"project_image" form:"project_image" query:"project_image"`
-	ProjectFile  *ProjectFile  `json:"project_file" toml:"project_file" form:"project_file" query:"project_file"`
-	Slice        *ProjectSlice `json:"slice" toml:"slice" form:"slice" query:"slice"`
+	ID           string         `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
+	Name         string         `json:"name" toml:"name" form:"name" query:"name"`
+	Generated    bool           `json:"generated" toml:"generated" form:"generated" query:"generated"`
+	ProjectUUID  string         `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
+	project      *Project       `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
+	Size         int64          `json:"size" toml:"size" form:"size" query:"size"`
+	ModTime      time.Time      `json:"mod_time" toml:"mod_time" form:"mod_time" query:"mod_time"`
+	AssetType    string         `json:"asset_type" toml:"asset_type" form:"asset_type" query:"asset_type"`
+	Extension    string         `json:"extension" toml:"extension" form:"extension" query:"extension"`
+	MimeType     string         `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
+	ImageID      string         `json:"image_id" toml:"image_id" form:"image_id" query:"image_id"`
+	AssetType2   *AssetType     `json:"asset_type_obj" toml:"asset_type_obj" form:"asset_type_obj" query:"asset_type_obj"`
+	Properties   map[string]any `json:"properties" toml:"properties" form:"properties" query:"properties"`
+	Model        *ProjectModel  `json:"model" toml:"model" form:"model" query:"model"`
+	ProjectImage *ProjectImage  `json:"project_image" toml:"project_image" form:"project_image" query:"project_image"`
+	ProjectFile  *ProjectFile   `json:"project_file" toml:"project_file" form:"project_file" query:"project_file"`
+	Slice        *ProjectSlice  `json:"slice" toml:"slice" form:"slice" query:"slice"`
 }
 
 var GeneratedExtensions = []string{".thumb.png", ".render.png"}

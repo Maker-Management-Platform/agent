@@ -56,7 +56,6 @@ func (i *initialize) Run() {
 				if err != nil {
 					log.Println(err)
 				}
-				log.Println(match[1])
 			}
 		}
 		if i.da.parent != nil {

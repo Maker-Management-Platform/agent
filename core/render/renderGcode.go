@@ -28,7 +28,7 @@ func (g *gcodeRenderer) render(job RenderJob) (string, error) {
 	imgName := fmt.Sprintf("%s.thumb.png", job.Asset().Name)
 	imgPath := utils.ToLibPath(path.Join(job.Project().FullPath(), imgName))
 	if _, err := os.Stat(imgPath); err == nil {
-		return imgPath, errors.New("already exists")
+		return imgName, errors.New("already exists")
 	}
 
 	path := utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name))
