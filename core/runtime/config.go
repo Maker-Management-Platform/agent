@@ -87,6 +87,7 @@ func init() {
 	viper.AddConfigPath(dataPath)
 	viper.SetConfigType("toml")
 	viper.AutomaticEnv()
+	viper.AllowEmptyEnv(true)
 
 	err := viper.ReadInConfig()
 	if err != nil {
