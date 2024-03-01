@@ -40,6 +40,10 @@ func Run() {
 		log.Fatal("error initing database", err)
 	}
 
+	err = state.LoadAssetTypes()
+	if err != nil {
+		log.Fatal("error loading assetTypes", err)
+	}
 	go processing.Run(runtime.Cfg.Library.Path)
 	go processing.RunTempDiscovery()
 	err = state.LoadPrinters()

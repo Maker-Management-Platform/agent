@@ -15,6 +15,7 @@ import (
 var TempFiles = make(map[string]*entities.TempFile)
 var Printers = make(map[string]*entities.Printer)
 var AssetTypes = make(map[string]*entities.AssetType)
+var ExtensionProjectType = make(map[string]*entities.AssetType)
 var printersFile string
 var assetTypesFile string
 
@@ -78,6 +79,12 @@ func LoadAssetTypes() error {
 	_, err = toml.DecodeFile(assetTypesFile, &AssetTypes)
 	if err != nil {
 		log.Println("error loading asset types")
+	}
+
+	for _, assetType := range AssetTypes {
+		for _, ext := range assetType.Extensions {
+			ExtensionProjectType[ext] = assetType
+		}
 	}
 	return err
 }

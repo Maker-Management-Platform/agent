@@ -1,4 +1,4 @@
-package processing
+package initialization
 
 import (
 	"fmt"
@@ -9,16 +9,17 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/enrichment"
 	"github.com/eduardooliveira/stLib/core/queue"
-	"github.com/eduardooliveira/stLib/core/render"
+	"github.com/eduardooliveira/stLib/core/state"
 )
 
 type DiscoverableAsset struct {
-	name       string
-	path       string
-	project    *entities.Project
-	parent     *entities.ProjectAsset
-	skipInsert bool
+	Name       string
+	Path       string
+	Project    *entities.Project
+	Parent     *entities.ProjectAsset
+	SkipInsert bool
 }
 
 type initialize struct {
@@ -28,44 +29,44 @@ type initialize struct {
 var parentRegex = regexp.MustCompile(`^(?P<parent>.*)\.(?:thumb|render)`)
 
 func (i *initialize) Run() {
-	if i.da.parent != nil {
-		log.Println(i.da.parent.Name)
+	if i.da.Parent != nil {
+		log.Println(i.da.Parent.Name)
 	}
-	asset, err := entities.NewProjectAsset2(i.da.name, i.da.project)
+	asset, err := entities.NewProjectAsset2(i.da.Name, i.da.Project)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	err = processType(asset, i.da.project)
+	err = processType(asset, i.da.Project)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	if asset.AssetType == "image" {
-		if i.da.project.DefaultImageID == "" {
-			i.da.project.DefaultImageID = asset.ID
-			err = database.SetProjectDefaultImage(i.da.project.UUID, asset.ID)
+		if i.da.Project.DefaultImageID == "" {
+			i.da.Project.DefaultImageID = asset.ID
+			err = database.SetProjectDefaultImage(i.da.Project.UUID, asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
 		}
-		if i.da.parent == nil {
-			match := parentRegex.FindStringSubmatch(i.da.name)
+		if i.da.Parent == nil {
+			match := parentRegex.FindStringSubmatch(i.da.Name)
 			if len(match) == 2 {
-				i.da.parent, err = database.GetAssetByProjectAndName(i.da.project.UUID, match[1])
+				i.da.Parent, err = database.GetAssetByProjectAndName(i.da.Project.UUID, match[1])
 				if err != nil {
 					log.Println(err)
 				}
 			}
 		}
-		if i.da.parent != nil {
-			err = database.UpdateAssetImage(i.da.parent.ID, asset.ID)
+		if i.da.Parent != nil {
+			err = database.UpdateAssetImage(i.da.Parent.ID, asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
 		}
 	}
-	if !i.da.skipInsert {
+	if !i.da.SkipInsert {
 		err = database.InsertAsset(asset)
 		if err != nil {
 			log.Println(err)
@@ -75,7 +76,7 @@ func (i *initialize) Run() {
 }
 
 func (i *initialize) Name() string {
-	return fmt.Sprintf("Initialize %s", i.da.name)
+	return fmt.Sprintf("Initialize %s", i.da.Name)
 }
 
 func Enqueue(asset *DiscoverableAsset) {
@@ -88,14 +89,14 @@ func processType(asset *entities.ProjectAsset, project *entities.Project) error 
 		asset.AssetType = entities.ProjectModelType
 		asset.Model, err = entities.NewProjectModel2(asset, project)
 		if err == nil {
-			render.QueueJob(&renderableAsset{asset: asset, project: project})
+			enrichment.QueueJob(&renderableAsset{asset: asset, project: project})
 		}
 	} else if slices.Contains(entities.ImageExtensions, strings.ToLower(asset.Extension)) {
 		asset.ProjectImage, err = entities.NewProjectImage2(asset, project)
 	} else if slices.Contains(entities.SliceExtensions, strings.ToLower(asset.Extension)) {
 		asset.Slice, err = entities.NewProjectSlice2(asset, project)
 		if err == nil {
-			render.QueueJob(&renderableAsset{asset: asset, project: project})
+			enrichment.QueueJob(&renderableAsset{asset: asset, project: project})
 		}
 	} else {
 		asset.AssetType = entities.ProjectFileType
@@ -106,6 +107,10 @@ func processType(asset *entities.ProjectAsset, project *entities.Project) error 
 			asset.Generated = true
 		}
 	}
+	if t, ok := state.ExtensionProjectType[asset.Extension]; ok {
+		asset.AssetType = t.Name
+	}
+
 	return err
 }
 
@@ -127,10 +132,10 @@ func (r *renderableAsset) Asset() *entities.ProjectAsset {
 
 func (r *renderableAsset) OnComplete(path string, err error) {
 	Enqueue(&DiscoverableAsset{
-		name:       path,
-		path:       path,
-		project:    r.project,
-		parent:     r.asset,
-		skipInsert: err != nil && err.Error() == "already exists",
+		Name:       path,
+		Path:       path,
+		Project:    r.project,
+		Parent:     r.asset,
+		SkipInsert: err != nil && err.Error() == "already exists",
 	})
 }

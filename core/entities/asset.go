@@ -27,8 +27,8 @@ type ProjectAsset struct {
 	Extension    string         `json:"extension" toml:"extension" form:"extension" query:"extension"`
 	MimeType     string         `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
 	ImageID      string         `json:"image_id" toml:"image_id" form:"image_id" query:"image_id"`
-	AssetType2   *AssetType     `json:"asset_type_obj" toml:"asset_type_obj" form:"asset_type_obj" query:"asset_type_obj"`
-	Properties   map[string]any `json:"properties" toml:"properties" form:"properties" query:"properties"`
+	Properties   map[string]any `json:"properties" toml:"properties" form:"properties" query:"properties" gorm:"serializer:json"`
+	State        string         `json:"state" toml:"state" form:"state" query:"state"`
 	Model        *ProjectModel  `json:"model" toml:"model" form:"model" query:"model"`
 	ProjectImage *ProjectImage  `json:"project_image" toml:"project_image" form:"project_image" query:"project_image"`
 	ProjectFile  *ProjectFile   `json:"project_file" toml:"project_file" form:"project_file" query:"project_file"`
@@ -43,6 +43,7 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 		Generated:   false,
 		ProjectUUID: project.UUID,
 		project:     project,
+		Properties:  make(map[string]any),
 	}
 	fullFilePath := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), fileName))
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/initialization"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -56,13 +57,13 @@ func walker(path string, d fs.DirEntry, err error) error {
 			log.Println(err)
 		}
 		for _, dAsset := range dAssets {
-			Enqueue(dAsset)
+			initialization.Enqueue(dAsset)
 		}
 	}
 	return nil
 }
 
-func DiscoverAssets(project *entities.Project) (assets []*DiscoverableAsset, err error) {
+func DiscoverAssets(project *entities.Project) (assets []*initialization.DiscoverableAsset, err error) {
 	projectPath := utils.ToLibPath(project.FullPath())
 
 	entries, err := os.ReadDir(projectPath)
@@ -70,7 +71,7 @@ func DiscoverAssets(project *entities.Project) (assets []*DiscoverableAsset, err
 		log.Println("failed to read path", projectPath)
 		return nil, err
 	}
-	dAssets := make([]*DiscoverableAsset, 0)
+	dAssets := make([]*initialization.DiscoverableAsset, 0)
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -79,10 +80,10 @@ func DiscoverAssets(project *entities.Project) (assets []*DiscoverableAsset, err
 		if shouldSkipFile(e.Name()) {
 			continue
 		}
-		dAssets = append(dAssets, &DiscoverableAsset{
-			name:    e.Name(),
-			path:    utils.ToLibPath(path.Join(project.FullPath(), e.Name())),
-			project: project,
+		dAssets = append(dAssets, &initialization.DiscoverableAsset{
+			Name:    e.Name(),
+			Path:    utils.ToLibPath(path.Join(project.FullPath(), e.Name())),
+			Project: project,
 		})
 
 	}
