@@ -3,6 +3,8 @@ package printers
 import (
 	"time"
 
+	"github.com/eduardooliveira/stLib/core/integrations/octorpint"
+
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
@@ -34,6 +36,8 @@ func checkConnection() {
 			switch p.Type {
 			case "klipper":
 				klipper.ConnectionStatus(p)
+			case "octoPrint":
+				octorpint.ConnectionStatus(p)
 			}
 		}
 		time.Sleep(10 * time.Second)
