@@ -1,6 +1,7 @@
 package printers
 
 import (
+	"github.com/eduardooliveira/stLib/core/integrations/octorpint"
 	"log"
 	"time"
 
@@ -32,6 +33,8 @@ func checkConnection() {
 			switch p.Type {
 			case "klipper":
 				klipper.ConntectionStatus(p)
+			case "octoPrint":
+				octorpint.ConnectionStatus(p)
 			}
 		}
 		time.Sleep(10 * time.Second)
