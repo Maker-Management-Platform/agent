@@ -22,6 +22,7 @@ import (
 func index(c echo.Context) error {
 	rtn := make([]*entities.Printer, 0)
 	for _, p := range state.Printers {
+		p.ApiKey = ""
 		rtn = append(rtn, p)
 	}
 	return c.JSON(http.StatusOK, rtn)
@@ -30,7 +31,7 @@ func index(c echo.Context) error {
 func show(c echo.Context) error {
 	uuid := c.Param("uuid")
 	printer, ok := state.Printers[uuid]
-
+	printer.ApiKey = ""
 	if !ok {
 		return c.NoContent(http.StatusNotFound)
 	}
