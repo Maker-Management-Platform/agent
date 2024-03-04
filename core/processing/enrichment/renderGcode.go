@@ -18,15 +18,20 @@ import (
 )
 
 type gcodeRenderer struct{}
+
+func NewGCodeRenderer() *gcodeRenderer {
+	return &gcodeRenderer{}
+}
+
 type tmpImg struct {
 	Height int
 	Width  int
 	Data   []byte
 }
 
-func (g *gcodeRenderer) render(job RenderJob) (string, error) {
-	imgName := fmt.Sprintf("%s.thumb.png", job.Asset().Name)
-	imgPath := utils.ToLibPath(path.Join(job.Project().FullPath(), imgName))
+func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
+	imgName := fmt.Sprintf("%s.%s.t.png", job.Asset().ProjectUUID, job.Asset().ID)
+	imgPath := utils.ToGeneratedPath(imgName)
 	if _, err := os.Stat(imgPath); err == nil {
 		return imgName, errors.New("already exists")
 	}

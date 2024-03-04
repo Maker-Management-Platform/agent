@@ -2,15 +2,10 @@ package database
 
 import (
 	"github.com/eduardooliveira/stLib/core/entities"
-	"gorm.io/gorm"
 )
 
 func initAssets() error {
-	if err := DB.AutoMigrate(&entities.ProjectAsset{}); err != nil {
-		return err
-	}
-
-	return DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&entities.ProjectAsset{}).Error
+	return DB.AutoMigrate(&entities.ProjectAsset{})
 }
 
 func InsertAsset(a *entities.ProjectAsset) error {
@@ -39,4 +34,8 @@ func DeleteAsset(id string) (err error) {
 
 func UpdateAssetImage(id string, imageID string) (err error) {
 	return DB.Model(&entities.ProjectAsset{ID: id}).Update("image_id", imageID).Error
+}
+
+func UpdateAssetProperties(id string, properties entities.AssetProperties) error {
+	return DB.Model(&entities.ProjectAsset{ID: id}).Update("properties", properties).Error
 }

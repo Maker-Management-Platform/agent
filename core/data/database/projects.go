@@ -2,15 +2,10 @@ package database
 
 import (
 	models "github.com/eduardooliveira/stLib/core/entities"
-	"gorm.io/gorm"
 )
 
 func initProjects() error {
-	if err := DB.AutoMigrate(&models.Project{}); err != nil {
-		return err
-	}
-
-	return DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Project{}).Error
+	return DB.AutoMigrate(&models.Project{})
 }
 
 func InsertProject(p *models.Project) error {

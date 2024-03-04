@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -108,12 +109,19 @@ func getAsset(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	var assetPath string
+	if asset.Generated {
+		assetPath = utils.ToGeneratedPath(asset.Name)
+	} else {
+		assetPath = utils.ToLibPath(path.Join(project.FullPath(), asset.Name))
+	}
+
 	if c.QueryParam("download") != "" {
-		return c.Attachment(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)), asset.Name)
+		return c.Attachment(assetPath, asset.Name)
 
 	}
 
-	return c.Inline(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), asset.Name)), asset.Name)
+	return c.Inline(assetPath, asset.Name)
 }
 
 func save(c echo.Context) error {

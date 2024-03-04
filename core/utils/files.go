@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/sha1"
+	"crypto/sha512"
 	"errors"
 	"fmt"
 	"io"
@@ -28,11 +29,33 @@ func GetFileSha1(path string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
+func GetFileSha512(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha512.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func ToLibPath(p string) string {
 	if strings.HasPrefix(p, runtime.Cfg.Library.Path) {
 		return p
 	}
 	return path.Clean(path.Join(runtime.Cfg.Library.Path, p))
+}
+
+func ToGeneratedPath(p string) string {
+	generatedPath := path.Join(runtime.GetDataPath(), "generated")
+	if strings.HasPrefix(p, generatedPath) {
+		return p
+	}
+	return path.Clean(path.Join(generatedPath, p))
 }
 
 func Move(src, dst string, toLibPath bool) error {
