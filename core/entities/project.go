@@ -37,6 +37,7 @@ func NewProjectFromPath(path string) *Project {
 	return project
 }
 
+// Deprecated: .project.stlib is deprecated, all will be stored in data.db
 func tryLoadFromFile(path string) *Project {
 	p := NewProject()
 	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", path)), &p)

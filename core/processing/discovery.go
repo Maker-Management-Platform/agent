@@ -5,14 +5,12 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -34,27 +32,38 @@ func walker(path string, d fs.DirEntry, err error) error {
 		return nil
 	}
 
-	path, _ = filepath.Rel(runtime.Cfg.Library.Path, path)
-	project := entities.NewProjectFromPath(path)
+	folder, _ := filepath.Rel(runtime.Cfg.Library.Path, path)
+	if folder == "." {
+		return nil
+	}
+
+	newProject := true
+	project := entities.NewProjectFromPath(folder)
+	if p, err := database.GetProjectByPathAndName(project.Path, project.Name); err == nil {
+		project = p
+		newProject = false
+	}
 
 	dAssets, err := DiscoverAssets(project)
 	if err != nil {
 		return err
 	}
 
-	if !project.Initialized {
+	if newProject {
 		project.Tags = append(project.Tags, pathToTags(project.Path)...)
 	}
 
 	if len(dAssets) > 0 {
-		project.Initialized = true
+		if newProject {
+			if err := utils.CreateAssetsFolder(project.UUID); err != nil {
+				log.Println(err)
+				return err
+			}
+			if err := database.InsertProject(project); err != nil {
+				log.Println(err)
+			}
+		}
 
-		if err := database.InsertProject(project); err != nil {
-			log.Println(err)
-		}
-		if err := state.PersistProject(project); err != nil {
-			log.Println(err)
-		}
 		for _, dAsset := range dAssets {
 			EnqueueInitJob(dAsset)
 		}
@@ -81,8 +90,8 @@ func DiscoverAssets(project *entities.Project) (assets []*processableAsset, err 
 		}
 		dAssets = append(dAssets, &processableAsset{
 			name:    e.Name(),
-			path:    utils.ToLibPath(path.Join(project.FullPath(), e.Name())),
 			project: project,
+			origin:  "fs",
 		})
 
 	}

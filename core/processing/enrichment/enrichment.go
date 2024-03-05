@@ -2,6 +2,11 @@ package enrichment
 
 import "github.com/eduardooliveira/stLib/core/entities"
 
+type Extracted struct {
+	Label string
+	File  string
+}
+
 type Enrichable interface {
 	Asset() *entities.ProjectAsset
 	Project() *entities.Project
@@ -16,5 +21,5 @@ type Parser interface {
 }
 
 type Extractor interface {
-	Extract(Enrichable) ([]string, error)
+	Extract(Enrichable) ([]*Extracted, error)
 }

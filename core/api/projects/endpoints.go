@@ -8,121 +8,16 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
-	"github.com/morkid/paginate"
 	"gorm.io/gorm"
 )
-
-func index(c echo.Context) error {
-	config := paginate.Config{
-		FieldSelectorEnabled: true,
-	}
-	pg := paginate.New(config)
-
-	q := database.DB.Debug().Model(&models.Project{}).Preload("Tags")
-
-	if c.QueryParams().Has("name") {
-		q.Where("name LIKE ?", fmt.Sprintf("%%%s%%", c.QueryParam("name")))
-	}
-	if c.QueryParams().Has("tags") {
-		for i, t := range strings.Split(c.QueryParam("tags"), ",") {
-			q.Joins(fmt.Sprintf("LEFT JOIN project_tags as project_tags%d on project_tags%d.project_uuid = projects.uuid", i, i)).
-				Where(fmt.Sprintf("project_tags%d.tag_value = ?", i), t)
-		}
-
-	}
-	q.Order("name ASC")
-	page := pg.With(q).Request(c.Request()).Response(&[]models.Project{})
-	if page.RawError != nil {
-		log.Println(page.RawError)
-		return echo.NewHTTPError(http.StatusInternalServerError, page.RawError.Error())
-	}
-	return c.JSON(http.StatusOK, page)
-}
-
-func list(c echo.Context) error {
-	rtn, err := database.GetProjectNames()
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(http.StatusOK, rtn)
-}
-
-func show(c echo.Context) error {
-	uuid := c.Param("uuid")
-	rtn, err := database.GetProject(uuid)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(http.StatusOK, rtn)
-}
-
-func showAssets(c echo.Context) error {
-	uuid := c.Param("uuid")
-	if uuid == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("missing project uuid"))
-	}
-	rtn, err := database.GetAssetsByProject(uuid)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(http.StatusOK, rtn)
-}
-
-func getAsset(c echo.Context) error {
-	project, err := database.GetProject(c.Param("uuid"))
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	asset, err := database.GetProjectAsset(project.UUID, c.Param("id"))
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	var assetPath string
-	if asset.Generated {
-		assetPath = utils.ToGeneratedPath(asset.Name)
-	} else {
-		assetPath = utils.ToLibPath(path.Join(project.FullPath(), asset.Name))
-	}
-
-	if c.QueryParam("download") != "" {
-		return c.Attachment(assetPath, asset.Name)
-
-	}
-
-	return c.Inline(assetPath, asset.Name)
-}
 
 func save(c echo.Context) error {
 	form, err := c.MultipartForm()
@@ -137,7 +32,7 @@ func save(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("more payloads than expected"))
 	}
 
-	pproject := &models.Project{}
+	pproject := &entities.Project{}
 
 	err = json.Unmarshal([]byte(projectPayload[0]), pproject)
 	if err != nil {
@@ -191,10 +86,10 @@ func save(c echo.Context) error {
 }
 
 type CreateProject struct {
-	Name             string        `json:"name"`
-	Description      string        `json:"description"`
-	DefaultImageName string        `json:"default_image_name"`
-	Tags             []*models.Tag `json:"tags"`
+	Name             string          `json:"name"`
+	Description      string          `json:"description"`
+	DefaultImageName string          `json:"default_image_name"`
+	Tags             []*entities.Tag `json:"tags"`
 }
 
 func new(c echo.Context) error {
@@ -225,7 +120,7 @@ func new(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	project := models.NewProject()
+	project := entities.NewProject()
 	project.Name = createProject.Name
 	project.Path = "/"
 	project.Description = createProject.Description
@@ -300,7 +195,7 @@ func new(c echo.Context) error {
 }
 
 func moveHandler(c echo.Context) error {
-	pproject := &models.Project{}
+	pproject := &entities.Project{}
 
 	if err := c.Bind(pproject); err != nil {
 		log.Println(err)
@@ -352,7 +247,7 @@ func moveHandler(c echo.Context) error {
 }
 
 func setMainImageHandler(c echo.Context) error {
-	pproject := &models.Project{}
+	pproject := &entities.Project{}
 
 	if err := c.Bind(pproject); err != nil {
 		log.Println(err)

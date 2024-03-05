@@ -37,7 +37,8 @@ func (n AssetProperties) Value() (driver.Value, error) {
 type ProjectAsset struct {
 	ID           string          `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
 	Name         string          `json:"name" toml:"name" form:"name" query:"name"`
-	Generated    bool            `json:"generated" toml:"generated" form:"generated" query:"generated"`
+	Label        string          `json:"label" toml:"label" form:"label" query:"label"`
+	Origin       string          `json:"generation" toml:"generation" form:"generation" query:"generation"`
 	ProjectUUID  string          `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
 	project      *Project        `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size         int64           `json:"size" toml:"size" form:"size" query:"size"`
@@ -59,7 +60,6 @@ var GeneratedExtensions = []string{".thumb.png", ".render.png"}
 func NewProjectAsset(fileName string, project *Project, file *os.File) (*ProjectAsset, []*ProjectAsset, error) {
 	var asset = &ProjectAsset{
 		Name:        fileName,
-		Generated:   false,
 		ProjectUUID: project.UUID,
 		project:     project,
 	}
@@ -95,31 +95,32 @@ func NewProjectAsset(fileName string, project *Project, file *os.File) (*Project
 	}
 	for _, ext := range GeneratedExtensions {
 		if strings.HasSuffix(asset.Name, ext) {
-			asset.Generated = true
+			asset.Origin = ""
 		}
 		for _, nestedAsset := range nestedAssets {
 			if strings.HasSuffix(nestedAsset.Name, ext) {
-				nestedAsset.Generated = true
+				nestedAsset.Origin = "true"
 			}
 		}
 	}
 
 	return asset, nestedAssets, err
 }
-func NewProjectAsset2(fileName string, project *Project, generated bool) (*ProjectAsset, error) {
+func NewProjectAsset2(fileName string, label string, project *Project, origin string) (*ProjectAsset, error) {
 	var asset = &ProjectAsset{
 		Name:        fileName,
-		Generated:   generated,
+		Label:       label,
+		Origin:      origin,
 		ProjectUUID: project.UUID,
 		project:     project,
 		Properties:  make(map[string]any),
 	}
 
 	var fullFilePath string
-	if generated {
-		fullFilePath = utils.ToGeneratedPath(fileName)
-	} else {
+	if origin == "fs" {
 		fullFilePath = utils.ToLibPath(path.Join(project.FullPath(), fileName))
+	} else {
+		fullFilePath = utils.ToAssetsPath(project.UUID, fileName)
 	}
 
 	var err error

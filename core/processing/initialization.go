@@ -8,14 +8,14 @@ import (
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/queue"
 	"github.com/eduardooliveira/stLib/core/state"
+	"gorm.io/gorm"
 )
 
 type DiscoverableAsset struct {
-	Name      string
-	Path      string
-	Generated bool
-	Project   *entities.Project
-	Parent    *entities.ProjectAsset
+	Name    string
+	Path    string
+	Project *entities.Project
+	Parent  *entities.ProjectAsset
 }
 
 func EnqueueInitJob(asset *processableAsset) {
@@ -25,7 +25,11 @@ func EnqueueInitJob(asset *processableAsset) {
 func (pa *processableAsset) JobAction() {
 	log.Println("Initializing asset", pa.name)
 	var err error
-	pa.asset, err = entities.NewProjectAsset2(pa.name, pa.project, pa.generated)
+	if _, err = database.GetAssetByProjectAndName(pa.project.UUID, pa.name); err != gorm.ErrRecordNotFound {
+		log.Println("Asset already exists")
+		return
+	}
+	pa.asset, err = entities.NewProjectAsset2(pa.name, pa.label, pa.project, pa.origin)
 	if err != nil {
 		log.Println(err)
 		return

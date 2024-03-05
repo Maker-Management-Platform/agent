@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -18,7 +18,7 @@ import (
 )
 
 func index(c echo.Context) error {
-	rtn := make([]*models.Printer, 0)
+	rtn := make([]*entities.Printer, 0)
 	for _, p := range state.Printers {
 		rtn = append(rtn, p)
 	}
@@ -82,14 +82,14 @@ func sendHandler(c echo.Context) error {
 
 func new(c echo.Context) error {
 
-	pPrinter := &models.Printer{}
+	pPrinter := &entities.Printer{}
 	err := c.Bind(pPrinter)
 
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	printer := models.NewPrinter()
+	printer := entities.NewPrinter()
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
@@ -163,7 +163,7 @@ func stream(c echo.Context) error {
 }
 
 func edit(c echo.Context) error {
-	pPrinter := &models.Printer{}
+	pPrinter := &entities.Printer{}
 
 	if err := c.Bind(pPrinter); err != nil {
 		log.Println(err)
@@ -192,7 +192,7 @@ func edit(c echo.Context) error {
 
 func testConnection(c echo.Context) error {
 
-	pPrinter := &models.Printer{}
+	pPrinter := &entities.Printer{}
 	err := c.Bind(pPrinter)
 
 	if err != nil {

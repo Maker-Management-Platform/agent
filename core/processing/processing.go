@@ -5,12 +5,12 @@ import (
 )
 
 type processableAsset struct {
-	name      string
-	path      string
-	project   *entities.Project
-	asset     *entities.ProjectAsset
-	parent    *entities.ProjectAsset
-	generated bool
+	name    string
+	label   string
+	project *entities.Project
+	asset   *entities.ProjectAsset
+	parent  *entities.ProjectAsset
+	origin  string
 }
 
 func (p *processableAsset) Name() string {

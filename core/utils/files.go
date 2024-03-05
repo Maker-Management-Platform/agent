@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -43,6 +44,12 @@ func GetFileSha512(path string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
+func GetStringSha512(s string) string {
+	h := sha512.New()
+	h.Write([]byte(s))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
 func ToLibPath(p string) string {
 	if strings.HasPrefix(p, runtime.Cfg.Library.Path) {
 		return p
@@ -50,12 +57,13 @@ func ToLibPath(p string) string {
 	return path.Clean(path.Join(runtime.Cfg.Library.Path, p))
 }
 
-func ToGeneratedPath(p string) string {
-	generatedPath := path.Join(runtime.GetDataPath(), "generated")
-	if strings.HasPrefix(p, generatedPath) {
-		return p
-	}
-	return path.Clean(path.Join(generatedPath, p))
+func ToAssetsPath(p, f string) string {
+	return path.Clean(path.Join(runtime.GetDataPath(), "assets", p, f))
+}
+
+func CreateAssetsFolder(p string) error {
+	assetsPath := filepath.Join(runtime.GetDataPath(), "assets")
+	return CreateFolder(filepath.Join(assetsPath, p))
 }
 
 func Move(src, dst string, toLibPath bool) error {

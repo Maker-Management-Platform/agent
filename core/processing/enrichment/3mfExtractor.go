@@ -20,9 +20,9 @@ func New3MFExtractor() *mfExtractor {
 	return &mfExtractor{}
 }
 
-func (me *mfExtractor) Extract(e Enrichable) ([]string, error) {
-	rtn := make([]string, 0)
-	baseName := fmt.Sprintf("%s.%s.e", e.Asset().ProjectUUID, e.Asset().ID)
+func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
+	rtn := make([]*Extracted, 0)
+	baseName := fmt.Sprintf("%s.e", e.Asset().ID)
 	path := utils.ToLibPath(filepath.Join(e.Project().FullPath(), e.Asset().Name))
 
 	archive, err := zip.OpenReader(path)
@@ -32,7 +32,7 @@ func (me *mfExtractor) Extract(e Enrichable) ([]string, error) {
 	}
 	defer archive.Close()
 
-	for _, f := range archive.File {
+	for i, f := range archive.File {
 		ext := filepath.Ext(f.Name)
 		// Only allow image files the platform supports
 		if !slices.Contains(state.AssetTypes["image"].Extensions, ext) {
@@ -43,8 +43,8 @@ func (me *mfExtractor) Extract(e Enrichable) ([]string, error) {
 		if strings.Contains(f.Name, ".thumbnails/") {
 			continue
 		}
-		dstName := fmt.Sprintf("%s%s", baseName, ext)
-		dstFile, err := os.OpenFile(utils.ToGeneratedPath(dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		dstName := fmt.Sprintf("%s%d%s", baseName, i, ext)
+		dstFile, err := os.OpenFile(utils.ToAssetsPath(e.Asset().ProjectUUID, dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			log.Println(err)
 			continue
@@ -62,7 +62,10 @@ func (me *mfExtractor) Extract(e Enrichable) ([]string, error) {
 			log.Println(err)
 			continue
 		}
-		rtn = append(rtn, dstName)
+		rtn = append(rtn, &Extracted{
+			File:  dstName,
+			Label: f.Name,
+		})
 
 	}
 

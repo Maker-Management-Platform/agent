@@ -50,16 +50,17 @@ func enrichementRoutine(renderers map[string]enrichment.Renderer, extractors map
 }
 
 func extract(p *processableAsset, extractor enrichment.Extractor) error {
-	files, err := extractor.Extract(p)
+	excracted, err := extractor.Extract(p)
 	if err != nil {
 		return err
 	}
-	for _, file := range files {
+	for _, e := range excracted {
 		EnqueueInitJob(&processableAsset{
-			name:      file,
-			parent:    p.asset,
-			project:   p.project,
-			generated: true,
+			name:    e.File,
+			label:   e.Label,
+			parent:  p.asset,
+			project: p.project,
+			origin:  "extract",
 		})
 	}
 	return nil
@@ -71,10 +72,10 @@ func render(p *processableAsset, renderer enrichment.Renderer) error {
 		return err
 	}
 	EnqueueInitJob(&processableAsset{
-		name:      file,
-		parent:    p.asset,
-		project:   p.project,
-		generated: true,
+		name:    file,
+		parent:  p.asset,
+		project: p.project,
+		origin:  "render",
 	})
 	return nil
 }

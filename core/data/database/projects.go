@@ -31,6 +31,10 @@ func GetProject(uuid string) (rtn *models.Project, err error) {
 	return rtn, DB.Where(&models.Project{UUID: uuid}).Preload("Tags").First(&rtn).Error
 }
 
+func GetProjectByPathAndName(path string, name string) (rtn *models.Project, err error) {
+	return rtn, DB.Where(&models.Project{Path: path, Name: name}).First(&rtn).Error
+}
+
 func DeleteProject(uuid string) (err error) {
 	return DB.Where(&models.Project{UUID: uuid}).Delete(&models.Project{}).Error
 }

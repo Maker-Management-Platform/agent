@@ -46,8 +46,8 @@ func NewSTLRenderer() *stlRenderer {
 }
 
 func (s *stlRenderer) Render(job Enrichable) (string, error) {
-	renderName := fmt.Sprintf("%s.%s.r.png", job.Asset().ProjectUUID, job.Asset().ID)
-	renderSavePath := utils.ToGeneratedPath(renderName)
+	renderName := fmt.Sprintf("%s.r.png", job.Asset().ID)
+	renderSavePath := utils.ToAssetsPath(job.Asset().ProjectUUID, renderName)
 
 	if _, err := os.Stat(renderSavePath); err == nil {
 		return renderName, errors.New("already exists")
