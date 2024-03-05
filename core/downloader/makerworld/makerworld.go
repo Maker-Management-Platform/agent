@@ -19,8 +19,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
-	models "github.com/eduardooliveira/stLib/core/entities"
-	"github.com/eduardooliveira/stLib/core/state"
+	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"golang.org/x/net/html"
 )
@@ -28,7 +27,7 @@ import (
 type mwClient struct {
 	client    *http.Client
 	userAgent string
-	project   *models.Project
+	project   *entities.Project
 	metadata  *makerWorldMetaData
 }
 
@@ -51,7 +50,7 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	}
 	httpClient.Jar.SetCookies(u, cookies)
 
-	project := models.NewProject()
+	project := entities.NewProject()
 
 	mwc := &mwClient{
 		client:    httpClient,
@@ -70,7 +69,7 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 		return err
 	}
 
-	assets := make([]*models.ProjectAsset, 0)
+	assets := make([]*entities.ProjectAsset, 0)
 	as, err := mwc.fetchCover()
 	if err != nil {
 		log.Println("error fetching cover")
@@ -106,21 +105,18 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	}
 
 	project.Initialized = true
-	if err = state.PersistProject(project); err != nil {
-		return err
-	}
 
 	return database.InsertProject(project)
 }
 
-func (mwc *mwClient) fetchCover() (assets []*models.ProjectAsset, err error) {
+func (mwc *mwClient) fetchCover() (assets []*entities.ProjectAsset, err error) {
 	req, err := http.NewRequest("GET", mwc.metadata.Props.PageProps.Design.CoverURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("User-Agent", mwc.userAgent)
 
-	assets = make([]*models.ProjectAsset, 0)
+	assets = make([]*entities.ProjectAsset, 0)
 	asset, nestedAssets, err := tools.DownloadAsset(path.Base(mwc.metadata.Props.PageProps.Design.CoverURL), mwc.project, mwc.client, req)
 	if err != nil {
 		log.Println("Error fetchig cover, skiping: ", err)
@@ -133,7 +129,7 @@ func (mwc *mwClient) fetchCover() (assets []*models.ProjectAsset, err error) {
 	return
 }
 
-func (mwc *mwClient) fetchPictures() (assets []*models.ProjectAsset, err error) {
+func (mwc *mwClient) fetchPictures() (assets []*entities.ProjectAsset, err error) {
 	for _, p := range mwc.metadata.Props.PageProps.Design.DesignExtension.DesignPictures {
 		req, err := http.NewRequest("GET", p.URL, nil)
 		if err != nil {
@@ -141,7 +137,7 @@ func (mwc *mwClient) fetchPictures() (assets []*models.ProjectAsset, err error) 
 		}
 		req.Header.Add("User-Agent", mwc.userAgent)
 
-		assets = make([]*models.ProjectAsset, 0)
+		assets = make([]*entities.ProjectAsset, 0)
 		asset, nestedAssets, err := tools.DownloadAsset(p.Name, mwc.project, mwc.client, req)
 		if err != nil {
 			log.Println("Error fetchig image, skiping: ", err)
@@ -154,7 +150,7 @@ func (mwc *mwClient) fetchPictures() (assets []*models.ProjectAsset, err error) 
 	return
 }
 
-func (mwc *mwClient) fetchModels() (assets []*models.ProjectAsset, err error) {
+func (mwc *mwClient) fetchModels() (assets []*entities.ProjectAsset, err error) {
 	for _, m := range mwc.metadata.Props.PageProps.Design.DesignExtension.ModelFiles {
 		req, err := http.NewRequest("GET", m.ModelURL, nil)
 		if err != nil {
@@ -162,7 +158,7 @@ func (mwc *mwClient) fetchModels() (assets []*models.ProjectAsset, err error) {
 		}
 		req.Header.Add("User-Agent", mwc.userAgent)
 
-		assets = make([]*models.ProjectAsset, 0)
+		assets = make([]*entities.ProjectAsset, 0)
 		asset, nestedAssets, err := tools.DownloadAsset(m.ModelName, mwc.project, mwc.client, req)
 		if err != nil {
 			log.Println("Error fetchig model, skiping: ", err)
@@ -175,9 +171,9 @@ func (mwc *mwClient) fetchModels() (assets []*models.ProjectAsset, err error) {
 	return
 }
 
-func (mwc *mwClient) fetchInstances() (assets []*models.ProjectAsset, err error) {
+func (mwc *mwClient) fetchInstances() (assets []*entities.ProjectAsset, err error) {
 
-	assets = make([]*models.ProjectAsset, 0)
+	assets = make([]*entities.ProjectAsset, 0)
 	for _, m := range mwc.metadata.Props.PageProps.Design.Instances {
 		sl := rand.Intn(6000-3000) + 3000
 		log.Println("sleeping: ", sl)
@@ -261,9 +257,9 @@ func (mwc *mwClient) fetchDetails(url *url.URL) (*makerWorldMetaData, error) {
 
 	mwc.project.Name = metadata.Props.PageProps.Design.Title
 	mwc.project.Description = metadata.Props.PageProps.Design.Summary
-	mwc.project.Tags = models.StringsToTags(metadata.Props.PageProps.Design.Tags)
+	mwc.project.Tags = entities.StringsToTags(metadata.Props.PageProps.Design.Tags)
 	for _, c := range metadata.Props.PageProps.Design.Categories {
-		mwc.project.Tags = append(mwc.project.Tags, models.StringToTag(c.Name))
+		mwc.project.Tags = append(mwc.project.Tags, entities.StringToTag(c.Name))
 	}
 	mwc.project.ExternalLink = url.String()
 

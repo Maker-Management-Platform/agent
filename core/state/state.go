@@ -1,7 +1,6 @@
 package state
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -9,7 +8,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/utils"
 )
 
 var TempFiles = make(map[string]*entities.TempFile)
@@ -18,20 +16,6 @@ var AssetTypes = make(map[string]*entities.AssetType)
 var ExtensionProjectType = make(map[string]*entities.AssetType)
 var printersFile string
 var assetTypesFile string
-
-func PersistProject(project *entities.Project) error {
-	f, err := os.OpenFile(fmt.Sprintf("%s/.project.stlib", utils.ToLibPath(project.FullPath())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		log.Println(err)
-	}
-	if err := toml.NewEncoder(f).Encode(project); err != nil {
-		log.Println(err)
-	}
-	if err := f.Close(); err != nil {
-		log.Println(err)
-	}
-	return err
-}
 
 func PersistPrinters() error {
 	f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)

@@ -13,7 +13,6 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -66,13 +65,6 @@ func save(c echo.Context) error {
 			log.Println(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-
-	err = state.PersistProject(pproject)
-
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	err = database.UpdateProject(pproject)
@@ -226,13 +218,6 @@ func moveHandler(c echo.Context) error {
 
 	project.Path = filepath.Clean(pproject.Path)
 
-	err = state.PersistProject(project)
-
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
 	err = database.UpdateProject(project)
 
 	if err != nil {
@@ -269,13 +254,6 @@ func setMainImageHandler(c echo.Context) error {
 
 	if pproject.DefaultImageID != project.DefaultImageID {
 		project.DefaultImageID = pproject.DefaultImageID
-	}
-
-	err = state.PersistProject(project)
-
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	err = database.UpdateProject(project)

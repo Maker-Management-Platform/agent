@@ -12,9 +12,8 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
-	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -36,7 +35,7 @@ func Fetch(url string) error {
 
 	httpClient := &http.Client{}
 
-	project := models.NewProject()
+	project := entities.NewProject()
 
 	err := fetchDetails(id, project, httpClient)
 	if err != nil {
@@ -73,14 +72,10 @@ func Fetch(url string) error {
 
 	project.Initialized = true
 
-	if err = state.PersistProject(project); err != nil {
-		return err
-	}
-
 	return database.InsertProject(project)
 }
 
-func fetchDetails(id string, project *models.Project, httpClient *http.Client) error {
+func fetchDetails(id string, project *entities.Project, httpClient *http.Client) error {
 	u := &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id}
 	project.ExternalLink = u.String()
 
@@ -106,7 +101,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	project.Description = thing.Description
 
 	for _, tag := range thing.Tags {
-		project.Tags = append(project.Tags, models.StringToTag(tag.Name))
+		project.Tags = append(project.Tags, entities.StringToTag(tag.Name))
 	}
 
 	log.Println("Downloading details for thing: ", thing.Name)
@@ -114,7 +109,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 	return nil
 }
 
-func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
+func fetchFiles(id string, project *entities.Project, httpClient *http.Client) ([]*entities.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
@@ -134,7 +129,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]
 	}
 
 	req.Method = "GET"
-	rtn := make([]*models.ProjectAsset, 0)
+	rtn := make([]*entities.ProjectAsset, 0)
 
 	for _, file := range files {
 
@@ -155,7 +150,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]
 	return rtn, nil
 }
 
-func fetchImages(id string, project *models.Project, httpClient *http.Client) ([]*models.ProjectAsset, error) {
+func fetchImages(id string, project *entities.Project, httpClient *http.Client) ([]*entities.ProjectAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
@@ -175,7 +170,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) ([
 	}
 
 	req.Method = "GET"
-	rtn := make([]*models.ProjectAsset, 0)
+	rtn := make([]*entities.ProjectAsset, 0)
 
 	for _, image := range tImages {
 
