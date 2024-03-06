@@ -20,7 +20,7 @@ func NewGCodeParser() *gCodeParser {
 }
 
 func (p *gCodeParser) Parse(e Enrichable) error {
-	path := utils.ToLibPath(path.Join(e.Project().FullPath(), e.Asset().Name))
+	path := utils.ToLibPath(path.Join(e.GetProject().FullPath(), e.GetAsset().Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (p *gCodeParser) Parse(e Enrichable) error {
 			line := strings.Trim(scanner.Text(), " ;")
 
 			if !strings.HasPrefix(line, "thumbnail begin") {
-				parseComment(e.Asset(), line)
+				parseComment(e.GetAsset(), line)
 			}
 
 		}

@@ -57,13 +57,18 @@ func ToLibPath(p string) string {
 	return path.Clean(path.Join(runtime.Cfg.Library.Path, p))
 }
 
-func ToAssetsPath(p, f string) string {
+func ToAssetsPath(p string, f string) string {
 	return path.Clean(path.Join(runtime.GetDataPath(), "assets", p, f))
 }
 
 func CreateAssetsFolder(p string) error {
 	assetsPath := filepath.Join(runtime.GetDataPath(), "assets")
 	return CreateFolder(filepath.Join(assetsPath, p))
+}
+
+func DeleteAssetsFolder(p string) error {
+	assetsPath := filepath.Join(runtime.GetDataPath(), "assets")
+	return os.RemoveAll(filepath.Join(assetsPath, p))
 }
 
 func Move(src, dst string, toLibPath bool) error {

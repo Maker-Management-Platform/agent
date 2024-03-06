@@ -31,7 +31,7 @@ func NewProjectFromPath(path string) *Project {
 		return p
 	}
 
-	project := NewProject()
+	project := newProject()
 	project.Path = filepath.Clean(fmt.Sprintf("/%s", filepath.Dir(path)))
 	project.Name = filepath.Base(path)
 	return project
@@ -39,7 +39,7 @@ func NewProjectFromPath(path string) *Project {
 
 // Deprecated: .project.stlib is deprecated, all will be stored in data.db
 func tryLoadFromFile(path string) *Project {
-	p := NewProject()
+	p := newProject()
 	_, err := toml.DecodeFile(utils.ToLibPath(fmt.Sprintf("%s/.project.stlib", path)), &p)
 	if err != nil {
 		return nil
@@ -48,12 +48,17 @@ func tryLoadFromFile(path string) *Project {
 	return p
 }
 
-func NewProject() *Project {
-	project := &Project{
-		UUID:        uuid.New().String(),
-		Initialized: false,
-		Tags:        make([]*Tag, 0),
-		Assets:      make(map[string]*ProjectAsset),
-	}
+func NewProject(name string) *Project {
+	project := newProject()
+	project.Name = name
+	project.Path = "/"
 	return project
+}
+
+func newProject() *Project {
+	return &Project{
+		UUID:   uuid.New().String(),
+		Tags:   make([]*Tag, 0),
+		Assets: make(map[string]*ProjectAsset),
+	}
 }

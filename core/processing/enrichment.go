@@ -6,7 +6,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/processing/enrichment"
 )
 
-var enrichmentQueue = make(chan *processableAsset, 256)
+var enrichmentQueue = make(chan *ProcessableAsset, 256)
 
 func init() {
 	renderers := make(map[string]enrichment.Renderer, 0)
@@ -20,62 +20,62 @@ func init() {
 	go enrichementRoutine(renderers, extractors, parsers)
 }
 
-func QueueEnrichmentJob(job *processableAsset) {
+func QueueEnrichmentJob(job *ProcessableAsset) {
 	enrichmentQueue <- job
-	log.Println("enrichment queue size: ", len(enrichmentQueue), " + ", job.Name())
+	log.Println("enrichment queue size: ", len(enrichmentQueue), " + ", job.Name)
 }
 
 func enrichementRoutine(renderers map[string]enrichment.Renderer, extractors map[string]enrichment.Extractor, parsers map[string]enrichment.Parser) {
 	for {
 		job := <-enrichmentQueue
-		if renderer, ok := renderers[job.asset.Extension]; ok {
+		if renderer, ok := renderers[job.Asset.Extension]; ok {
 			if err := render(job, renderer); err != nil {
 				log.Println(err)
 			}
 		}
-		if extractor, ok := extractors[job.asset.Extension]; ok {
+		if extractor, ok := extractors[job.Asset.Extension]; ok {
 			if err := extract(job, extractor); err != nil {
 				log.Println(err)
 			}
 		}
-		if parser, ok := parsers[job.asset.Extension]; ok {
+		if parser, ok := parsers[job.Asset.Extension]; ok {
 			if err := parser.Parse(job); err != nil {
 				log.Println(err)
 			}
 		}
 
 		job.OnEnrichmentComplete(nil)
-		log.Println("enrichment queue size: ", len(enrichmentQueue), " - ", job.Name())
+		log.Println("enrichment queue size: ", len(enrichmentQueue), " - ", job.Name)
 	}
 }
 
-func extract(p *processableAsset, extractor enrichment.Extractor) error {
+func extract(p *ProcessableAsset, extractor enrichment.Extractor) error {
 	excracted, err := extractor.Extract(p)
 	if err != nil {
 		return err
 	}
 	for _, e := range excracted {
-		EnqueueInitJob(&processableAsset{
-			name:    e.File,
-			label:   e.Label,
-			parent:  p.asset,
-			project: p.project,
-			origin:  "extract",
+		EnqueueInitJob(&ProcessableAsset{
+			Name:    e.File,
+			Label:   e.Label,
+			Parent:  p.Asset,
+			Project: p.Project,
+			Origin:  "extract",
 		})
 	}
 	return nil
 }
 
-func render(p *processableAsset, renderer enrichment.Renderer) error {
+func render(p *ProcessableAsset, renderer enrichment.Renderer) error {
 	file, err := renderer.Render(p)
 	if err != nil {
 		return err
 	}
-	EnqueueInitJob(&processableAsset{
-		name:    file,
-		parent:  p.asset,
-		project: p.project,
-		origin:  "render",
+	EnqueueInitJob(&ProcessableAsset{
+		Name:    file,
+		Parent:  p.Asset,
+		Project: p.Project,
+		Origin:  "render",
 	})
 	return nil
 }

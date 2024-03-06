@@ -1,4 +1,4 @@
-package projects
+package assets
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func showAssets(c echo.Context) error {
+func List(c echo.Context) error {
 	uuid := c.Param("uuid")
 	if uuid == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, errors.New("missing project uuid"))

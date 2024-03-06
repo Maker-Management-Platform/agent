@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/core/api/assets"
 	"github.com/eduardooliveira/stLib/core/api/projects"
 	"github.com/eduardooliveira/stLib/core/api/system"
 	"github.com/eduardooliveira/stLib/core/api/tags"
@@ -70,7 +69,6 @@ func Run() {
 	events.Register(api.Group("/events"))
 	projects.Register(api.Group("/projects"))
 	tags.Register(api.Group("/tags"))
-	assets.Register(api.Group("/assets"))
 	tempfiles.Register(api.Group("/tempfiles"))
 	printers.Register(api.Group("/printers"))
 	downloader.Register(api.Group("/downloader"))

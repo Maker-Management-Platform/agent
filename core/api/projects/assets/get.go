@@ -1,4 +1,4 @@
-package projects
+package assets
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func getAsset(c echo.Context) error {
+func Get(c echo.Context) error {
 	project, err := database.GetProject(c.Param("uuid"))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

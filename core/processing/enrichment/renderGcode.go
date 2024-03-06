@@ -30,13 +30,13 @@ type tmpImg struct {
 }
 
 func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
-	imgName := fmt.Sprintf("%s.r.png", job.Asset().ID)
-	imgPath := utils.ToAssetsPath(job.Asset().ProjectUUID, imgName)
+	imgName := fmt.Sprintf("%s.r.png", job.GetAsset().ID)
+	imgPath := utils.ToAssetsPath(job.GetAsset().ProjectUUID, imgName)
 	if _, err := os.Stat(imgPath); err == nil {
 		return imgName, errors.New("already exists")
 	}
 
-	path := utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name))
+	path := utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return "", err

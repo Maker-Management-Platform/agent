@@ -35,7 +35,7 @@ func Fetch(url string) error {
 
 	httpClient := &http.Client{}
 
-	project := entities.NewProject()
+	project := entities.NewProject("CHANGE ME")
 
 	err := fetchDetails(id, project, httpClient)
 	if err != nil {

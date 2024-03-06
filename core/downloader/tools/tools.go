@@ -37,3 +37,18 @@ func DownloadAsset(name string, project *models.Project, client *http.Client, re
 
 	return models.NewProjectAsset(name, project, out)
 }
+
+func SaveFile(dst string, f io.Reader) error {
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

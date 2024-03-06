@@ -50,7 +50,7 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	}
 	httpClient.Jar.SetCookies(u, cookies)
 
-	project := entities.NewProject()
+	project := entities.NewProject("CHANGE ME")
 
 	mwc := &mwClient{
 		client:    httpClient,

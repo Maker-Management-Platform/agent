@@ -18,18 +18,18 @@ type DiscoverableAsset struct {
 	Parent  *entities.ProjectAsset
 }
 
-func EnqueueInitJob(asset *processableAsset) {
+func EnqueueInitJob(asset *ProcessableAsset) {
 	queue.Enqueue(asset)
 }
 
-func (pa *processableAsset) JobAction() {
-	log.Println("Initializing asset", pa.name)
+func (pa *ProcessableAsset) JobAction() {
+	log.Println("Initializing asset", pa.Name)
 	var err error
-	if _, err = database.GetAssetByProjectAndName(pa.project.UUID, pa.name); err != gorm.ErrRecordNotFound {
+	if _, err = database.GetAssetByProjectAndName(pa.Project.UUID, pa.Name); err != gorm.ErrRecordNotFound {
 		log.Println("Asset already exists")
 		return
 	}
-	pa.asset, err = entities.NewProjectAsset2(pa.name, pa.label, pa.project, pa.origin)
+	pa.Asset, err = entities.NewProjectAsset2(pa.Name, pa.Label, pa.Project, pa.Origin)
 	if err != nil {
 		log.Println(err)
 		return
@@ -39,50 +39,50 @@ func (pa *processableAsset) JobAction() {
 		log.Println(err)
 		return
 	}
-	if pa.asset.AssetType == "image" {
-		if pa.project.DefaultImageID == "" {
-			pa.project.DefaultImageID = pa.asset.ID
-			err = database.SetProjectDefaultImage(pa.project.UUID, pa.asset.ID)
+	if pa.Asset.AssetType == "image" {
+		if pa.Project.DefaultImageID == "" {
+			pa.Project.DefaultImageID = pa.Asset.ID
+			err = database.SetProjectDefaultImage(pa.Project.UUID, pa.Asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
 		}
-		if pa.parent != nil {
-			err = database.UpdateAssetImage(pa.parent.ID, pa.asset.ID)
+		if pa.Parent != nil {
+			err = database.UpdateAssetImage(pa.Parent.ID, pa.Asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
 		}
 	}
-	err = database.InsertAsset(pa.asset)
+	err = database.InsertAsset(pa.Asset)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 }
 
-func (pa *processableAsset) JobName() string {
-	return fmt.Sprintf("Initialize %s", pa.name)
+func (pa *ProcessableAsset) JobName() string {
+	return fmt.Sprintf("Initialize %s", pa.Name)
 }
 
-func processType(pa *processableAsset) error {
+func processType(pa *ProcessableAsset) error {
 	var err error
 
-	if t, ok := state.ExtensionProjectType[pa.asset.Extension]; ok {
-		pa.asset.AssetType = t.Name
+	if t, ok := state.ExtensionProjectType[pa.Asset.Extension]; ok {
+		pa.Asset.AssetType = t.Name
 	}
 	QueueEnrichmentJob(pa)
 
 	return err
 }
 
-func (pa *processableAsset) OnEnrichmentComplete(err error) {
+func (pa *ProcessableAsset) OnEnrichmentComplete(err error) {
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	if err = database.UpdateAssetProperties(pa.asset.ID, pa.asset.Properties); err != nil {
+	if err = database.UpdateAssetProperties(pa.Asset.ID, pa.Asset.Properties); err != nil {
 		log.Println(err)
 		return
 	}

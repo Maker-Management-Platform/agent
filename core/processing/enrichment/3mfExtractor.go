@@ -22,8 +22,8 @@ func New3MFExtractor() *mfExtractor {
 
 func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
 	rtn := make([]*Extracted, 0)
-	baseName := fmt.Sprintf("%s.e", e.Asset().ID)
-	path := utils.ToLibPath(filepath.Join(e.Project().FullPath(), e.Asset().Name))
+	baseName := fmt.Sprintf("%s.e", e.GetAsset().ID)
+	path := utils.ToLibPath(filepath.Join(e.GetProject().FullPath(), e.GetAsset().Name))
 
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -44,7 +44,7 @@ func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
 			continue
 		}
 		dstName := fmt.Sprintf("%s%d%s", baseName, i, ext)
-		dstFile, err := os.OpenFile(utils.ToAssetsPath(e.Asset().ProjectUUID, dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		dstFile, err := os.OpenFile(utils.ToAssetsPath(e.GetAsset().ProjectUUID, dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			log.Println(err)
 			continue

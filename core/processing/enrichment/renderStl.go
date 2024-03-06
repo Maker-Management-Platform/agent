@@ -46,14 +46,14 @@ func NewSTLRenderer() *stlRenderer {
 }
 
 func (s *stlRenderer) Render(job Enrichable) (string, error) {
-	renderName := fmt.Sprintf("%s.r.png", job.Asset().ID)
-	renderSavePath := utils.ToAssetsPath(job.Asset().ProjectUUID, renderName)
+	renderName := fmt.Sprintf("%s.r.png", job.GetAsset().ID)
+	renderSavePath := utils.ToAssetsPath(job.GetAsset().ProjectUUID, renderName)
 
 	if _, err := os.Stat(renderSavePath); err == nil {
 		return renderName, errors.New("already exists")
 	}
 
-	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.Project().FullPath(), job.Asset().Name)))
+	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name)))
 	if err != nil {
 		log.Println(err)
 		return "", err

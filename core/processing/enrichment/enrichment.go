@@ -8,8 +8,8 @@ type Extracted struct {
 }
 
 type Enrichable interface {
-	Asset() *entities.ProjectAsset
-	Project() *entities.Project
+	GetAsset() *entities.ProjectAsset
+	GetProject() *entities.Project
 }
 
 type Renderer interface {

@@ -36,7 +36,11 @@ func walker(path string, d fs.DirEntry, err error) error {
 	if folder == "." {
 		return nil
 	}
+	_, err = HandlePath(folder)
+	return err
+}
 
+func HandlePath(folder string) (*entities.Project, error) {
 	newProject := true
 	project := entities.NewProjectFromPath(folder)
 	if p, err := database.GetProjectByPathAndName(project.Path, project.Name); err == nil {
@@ -44,9 +48,9 @@ func walker(path string, d fs.DirEntry, err error) error {
 		newProject = false
 	}
 
-	dAssets, err := DiscoverAssets(project)
+	dAssets, err := discoverAssets(project)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if newProject {
@@ -57,7 +61,7 @@ func walker(path string, d fs.DirEntry, err error) error {
 		if newProject {
 			if err := utils.CreateAssetsFolder(project.UUID); err != nil {
 				log.Println(err)
-				return err
+				return nil, err
 			}
 			if err := database.InsertProject(project); err != nil {
 				log.Println(err)
@@ -68,10 +72,10 @@ func walker(path string, d fs.DirEntry, err error) error {
 			EnqueueInitJob(dAsset)
 		}
 	}
-	return nil
+	return project, nil
 }
 
-func DiscoverAssets(project *entities.Project) (assets []*processableAsset, err error) {
+func discoverAssets(project *entities.Project) (assets []*ProcessableAsset, err error) {
 	projectPath := utils.ToLibPath(project.FullPath())
 
 	entries, err := os.ReadDir(projectPath)
@@ -79,7 +83,7 @@ func DiscoverAssets(project *entities.Project) (assets []*processableAsset, err 
 		log.Println("failed to read path", projectPath)
 		return nil, err
 	}
-	dAssets := make([]*processableAsset, 0)
+	dAssets := make([]*ProcessableAsset, 0)
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -88,10 +92,10 @@ func DiscoverAssets(project *entities.Project) (assets []*processableAsset, err 
 		if shouldSkipFile(e.Name()) {
 			continue
 		}
-		dAssets = append(dAssets, &processableAsset{
-			name:    e.Name(),
-			project: project,
-			origin:  "fs",
+		dAssets = append(dAssets, &ProcessableAsset{
+			Name:    e.Name(),
+			Project: project,
+			Origin:  "fs",
 		})
 
 	}
