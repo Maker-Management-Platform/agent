@@ -66,6 +66,11 @@ func NewProjectSlice(fileName string, asset *ProjectAsset, project *Project, fil
 		log.Println("Error parsing gecode for ", fileName, err)
 		return s, nil, nil
 	}
+
+	if nestedAsset == nil {
+		return s, []*ProjectAsset{}, nil
+	}
+
 	return s, []*ProjectAsset{nestedAsset}, nil
 }
 

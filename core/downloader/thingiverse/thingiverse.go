@@ -3,6 +3,7 @@ package thingiverse
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -20,7 +21,7 @@ import (
 
 func Fetch(url string) error {
 
-	if runtime.Cfg.ThingiverseToken == "" {
+	if runtime.Cfg.Integrations.Thingiverse.Token == "" {
 		return errors.New("missing Thingiverse api token")
 	}
 
@@ -42,6 +43,7 @@ func Fetch(url string) error {
 	if err != nil {
 		return err
 	}
+	project.Name = fmt.Sprintf("%s %s", id, project.Name)
 
 	if err = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm); err != nil {
 		log.Println("error creating project folder")
@@ -88,7 +90,7 @@ func fetchDetails(id string, project *models.Project, httpClient *http.Client) e
 		Method: "GET",
 		URL:    u,
 		Header: http.Header{
-			"Authorization": []string{"Bearer " + runtime.Cfg.ThingiverseToken},
+			"Authorization": []string{"Bearer " + runtime.Cfg.Integrations.Thingiverse.Token},
 		},
 	}
 	res, err := httpClient.Do(req)
@@ -119,7 +121,7 @@ func fetchFiles(id string, project *models.Project, httpClient *http.Client) ([]
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
 		Header: http.Header{
-			"Authorization": []string{"Bearer " + runtime.Cfg.ThingiverseToken},
+			"Authorization": []string{"Bearer " + runtime.Cfg.Integrations.Thingiverse.Token},
 		},
 	}
 	res, err := httpClient.Do(req)
@@ -160,7 +162,7 @@ func fetchImages(id string, project *models.Project, httpClient *http.Client) ([
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
 		Header: http.Header{
-			"Authorization": []string{"Bearer " + runtime.Cfg.ThingiverseToken},
+			"Authorization": []string{"Bearer " + runtime.Cfg.Integrations.Thingiverse.Token},
 		},
 	}
 	res, err := httpClient.Do(req)

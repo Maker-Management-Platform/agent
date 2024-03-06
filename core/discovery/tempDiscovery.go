@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
@@ -14,14 +16,23 @@ import (
 
 func RunTempDiscovery() {
 	log.Println("Discovering Temp files")
-	entries, err := os.ReadDir("temp")
+
+	tempPath := filepath.Clean(path.Join(runtime.GetDataPath(), "temp"))
+	if _, err := os.Stat(tempPath); os.IsNotExist(err) {
+		err := os.MkdirAll(tempPath, os.ModePerm)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
+	entries, err := os.ReadDir(tempPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, e := range entries {
 		blacklisted := false
-		for _, blacklist := range runtime.Cfg.FileBlacklist {
+		for _, blacklist := range runtime.Cfg.Library.Blacklist {
 			if strings.HasSuffix(e.Name(), blacklist) {
 				blacklisted = true
 				break

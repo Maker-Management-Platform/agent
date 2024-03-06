@@ -2,7 +2,6 @@ package printers
 
 import (
 	"github.com/eduardooliveira/stLib/core/integrations/octorpint"
-	"log"
 	"time"
 
 	"github.com/eduardooliveira/stLib/core/integrations/klipper"
@@ -18,9 +17,13 @@ func Register(e *echo.Group) {
 	group.POST("", new)
 	group.GET("", index)
 	group.GET("/:uuid", show)
+	group.GET("/:uuid/stream", stream)
+	group.GET("/:uuid/status", statusHandler)
 	group.POST("/:uuid", edit)
 	group.POST("/:uuid/delete", deleteHandler)
 	group.GET("/:uuid/send/:id", sendHandler)
+	group.GET("/:uuid/subscribe/:session", subscribe)
+	group.GET("/:uuid/unsubscribe/:session", unSubscribe)
 	group.POST("/test", testConnection)
 
 	go checkConnection()
@@ -28,11 +31,10 @@ func Register(e *echo.Group) {
 
 func checkConnection() {
 	for {
-		log.Println("Checking printer connectivity")
 		for _, p := range state.Printers {
 			switch p.Type {
 			case "klipper":
-				klipper.ConntectionStatus(p)
+				klipper.ConnectionStatus(p)
 			case "octoPrint":
 				octorpint.ConnectionStatus(p)
 			}

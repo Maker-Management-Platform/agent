@@ -5,21 +5,20 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 
+	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/models"
+	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 )
 
 func index(c echo.Context) error {
-	rtn := make([]*models.TempFile, 0)
-	for _, t := range state.TempFiles {
-		rtn = append(rtn, t)
-	}
-	return c.JSON(http.StatusOK, rtn)
+	return c.JSON(http.StatusOK, maputil.Values[string, *models.TempFile](state.TempFiles))
 }
 
 func move(c echo.Context) error {
@@ -55,7 +54,7 @@ func move(c echo.Context) error {
 
 	dst := utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), tempFile.Name))
 
-	err = os.Rename(filepath.Clean(fmt.Sprintf("temp/%s", tempFile.Name)), dst)
+	err = utils.Move(filepath.Clean(path.Join(runtime.GetDataPath(), "temp", tempFile.Name)), dst, false)
 
 	if err != nil {
 		log.Println("Error moving temp file: ", err)
@@ -110,7 +109,7 @@ func deleteTempFile(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	err := os.Remove(fmt.Sprintf("temp/%s", tempFile.Name))
+	err := os.Remove(path.Join(runtime.GetDataPath(), "temp", tempFile.Name))
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
