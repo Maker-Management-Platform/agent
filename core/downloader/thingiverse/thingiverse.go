@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"time"
 
@@ -42,32 +41,25 @@ func Fetch(url string) error {
 		return err
 	}
 
-	if err = os.Mkdir(utils.ToLibPath(project.FullPath()), os.ModePerm); err != nil {
+	if err = utils.CreateFolder(utils.ToLibPath(project.FullPath())); err != nil {
 		log.Println("error creating project folder")
 		return err
 	}
 
-	files, err := fetchFiles(id, project, httpClient)
+	if err = utils.CreateAssetsFolder(project.UUID); err != nil {
+		log.Println("error creating assets folder")
+		return err
+	}
+
+	err = fetchFiles(id, project, httpClient)
 	if err != nil {
 		log.Println("error fetching files")
 		return err
 	}
-	images, err := fetchImages(id, project, httpClient)
+	err = fetchImages(id, project, httpClient)
 	if err != nil {
 		log.Println("error fetching images")
 		return err
-	}
-
-	for _, a := range files {
-		if err := database.InsertAsset(a); err != nil {
-			log.Println(err)
-		}
-	}
-
-	for _, a := range images {
-		if err := database.InsertAsset(a); err != nil {
-			log.Println(err)
-		}
 	}
 
 	project.Initialized = true
@@ -109,7 +101,7 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 	return nil
 }
 
-func fetchFiles(id string, project *entities.Project, httpClient *http.Client) ([]*entities.ProjectAsset, error) {
+func fetchFiles(id string, project *entities.Project, httpClient *http.Client) error {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
@@ -119,38 +111,34 @@ func fetchFiles(id string, project *entities.Project, httpClient *http.Client) (
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
 	var files []*ThingFile
 	if err := json.NewDecoder(res.Body).Decode(&files); err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Method = "GET"
-	rtn := make([]*entities.ProjectAsset, 0)
 
 	for _, file := range files {
 
 		req.URL, _ = url.Parse(file.DownloadURL)
 
-		asset, nestedAssets, err := tools.DownloadAsset(file.Name, project, httpClient, req)
+		err := tools.DownloadAsset(file.Name, project, httpClient, req)
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		rtn = append(rtn, asset)
-		rtn = append(rtn, nestedAssets...)
 
 	}
 
 	log.Printf("Downloaded %d files\n", len(files))
 
-	return rtn, nil
+	return nil
 }
 
-func fetchImages(id string, project *entities.Project, httpClient *http.Client) ([]*entities.ProjectAsset, error) {
+func fetchImages(id string, project *entities.Project, httpClient *http.Client) error {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
@@ -160,17 +148,16 @@ func fetchImages(id string, project *entities.Project, httpClient *http.Client) 
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
 	var tImages []*ThingImage
 	if err := json.NewDecoder(res.Body).Decode(&tImages); err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Method = "GET"
-	rtn := make([]*entities.ProjectAsset, 0)
 
 	for _, image := range tImages {
 
@@ -179,15 +166,11 @@ func fetchImages(id string, project *entities.Project, httpClient *http.Client) 
 
 				req.URL, _ = url.Parse(size.URL)
 
-				asset, nestedAssets, err := tools.DownloadAsset(image.Name, project, httpClient, req)
+				err := tools.DownloadAsset(image.Name, project, httpClient, req)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
-				rtn = append(rtn, asset)
-				rtn = append(rtn, nestedAssets...)
-
-				project.DefaultImageID = asset.ID
 			}
 		}
 
@@ -195,7 +178,7 @@ func fetchImages(id string, project *entities.Project, httpClient *http.Client) 
 
 	log.Printf("Downloaded %d images\n", len(tImages))
 
-	return rtn, nil
+	return nil
 }
 
 type ThingImage struct {
