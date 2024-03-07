@@ -1,0 +1,12 @@
+[image]
+name = "image"
+label = "Images"
+extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+[model]
+name = "model"
+label = "Models"
+extensions = [".stl", ".3fm"]
+[slice]
+name = "slice"
+label = "Slices"
+extensions = [".gcode"]
