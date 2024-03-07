@@ -3,6 +3,7 @@ package thingiverse
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 		return err
 	}
 
-	project.Name = thing.Name
+	project.Name = fmt.Sprintf("%d %s", thing.ID, thing.Name)
 	project.Description = thing.Description
 
 	for _, tag := range thing.Tags {
