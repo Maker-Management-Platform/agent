@@ -2,15 +2,23 @@
 name = "image"
 label = "Images"
 extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+order = 1
 #[pdf]
 #name = "pdf"
-#label = "pdf"
+#label = "PDF's"
 #extensions = [".pdf"]
 [model]
 name = "model"
 label = "Models"
 extensions = [".stl", ".3fm"]
+order = 0
 [slice]
 name = "slice"
 label = "Slices"
 extensions = [".gcode"]
+order = 2
+[source]
+name = "source"
+label = "Sources"
+extensions = [".stp", ".step", ".fbx"]
+order = 99
