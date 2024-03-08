@@ -12,6 +12,10 @@ func InsertAsset(a *entities.ProjectAsset) error {
 	return DB.Create(a).Error
 }
 
+func SaveAsset(a *entities.ProjectAsset) error {
+	return DB.Save(a).Error
+}
+
 func GetAssetsByProject(uuid string) (rtn []*entities.ProjectAsset, err error) {
 	return rtn, DB.Order("name").Where(&entities.ProjectAsset{ProjectUUID: uuid}).Find(&rtn).Error
 }
