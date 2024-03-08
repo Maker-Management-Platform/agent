@@ -2,6 +2,10 @@
 name = "image"
 label = "Images"
 extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+#[pdf]
+#name = "pdf"
+#label = "pdf"
+#extensions = [".pdf"]
 [model]
 name = "model"
 label = "Models"

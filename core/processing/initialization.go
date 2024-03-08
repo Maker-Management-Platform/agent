@@ -71,6 +71,8 @@ func processType(pa *ProcessableAsset) error {
 
 	if t, ok := state.ExtensionProjectType[pa.Asset.Extension]; ok {
 		pa.Asset.AssetType = t.Name
+	} else {
+		pa.Asset.AssetType = "other"
 	}
 	QueueEnrichmentJob(pa)
 
