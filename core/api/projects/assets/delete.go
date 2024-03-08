@@ -51,7 +51,7 @@ func Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	if asset.ImageID != "" {
+	if asset.ImageID != "" && asset.ID != asset.ImageID {
 
 		var image *entities.ProjectAsset
 

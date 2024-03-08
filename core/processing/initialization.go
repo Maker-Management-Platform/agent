@@ -40,6 +40,7 @@ func (pa *ProcessableAsset) JobAction() {
 		return
 	}
 	if pa.Asset.AssetType == "image" {
+		pa.Asset.ImageID = pa.Asset.ID
 		if pa.Project.DefaultImageID == "" {
 			pa.Project.DefaultImageID = pa.Asset.ID
 			err = database.SetProjectDefaultImage(pa.Project.UUID, pa.Asset.ID)

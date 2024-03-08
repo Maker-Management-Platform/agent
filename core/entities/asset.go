@@ -37,7 +37,7 @@ type ProjectAsset struct {
 	ID          string          `json:"id" toml:"id" form:"id" query:"id" gorm:"primaryKey"`
 	Name        string          `json:"name" toml:"name" form:"name" query:"name"`
 	Label       string          `json:"label" toml:"label" form:"label" query:"label"`
-	Origin      string          `json:"generation" toml:"generation" form:"generation" query:"generation"`
+	Origin      string          `json:"origin" toml:"origin" form:"origin" query:"origin"`
 	ProjectUUID string          `json:"project_uuid" toml:"project_uuid" form:"project_uuid" query:"project_uuid"`
 	project     *Project        `json:"-" toml:"-" form:"-" query:"-" gorm:"foreignKey:ProjectUUID"`
 	Size        int64           `json:"size" toml:"size" form:"size" query:"size"`
@@ -47,7 +47,6 @@ type ProjectAsset struct {
 	MimeType    string          `json:"mime_type" toml:"mime_type" form:"mime_type" query:"mime_type"`
 	ImageID     string          `json:"image_id" toml:"image_id" form:"image_id" query:"image_id"`
 	Properties  AssetProperties `json:"properties" toml:"properties" form:"properties" query:"properties"`
-	State       string          `json:"state" toml:"state" form:"state" query:"state"`
 }
 
 func NewProjectAsset2(fileName string, label string, project *Project, origin string) (*ProjectAsset, error) {
