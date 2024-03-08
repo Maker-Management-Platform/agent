@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/eduardooliveira/stLib/core/integrations/octorpint"
 	"io"
 	"log"
 	"net/http"
@@ -28,7 +29,6 @@ func index(c echo.Context) error {
 func show(c echo.Context) error {
 	uuid := c.Param("uuid")
 	printer, ok := state.Printers[uuid]
-
 	if !ok {
 		return c.NoContent(http.StatusNotFound)
 	}
@@ -72,6 +72,11 @@ func sendHandler(c echo.Context) error {
 	if printer.Type == "klipper" {
 		err = klipper.UploadFile(printer, asset)
 	}
+
+	if printer.Type == "octoPrint" {
+		err = octorpint.UploadFile(printer, asset)
+	}
+
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -93,6 +98,7 @@ func new(c echo.Context) error {
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
+	printer.ApiKey = pPrinter.ApiKey
 
 	state.Printers[printer.UUID] = printer
 	state.PersistPrinters()
@@ -183,6 +189,7 @@ func edit(c echo.Context) error {
 	printer.Name = pPrinter.Name
 	printer.Address = pPrinter.Address
 	printer.Type = pPrinter.Type
+	printer.ApiKey = pPrinter.ApiKey
 
 	state.Printers[printer.UUID] = printer
 	state.PersistPrinters()
@@ -201,6 +208,10 @@ func testConnection(c echo.Context) error {
 
 	if pPrinter.Type == "klipper" {
 		err = klipper.ConnectionStatus(pPrinter)
+		log.Println(err)
+		return c.JSON(http.StatusOK, pPrinter)
+	} else if pPrinter.Type == "octoPrint" {
+		err = octorpint.ConnectionStatus(pPrinter)
 		log.Println(err)
 		return c.JSON(http.StatusOK, pPrinter)
 	}
