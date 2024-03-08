@@ -8,6 +8,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/queue"
 	"github.com/eduardooliveira/stLib/core/state"
+	"github.com/eduardooliveira/stLib/core/system"
 )
 
 type DiscoverableAsset struct {
@@ -23,6 +24,7 @@ func EnqueueInitJob(asset *ProcessableAsset) {
 
 func (pa *ProcessableAsset) JobAction() {
 	log.Println("Initializing asset", pa.Name)
+	system.Publish("discovery", pa.Name)
 	var err error
 	if a, err := database.GetAssetByProjectAndName(pa.Project.UUID, pa.Name); err != nil && a != nil {
 		pa.Asset = a

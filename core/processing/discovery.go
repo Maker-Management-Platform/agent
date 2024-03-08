@@ -11,6 +11,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -56,6 +57,7 @@ func HandlePath(folder string) (*entities.Project, error) {
 	if newProject {
 		project.Tags = append(project.Tags, pathToTags(project.Path)...)
 	}
+	system.Publish("discovery", project.Name)
 
 	if len(dAssets) > 0 {
 		if newProject {
