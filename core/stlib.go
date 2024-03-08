@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	assettypes "github.com/eduardooliveira/stLib/core/api/assetTypes"
 	"github.com/eduardooliveira/stLib/core/api/projects"
 	"github.com/eduardooliveira/stLib/core/api/system"
 	"github.com/eduardooliveira/stLib/core/api/tags"
@@ -73,5 +74,6 @@ func Run() {
 	printers.Register(api.Group("/printers"))
 	downloader.Register(api.Group("/downloader"))
 	system.Register(api.Group("/system"))
+	assettypes.Register(api.Group("/assettypes"))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", runtime.Cfg.Server.Port)))
 }
