@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
@@ -16,7 +17,10 @@ import (
 )
 
 func Run(path string) {
+	time.Sleep(5 * time.Second)
+	system.Publish("discovery.scan", map[string]any{"state": "started"})
 	err := filepath.WalkDir(path, walker)
+	system.Publish("discovery.scan", map[string]any{"state": "finished"})
 	if err != nil {
 		fmt.Printf("error walking the path %q: %v\n", path, err)
 		return
@@ -57,7 +61,6 @@ func HandlePath(folder string) (*entities.Project, error) {
 	if newProject {
 		project.Tags = append(project.Tags, pathToTags(project.Path)...)
 	}
-	system.Publish("discovery", project.Name)
 
 	if len(dAssets) > 0 {
 		if newProject {

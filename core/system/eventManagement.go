@@ -25,7 +25,7 @@ func (em *eventManagement) OnNewSub() error {
 }
 
 func (em *eventManagement) Read() chan *events.Message {
-	rtn := make(chan *events.Message, 10)
+	rtn := make(chan *events.Message, 100)
 	eventName := "system.state"
 	go func() {
 		for {
@@ -54,7 +54,7 @@ func GetEventPublisher() *eventManagement {
 
 func init() {
 	eventManager = &eventManagement{}
-	systemEvents = make(chan *systemEvent, 1)
+	systemEvents = make(chan *systemEvent, 100)
 }
 
 func Publish(name string, data any) {

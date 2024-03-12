@@ -4,13 +4,15 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func Get(c echo.Context) error {
+func GetFile(c echo.Context) error {
 	project, err := database.GetProject(c.Param("uuid"))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -29,5 +31,17 @@ func Get(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, asset)
+	var assetPath string
+	if asset.Origin == "fs" {
+		assetPath = utils.ToLibPath(path.Join(project.FullPath(), asset.Name))
+	} else {
+		assetPath = utils.ToAssetsPath(project.UUID, asset.Name)
+	}
+
+	if c.QueryParam("download") != "" {
+		return c.Attachment(assetPath, asset.Name)
+
+	}
+
+	return c.Inline(assetPath, asset.Name)
 }
