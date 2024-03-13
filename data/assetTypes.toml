@@ -20,5 +20,5 @@ order = 2
 [source]
 name = "source"
 label = "Sources"
-extensions = [".stp", ".step", ".fbx"]
+extensions = [".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"]
 order = 99

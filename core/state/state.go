@@ -18,7 +18,7 @@ var printersFile string
 var assetTypesFile string
 
 func PersistPrinters() error {
-	f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		log.Println(err)
 	}
@@ -63,6 +63,43 @@ func LoadAssetTypes() error {
 	_, err = toml.DecodeFile(assetTypesFile, &AssetTypes)
 	if err != nil {
 		log.Println("error loading asset types")
+	}
+
+	if len(AssetTypes) == 0 {
+		AssetTypes["model"] = &entities.AssetType{
+			Name:       "model",
+			Label:      "Models",
+			Extensions: []string{".stl", ".3fm"},
+			Order:      0,
+		}
+		AssetTypes["image"] = &entities.AssetType{
+			Name:       "image",
+			Label:      "Images",
+			Extensions: []string{".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"},
+			Order:      1,
+		}
+		AssetTypes["slice"] = &entities.AssetType{
+			Name:       "slice",
+			Label:      "Slices",
+			Extensions: []string{".gcode"},
+			Order:      2,
+		}
+		AssetTypes["source"] = &entities.AssetType{
+			Name:       "source",
+			Label:      "Sources",
+			Extensions: []string{".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"},
+			Order:      99,
+		}
+		f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
+		if err := toml.NewEncoder(f).Encode(Printers); err != nil {
+			log.Println(err)
+		}
+		if err := f.Close(); err != nil {
+			log.Println(err)
+		}
 	}
 
 	for _, assetType := range AssetTypes {
