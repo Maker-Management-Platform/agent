@@ -90,11 +90,11 @@ func LoadAssetTypes() error {
 			Extensions: []string{".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"},
 			Order:      99,
 		}
-		f, err := os.OpenFile(printersFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		f, err := os.OpenFile(assetTypesFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 		if err != nil {
 			log.Println(err)
 		}
-		if err := toml.NewEncoder(f).Encode(Printers); err != nil {
+		if err := toml.NewEncoder(f).Encode(AssetTypes); err != nil {
 			log.Println(err)
 		}
 		if err := f.Close(); err != nil {
