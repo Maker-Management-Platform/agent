@@ -17,6 +17,13 @@ import (
 )
 
 func Run(path string) {
+	tempPath := filepath.Clean(filepath.Join(runtime.GetDataPath(), "assets"))
+	if _, err := os.Stat(tempPath); os.IsNotExist(err) {
+		err := os.MkdirAll(tempPath, os.ModePerm)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
 	time.Sleep(5 * time.Second)
 	system.Publish("discovery.scan", map[string]any{"state": "started"})
 	err := filepath.WalkDir(path, walker)
