@@ -44,7 +44,7 @@ func tryLoadFromFile(path string) *Project {
 	if err != nil {
 		return nil
 	}
-	p.Initialized = true
+	p.DefaultImageID = ""
 	return p
 }
 
