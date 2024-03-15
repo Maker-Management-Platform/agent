@@ -24,13 +24,14 @@ func EnqueueInitJob(asset *ProcessableAsset) {
 func (pa *ProcessableAsset) JobAction() {
 	log.Println("Initializing asset", pa.Name)
 	var err error
-	if a, err := database.GetAssetByProjectAndName(pa.Project.UUID, pa.Name); err != nil && a != nil {
+	if a, err := database.GetAssetByProjectAndName(pa.Project.UUID, pa.Name); err == nil && a.ID != "" {
 		pa.Asset = a
-	}
-	pa.Asset, err = entities.NewProjectAsset2(pa.Name, pa.Label, pa.Project, pa.Origin)
-	if err != nil {
-		log.Println(err)
-		return
+	} else {
+		pa.Asset, err = entities.NewProjectAsset2(pa.Name, pa.Label, pa.Project, pa.Origin)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 	err = processType(pa)
 	if err != nil {
@@ -41,13 +42,13 @@ func (pa *ProcessableAsset) JobAction() {
 		pa.Asset.ImageID = pa.Asset.ID
 		if pa.Project.DefaultImageID == "" {
 			pa.Project.DefaultImageID = pa.Asset.ID
-			err = database.SetProjectDefaultImage(pa.Project.UUID, pa.Asset.ID)
+			err = database.SetProjectDefaultImage(pa.Project, pa.Asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
 		}
 		if pa.Parent != nil {
-			err = database.UpdateAssetImage(pa.Parent.ID, pa.Asset.ID)
+			err = database.UpdateAssetImage(pa.Parent, pa.Asset.ID)
 			if err != nil {
 				log.Println(err)
 			}
@@ -83,7 +84,7 @@ func (pa *ProcessableAsset) OnEnrichmentComplete(err error) {
 		return
 	}
 
-	if err = database.UpdateAssetProperties(pa.Asset.ID, pa.Asset.Properties); err != nil {
+	if err = database.UpdateAssetProperties(pa.Asset, pa.Asset.Properties); err != nil {
 		log.Println(err)
 		return
 	}

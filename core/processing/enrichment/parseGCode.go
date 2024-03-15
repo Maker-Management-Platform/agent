@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -26,6 +27,7 @@ func (p *gCodeParser) Parse(e Enrichable) error {
 		return err
 	}
 	defer f.Close()
+	system.Publish("parser", e.GetAsset().Name)
 
 	scanner := bufio.NewScanner(f)
 

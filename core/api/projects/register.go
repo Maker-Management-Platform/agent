@@ -23,5 +23,6 @@ func Register(e *echo.Group) {
 	group.GET("/:uuid/assets", assets.List)
 	group.POST("/:uuid/assets", assets.New)
 	group.GET("/:uuid/assets/:id", assets.Get)
+	group.GET("/:uuid/assets/:id/file", assets.GetFile)
 	group.POST("/:uuid/assets/:id/delete", assets.Delete)
 }

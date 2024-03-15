@@ -18,6 +18,7 @@ COPY --from=go /app/main ./
 
 RUN mkdir /data
 RUN mkdir /data/temp
+RUN mkdir /data/assets
 
 RUN chmod +x main
 

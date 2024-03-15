@@ -1,6 +1,7 @@
 package system
 
 import (
+	"errors"
 	"io/fs"
 	"net/http"
 	"os"
@@ -8,8 +9,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/exp/maps"
 )
@@ -64,5 +67,32 @@ func saveSettings(c echo.Context) error {
 
 func runDiscovery(c echo.Context) error {
 	go processing.Run(runtime.Cfg.Library.Path)
+	return c.NoContent(http.StatusOK)
+}
+
+func subscribe(c echo.Context) error {
+
+	session := c.Param("session")
+	if session == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("no session provided").Error())
+	}
+
+	err := events.Subscribe(session, "system.state", system.GetEventPublisher())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func unSubscribe(c echo.Context) error {
+
+	session := c.Param("session")
+	if session == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("no session provided").Error())
+	}
+
+	events.UnSubscribe(session, "system.state")
+
 	return c.NoContent(http.StatusOK)
 }

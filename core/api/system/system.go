@@ -12,4 +12,6 @@ func Register(e *echo.Group) {
 	group.GET("/settings", settings)
 	group.POST("/settings", saveSettings)
 	group.GET("/discovery", runDiscovery)
+	group.GET("/events/subscribe/:session", subscribe)
+	group.GET("/events/unsubscribe/:session", unSubscribe)
 }

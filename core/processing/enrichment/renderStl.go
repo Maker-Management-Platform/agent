@@ -9,6 +9,7 @@ import (
 
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/nfnt/resize"
 )
@@ -52,6 +53,8 @@ func (s *stlRenderer) Render(job Enrichable) (string, error) {
 	if _, err := os.Stat(renderSavePath); err == nil {
 		return renderName, errors.New("already exists")
 	}
+
+	system.Publish("render", job.GetAsset().Name)
 
 	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name)))
 	if err != nil {

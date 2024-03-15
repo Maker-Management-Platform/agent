@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -35,6 +36,7 @@ func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
 	if _, err := os.Stat(imgPath); err == nil {
 		return imgName, errors.New("already exists")
 	}
+	system.Publish("render", job.GetAsset().Name)
 
 	path := utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name))
 	f, err := os.Open(path)
