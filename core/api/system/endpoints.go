@@ -2,13 +2,14 @@ package system
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
@@ -30,14 +31,14 @@ func paths(c echo.Context) error {
 			return nil
 		}
 
-		entries, _ := os.ReadDir(path)
-
-		for _, e := range entries {
-			if !e.IsDir() && strings.Contains(e.Name(), ".project.stlib") {
-				return nil
-			}
-		}
 		path = strings.TrimLeft(path, runtime.Cfg.Library.Path)
+		projectsPath := filepath.Clean(fmt.Sprintf("/%s", filepath.Dir(path)))
+		projectName := filepath.Base(path)
+
+		if p, err := database.GetProjectByPathAndName(projectsPath, projectName); err == nil && p.UUID != "" {
+			return nil
+		}
+
 		rtn[path] = void{}
 
 		return nil
