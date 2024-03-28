@@ -99,7 +99,7 @@ jobs:
               go-version: '1.21'
               cache-dependency-path: go.sum
           
-          - run: go build -o artifacts/ main.go 
+          - run: go build -o artifacts/mmp main.go 
             env:
               GOOS: ${{ matrix.goos }}
               GOARCH: ${{ matrix.goarch }}
