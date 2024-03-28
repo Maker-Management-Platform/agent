@@ -104,5 +104,5 @@ jobs:
               GOOS: ${{ matrix.goos }}
               GOARCH: ${{ matrix.goarch }}
 
-          - run: ls -la
+          - run: ls -laR
             name: ${{ matrix.goos }} - ${{ matrix.goarch }}
