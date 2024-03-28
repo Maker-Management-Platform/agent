@@ -90,7 +90,7 @@ jobs:
           
           - uses: actions/download-artifact@v3
             with:
-              name: build/ui
+              name: ui
               path: artifacts/ui
 
           - name: Setup Go
@@ -99,10 +99,10 @@ jobs:
               go-version: '1.21'
               cache-dependency-path: go.sum
           
-          - run: go build -o build/ main.go 
+          - run: go build -o artifacts/ main.go 
             env:
               GOOS: ${{ matrix.goos }}
               GOARCH: ${{ matrix.goarch }}
 
-          - run: ls -laR ./build
+          - run: ls -laR ./artifacts
             name: ${{ matrix.goos }} - ${{ matrix.goarch }}
