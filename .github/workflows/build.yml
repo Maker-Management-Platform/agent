@@ -60,7 +60,7 @@ jobs:
             - run: npm ci
             - run: npm run build --if-present
     
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                 name: ui
                 path: dist/
@@ -107,7 +107,7 @@ jobs:
           - run: ls -laR ./artifacts
             name: ${{ matrix.goos }} - ${{ matrix.goarch }}
 
-          - uses: actions/upload-artifact@v3
+          - uses: actions/upload-artifact@v4
             with:
               name: ${{ matrix.goos }} - ${{ matrix.goarch }}
               path: artifacts/
