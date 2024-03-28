@@ -37,7 +37,6 @@ jobs:
               uses: actions/checkout@v4
               with:
                 repository: Maker-Management-Platform/mmp-ui
-                ref: refs/heads/release
 
 
             - name: Cache node modules
