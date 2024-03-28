@@ -90,7 +90,7 @@ jobs:
           
           - uses: actions/download-artifact@v3
             with:
-              name: ui
+              name: build/ui
               path: artifacts/ui
 
           - name: Setup Go
@@ -104,5 +104,5 @@ jobs:
               GOOS: ${{ matrix.goos }}
               GOARCH: ${{ matrix.goarch }}
 
-          - run: ls -laR
+          - run: ls -laR ./build
             name: ${{ matrix.goos }} - ${{ matrix.goarch }}
