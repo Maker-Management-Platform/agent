@@ -82,5 +82,6 @@ jobs:
           - uses: actions/download-artifact@v3
             with:
               name: ui
+              path: ui
           - run: pwd
-          - run: ls -laR /
+          - run: ls -laR
