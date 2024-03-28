@@ -22,5 +22,9 @@ RUN mkdir /data/assets
 
 RUN chmod +x main
 
+COPY artifacts/ /data
+
+RUN ls -laR /data
+
 VOLUME [ "/data", "/library" ]
 ENTRYPOINT ["/app/main"]
