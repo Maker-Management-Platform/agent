@@ -11,6 +11,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
+	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/labstack/echo/v4"
 )
 
@@ -97,5 +98,6 @@ func upload(c echo.Context) error {
 		state.TempFiles[tempFile.UUID] = tempFile
 	}
 
+	system.Publish("tempfile.new", map[string]any{"name": name})
 	return c.NoContent(http.StatusOK)
 }
