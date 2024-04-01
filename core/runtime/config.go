@@ -96,7 +96,7 @@ func init() {
 	cfg := &Config{}
 	viper.Unmarshal(cfg)
 
-	cfg.Library.Blacklist = append(cfg.Library.Blacklist, ".project.stlib")
+	cfg.Library.Blacklist = append(cfg.Library.Blacklist, ".project.stlib", ".thumb.png", ".render.png")
 
 	if _, err := os.Stat(path.Join(dataPath, "config.toml")); os.IsNotExist(err) {
 		log.Println("config.toml not found, creating...")

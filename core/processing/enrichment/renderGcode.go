@@ -81,6 +81,8 @@ func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
 
 	if image.Data != nil {
 
+		utils.CreateAssetsFolder(job.GetProject().UUID)
+
 		h := sha1.New()
 		_, err = h.Write(image.Data)
 		if err != nil {

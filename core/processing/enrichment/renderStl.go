@@ -88,5 +88,7 @@ func (s *stlRenderer) Render(job Enrichable) (string, error) {
 	image := context.Image()
 	image = resize.Resize(uint(s.width), uint(s.height), image, resize.Bilinear)
 
+	utils.CreateAssetsFolder(job.GetProject().UUID)
+
 	return renderName, fauxgl.SavePNG(renderSavePath, image)
 }

@@ -32,6 +32,8 @@ func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
 	}
 	defer archive.Close()
 
+	utils.CreateAssetsFolder(e.GetProject().UUID)
+
 	for i, f := range archive.File {
 		ext := filepath.Ext(f.Name)
 		// Only allow image files the platform supports
