@@ -25,7 +25,7 @@ func (em *eventManagement) OnNewSub() error {
 }
 
 func (em *eventManagement) Read() chan *events.Message {
-	rtn := make(chan *events.Message, 100)
+	rtn := make(chan *events.Message, 1)
 	eventName := "system.state"
 	go func() {
 		for {
@@ -35,7 +35,7 @@ func (em *eventManagement) Read() chan *events.Message {
 				Event: eventName,
 				Data:  m,
 			}:
-				log.Println("qweqwe")
+				log.Println("event sent")
 			default:
 				log.Println("status update channel full")
 			}
