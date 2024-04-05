@@ -32,5 +32,9 @@ func InitDatabase() error {
 		return err
 	}
 
+	if err = initPrintJob(); err != nil {
+		return err
+	}
+
 	return nil
 }

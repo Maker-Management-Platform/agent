@@ -35,7 +35,7 @@ func GetProjects() (rtn []*entities.Project, err error) {
 }
 
 func GetProjectNames() (rtn []*entities.Project, err error) {
-	return rtn, DB.Order("name").Select("uuid", "name").Find(&rtn).Error
+	return rtn, DB.Order("name").Select("uuid", "name", "default_image_id").Find(&rtn).Error
 }
 
 func GetProject(uuid string) (rtn *entities.Project, err error) {
