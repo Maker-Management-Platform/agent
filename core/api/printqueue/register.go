@@ -5,6 +5,6 @@ import (
 )
 
 func Register(e *echo.Group) {
-	e.GET("/status", enqueue)
+	e.GET("/jobs", getPrintJobs)
 	e.POST("/enqueue", enqueue)
 }

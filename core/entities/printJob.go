@@ -3,24 +3,26 @@ package entities
 import "github.com/google/uuid"
 
 const (
-	PrintJobStatusQueued   = "queued"
-	PrintJobStatusPrinting = "printing"
-	PrintJobStatusDone     = "done"
+	PrintJobStateQueued   = "queued"
+	PrintJobStatePrinting = "printing"
+	PrintJobStateDone     = "done"
 )
 
 type PrintJob struct {
 	UUID string `json:"uuid"`
 	//Tags   []*Tag        `json:"tags" gorm:"many2many:project_tags"`
-	Slice    *ProjectAsset `json:"slice" gorm:"foreignKey:SliceId"`
-	SliceId  int           `json:"-"`
+	Slice    *ProjectAsset `json:"slice" gorm:"references:ID"`
+	SliceId  string        `json:"sliceId"`
 	Position int           `json:"position"`
-	Status   string        `json:"status"`
+	State    string        `json:"state"`
 	Result   string        `json:"result"`
 }
 
 func NewPrintJob(sliceAsset *ProjectAsset) *PrintJob {
 	return &PrintJob{
-		UUID:   uuid.New().String(),
-		Status: PrintJobStatusQueued,
+		UUID:    uuid.New().String(),
+		State:   PrintJobStateQueued,
+		Slice:   sliceAsset,
+		SliceId: sliceAsset.ID,
 	}
 }
