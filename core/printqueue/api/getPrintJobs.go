@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eduardooliveira/stLib/core/data/database"
+	"github.com/eduardooliveira/stLib/core/printqueue/state"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -19,7 +19,7 @@ func getPrintJobs(c echo.Context) error {
 	}
 	states := strings.Split(c.QueryParam("states"), ",")
 
-	rtn, err := database.GetPrintJobs(states)
+	rtn, err := state.GetPrintQueue(states)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())

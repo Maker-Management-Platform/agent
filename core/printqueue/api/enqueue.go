@@ -8,6 +8,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/printqueue/state"
 	"github.com/labstack/echo/v4"
 )
 
@@ -69,7 +70,7 @@ func enqueue(c echo.Context) error {
 
 	for i := 0; i < enqueueRequest.Instances; i++ {
 		job := entities.NewPrintJob(slice)
-		err := database.InsertPrintJob(job)
+		err := state.AddPrintJob(job)
 		if err != nil {
 			log.Println(err)
 		}

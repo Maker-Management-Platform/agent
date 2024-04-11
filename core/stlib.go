@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	assettypes "github.com/eduardooliveira/stLib/core/api/assetTypes"
-	"github.com/eduardooliveira/stLib/core/api/printqueue"
 	"github.com/eduardooliveira/stLib/core/api/projects"
 	"github.com/eduardooliveira/stLib/core/api/system"
 	"github.com/eduardooliveira/stLib/core/api/tags"
@@ -18,6 +17,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/events"
 	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
+	printqueue "github.com/eduardooliveira/stLib/core/printqueue/api"
 	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"

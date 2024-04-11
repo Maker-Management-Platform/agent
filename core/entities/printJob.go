@@ -9,7 +9,7 @@ const (
 )
 
 type PrintJob struct {
-	UUID string `json:"uuid"`
+	UUID string `json:"uuid" gorm:"primaryKey"`
 	//Tags   []*Tag        `json:"tags" gorm:"many2many:project_tags"`
 	Slice    *ProjectAsset `json:"slice" gorm:"references:ID"`
 	SliceId  string        `json:"sliceId"`
