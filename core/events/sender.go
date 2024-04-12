@@ -7,8 +7,10 @@ import (
 )
 
 type Message struct {
-	Event string `json:"event"`
-	Data  any    `json:"data"`
+	Event string `json:"event,omitempty"` //used in top level events
+	//Name   string `json:"name,omitempty"`  //used in nested events
+	Data   any  `json:"data"`
+	Unpack bool `json:"unpack,omitempty"` //used in nested event lists
 }
 
 type sseSender struct {

@@ -61,11 +61,11 @@ func parseComment(a *entities.ProjectAsset, line string) {
 		return
 	}
 
-	if v, err := strconv.Atoi(params[1]); err != nil {
+	if v, err := strconv.Atoi(params[1]); err == nil {
 		a.Properties[params[0]] = v
 		return
 	}
-	if v, err := strconv.ParseFloat(params[1], 64); err != nil {
+	if v, err := strconv.ParseFloat(params[1], 64); err == nil {
 		a.Properties[params[0]] = v
 		return
 	}

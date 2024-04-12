@@ -8,10 +8,7 @@ import (
 )
 
 func initPrintJob() error {
-
-	err := DB.AutoMigrate(&entities.PrintJob{})
-	DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&entities.PrintJob{})
-	return err
+	return DB.AutoMigrate(&entities.PrintJob{})
 }
 
 func InsertPrintJob(p *entities.PrintJob) error {

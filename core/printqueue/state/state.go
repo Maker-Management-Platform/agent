@@ -15,7 +15,7 @@ func AddPrintJob(job *entities.PrintJob) error {
 		return err
 	}
 	printQueue = append(printQueue, job)
-	Publish("queue.update", printQueue)
+	Publish("queue.update", printQueue, false)
 	return nil
 }
 
@@ -46,6 +46,6 @@ func MovePrintJob(jobUUID string, pos int) ([]*entities.PrintJob, error) {
 		return nil, err
 	}
 	printQueue, err = database.GetPrintJobs()
-	Publish("queue.update", printQueue)
+	Publish("queue.update", printQueue, false)
 	return printQueue, err
 }

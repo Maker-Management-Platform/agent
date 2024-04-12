@@ -6,11 +6,6 @@ import (
 	"github.com/eduardooliveira/stLib/core/events"
 )
 
-type systemEvent struct {
-	Name  string `json:"name"`
-	State any    `json:"state"`
-}
-
 type eventManagement struct {
 }
 
@@ -32,8 +27,9 @@ func (em *eventManagement) Read() chan *events.Message {
 			m := <-systemEvents
 			select {
 			case rtn <- &events.Message{
-				Event: eventName,
-				Data:  m,
+				Event:  eventName,
+				Data:   m,
+				Unpack: true,
 			}:
 				log.Println("event sent")
 			default:
@@ -46,7 +42,7 @@ func (em *eventManagement) Read() chan *events.Message {
 }
 
 var eventManager *eventManagement
-var systemEvents chan *systemEvent
+var systemEvents chan *events.Message
 
 func GetEventPublisher() *eventManagement {
 	return eventManager
@@ -54,14 +50,14 @@ func GetEventPublisher() *eventManagement {
 
 func init() {
 	eventManager = &eventManagement{}
-	systemEvents = make(chan *systemEvent, 100)
+	systemEvents = make(chan *events.Message, 100)
 }
 
 func Publish(name string, data any) {
 	select {
-	case systemEvents <- &systemEvent{
-		Name:  name,
-		State: data,
+	case systemEvents <- &events.Message{
+		Event: name,
+		Data:  data,
 	}:
 	default:
 		log.Println("dropped system event")
