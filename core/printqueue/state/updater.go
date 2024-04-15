@@ -22,6 +22,11 @@ func runUpdate() {
 			startDelta := time.Now()
 			updateEvents := make([]*events.Message, 0)
 			for _, p := range printQueue {
+
+				if p.State != "queued" {
+					continue
+				}
+
 				jsu := &entities.JobStatusUpdate{
 					UUID: p.UUID,
 				}

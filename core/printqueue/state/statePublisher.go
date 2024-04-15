@@ -26,7 +26,7 @@ func (em *eventManagement) OnNewSub() error {
 }
 
 func (em *eventManagement) Read() chan *events.Message {
-	rtn := make(chan *events.Message, 1)
+	rtn := make(chan *events.Message, 10)
 	eventName := "printQueue.%s"
 	go func() {
 		for {

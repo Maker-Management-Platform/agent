@@ -5,6 +5,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/entities"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func initPrintJob() error {
@@ -12,17 +13,17 @@ func initPrintJob() error {
 }
 
 func InsertPrintJob(p *entities.PrintJob) error {
-	//return DB.Transaction(func(tx *gorm.DB) error {
-	pos, err := lastPrintJobInQueue(DB)
-	if err != nil {
-		return err
-	}
-	p.Position = pos + 1
-	if err := DB.Create(p).Error; err != nil {
-		return err
-	}
-	return nil
-	//})
+	return DB.Transaction(func(tx *gorm.DB) error {
+		pos, err := lastPrintJobInQueue(DB)
+		if err != nil {
+			return err
+		}
+		p.Position = pos + 1
+		if err := DB.Create(p).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func lastPrintJobInQueue(tx *gorm.DB) (int, error) {
@@ -46,7 +47,7 @@ func GetPrintJobs() (rtn []*entities.PrintJob, err error) {
 
 func Move(id string, pos int) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
-		p, err := GetPrintJobById(id)
+		p, err := GetPrintJobByUUID(id)
 		if err != nil {
 			return err
 		}
@@ -72,13 +73,40 @@ func Move(id string, pos int) error {
 	})
 }
 
+func ChangePrintJobState(uuid string, state string) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		var affected []*entities.PrintJob
+		if err := tx.Debug().Clauses(clause.Returning{}).Model(&affected).Where("uuid = ?", uuid).Update("state", state).Error; err != nil {
+			return err
+		}
+
+		if affected[0].Position > 0 {
+			var initalPosition = affected[0].Position
+			if err := tx.Debug().Model(affected[0]).Update("position", -1).Error; err != nil {
+				return err
+			}
+			lastPosition, err := lastPrintJobInQueue(tx)
+			if err != nil {
+				return err
+			}
+			for i := initalPosition; i <= lastPosition; i++ {
+				if err := tx.Debug().Model(&entities.PrintJob{}).Where("position = ?", i).Update("position", i-1).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 func SwapPrintJobs(ps1, ps2 string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
-		p1, err := GetPrintJobById(ps1)
+		p1, err := GetPrintJobByUUID(ps1)
 		if err != nil {
 			return err
 		}
-		p2, err := GetPrintJobById(ps2)
+		p2, err := GetPrintJobByUUID(ps2)
 		if err != nil {
 			return err
 		}
@@ -93,9 +121,9 @@ func SwapPrintJobs(ps1, ps2 string) error {
 	})
 }
 
-func GetPrintJobById(id string) (*entities.PrintJob, error) {
+func GetPrintJobByUUID(uuid string) (*entities.PrintJob, error) {
 	var p *entities.PrintJob
-	if err := DB.Debug().Where("uuid = ?", id).Take(&p).Error; err != nil {
+	if err := DB.Debug().Where("uuid = ?", uuid).Take(&p).Error; err != nil {
 		return nil, err
 	}
 	return p, nil

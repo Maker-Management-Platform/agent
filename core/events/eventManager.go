@@ -131,8 +131,9 @@ func runSubscription(topic string) {
 
 		for _, sess := range state.subscriptions[topic] {
 			subCount++
-			sess.Out <- msg
-
+			go func(s chan *Message) {
+				s <- msg
+			}(sess.Out)
 		}
 
 		if subCount == 0 {

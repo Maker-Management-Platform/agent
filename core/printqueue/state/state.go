@@ -19,6 +19,16 @@ func AddPrintJob(job *entities.PrintJob) error {
 	return nil
 }
 
+func ChangePrintJobState(jobUUID string, state string) ([]*entities.PrintJob, error) {
+	err := database.ChangePrintJobState(jobUUID, state)
+	if err != nil {
+		return nil, err
+	}
+	printQueue, err = database.GetPrintJobs()
+	Publish("queue.update", printQueue, false)
+	return printQueue, err
+}
+
 func GetPrintQueue(states []string) ([]*entities.PrintJob, error) {
 	if len(printQueue) == 0 {
 		var err error
