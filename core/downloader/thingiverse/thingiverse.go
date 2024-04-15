@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
@@ -89,7 +90,7 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 		return err
 	}
 
-	project.Name = fmt.Sprintf("%d %s", thing.ID, thing.Name)
+	project.Name = strings.ReplaceAll(fmt.Sprintf("%d - %s", thing.ID, thing.Name), "/", "-")
 	project.Description = thing.Description
 	project.ExternalLink = thing.PublicURL
 
