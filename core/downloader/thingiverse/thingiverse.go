@@ -70,7 +70,6 @@ func Fetch(url string) error {
 
 func fetchDetails(id string, project *entities.Project, httpClient *http.Client) error {
 	u := &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id}
-	project.ExternalLink = u.String()
 
 	req := &http.Request{
 		Method: "GET",
@@ -92,6 +91,7 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 
 	project.Name = fmt.Sprintf("%d %s", thing.ID, thing.Name)
 	project.Description = thing.Description
+	project.ExternalLink = thing.PublicURL
 
 	for _, tag := range thing.Tags {
 		project.Tags = append(project.Tags, entities.StringToTag(tag.Name))
