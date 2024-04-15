@@ -43,6 +43,10 @@ func Fetch(url string) error {
 		return err
 	}
 
+	if p, err := database.GetProjectByPathAndName(project.Path, project.Name); err == nil && p.UUID != "" {
+		project.UUID = p.UUID
+	}
+
 	if err = utils.CreateFolder(utils.ToLibPath(project.FullPath())); err != nil {
 		log.Println("error creating project folder")
 		return err
@@ -66,7 +70,7 @@ func Fetch(url string) error {
 
 	project.Initialized = true
 
-	return database.InsertProject(project)
+	return database.UpdateProject(project)
 }
 
 func fetchDetails(id string, project *entities.Project, httpClient *http.Client) error {
