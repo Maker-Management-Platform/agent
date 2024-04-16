@@ -9,6 +9,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/printqueue/state"
+	coreState "github.com/eduardooliveira/stLib/core/state"
 	"github.com/labstack/echo/v4"
 )
 
@@ -68,8 +69,15 @@ func enqueue(c echo.Context) error {
 
 	log.Println(project)
 
+	printer, ok := coreState.Printers[enqueueRequest.PrinterUUID]
+	if !ok {
+		log.Println("printer not found")
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("printer not found").Error())
+	}
+
 	for i := 0; i < enqueueRequest.Instances; i++ {
 		job := entities.NewPrintJob(slice)
+		job.PrinterUUID = printer.UUID
 		err := state.AddPrintJob(job)
 		if err != nil {
 			log.Println(err)

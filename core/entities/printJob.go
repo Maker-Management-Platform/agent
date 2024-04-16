@@ -11,11 +11,12 @@ const (
 type PrintJob struct {
 	UUID string `json:"uuid" gorm:"primaryKey"`
 	//Tags   []*Tag        `json:"tags" gorm:"many2many:project_tags"`
-	Slice    *ProjectAsset `json:"slice" gorm:"references:ID"`
-	SliceId  string        `json:"sliceId"`
-	Position int           `json:"position"`
-	State    string        `json:"state"`
-	Result   string        `json:"result"`
+	PrinterUUID string        `json:"printerUUID"`
+	Slice       *ProjectAsset `json:"slice" gorm:"references:ID"`
+	SliceId     string        `json:"sliceId"`
+	Position    int           `json:"position"`
+	State       string        `json:"state"`
+	Result      string        `json:"result"`
 }
 
 func NewPrintJob(sliceAsset *ProjectAsset) *PrintJob {
