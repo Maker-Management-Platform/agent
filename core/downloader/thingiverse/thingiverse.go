@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
@@ -42,6 +43,10 @@ func Fetch(url string) error {
 		return err
 	}
 
+	if p, err := database.GetProjectByPathAndName(project.Path, project.Name); err == nil && p.UUID != "" {
+		project.UUID = p.UUID
+	}
+
 	if err = utils.CreateFolder(utils.ToLibPath(project.FullPath())); err != nil {
 		log.Println("error creating project folder")
 		return err
@@ -65,12 +70,11 @@ func Fetch(url string) error {
 
 	project.Initialized = true
 
-	return database.InsertProject(project)
+	return database.UpdateProject(project)
 }
 
 func fetchDetails(id string, project *entities.Project, httpClient *http.Client) error {
 	u := &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id}
-	project.ExternalLink = u.String()
 
 	req := &http.Request{
 		Method: "GET",
@@ -90,8 +94,9 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 		return err
 	}
 
-	project.Name = fmt.Sprintf("%d %s", thing.ID, thing.Name)
+	project.Name = strings.ReplaceAll(fmt.Sprintf("%d - %s", thing.ID, thing.Name), "/", "-")
 	project.Description = thing.Description
+	project.ExternalLink = thing.PublicURL
 
 	for _, tag := range thing.Tags {
 		project.Tags = append(project.Tags, entities.StringToTag(tag.Name))
