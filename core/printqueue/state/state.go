@@ -9,7 +9,7 @@ import (
 
 var printQueue = make([]*entities.PrintJob, 0)
 
-func AddPrintJob(job *entities.PrintJob) error {
+func Enqueue(job *entities.PrintJob) error {
 	err := database.InsertPrintJob(job)
 	if err != nil {
 		return err
@@ -19,7 +19,31 @@ func AddPrintJob(job *entities.PrintJob) error {
 	return nil
 }
 
-func ChangePrintJobState(jobUUID string, state string) ([]*entities.PrintJob, error) {
+func Cancel(jobUUID string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "cancelled")
+}
+
+func Validate(jobUUID string, state string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "validated")
+}
+
+func start(jobUUID string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "printing")
+}
+
+func finish(jobUUID string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "finish")
+}
+
+func success(jobUUID string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "success")
+}
+
+func fail(jobUUID string) ([]*entities.PrintJob, error) {
+	return changePrintJobState(jobUUID, "failed")
+}
+
+func changePrintJobState(jobUUID string, state string) ([]*entities.PrintJob, error) {
 	err := database.ChangePrintJobState(jobUUID, state)
 	if err != nil {
 		return nil, err

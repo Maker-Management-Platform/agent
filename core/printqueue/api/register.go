@@ -8,6 +8,7 @@ func Register(e *echo.Group) {
 	e.GET("/jobs", getPrintJobs)
 	e.GET("/jobs/:uuid/cancel", cancel)
 	e.GET("/move", move)
+	e.GET("/validate", validate)
 	e.POST("/enqueue", enqueue)
 
 	e.GET("/subscribe/:session", subscribe)

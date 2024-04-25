@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -14,9 +15,64 @@ import (
 )
 
 var updateInterval = 10 * time.Second
+var triggerUpdateChannel = make(chan any)
+var printerQueue = make(map[string]time.Time)
 
 func init() {
 	go runUpdate()
+}
+
+func triggerUpdate() {
+	go func() {
+		triggerUpdateChannel <- struct{}{}
+	}()
+}
+
+func asyncUpdate() {
+	ticker := time.NewTicker(updateInterval)
+	for {
+		select {
+		case <-ticker.C:
+		case <-triggerUpdateChannel:
+		}
+		updatePrintQueue()
+	}
+}
+
+func updatePrintQueue() {
+	if len(printQueue) == 0 {
+		return
+	}
+	updateEvents := make([]*events.Message, 0)
+	for _, job := range printQueue {
+
+		if job.State == "canceled" || job.State == "failed" {
+			continue
+		}
+		jsu := &entities.JobStatusUpdate{
+			UUID: job.UUID,
+		}
+
+		printerState, err := matchPrintStateToJob(job)
+
+		if err != nil {
+			log.Println("printer not found ", job.PrinterUUID)
+			jsu.Error = err.Error()
+			updateEvents = append(updateEvents, &events.Message{
+				Event: job.UUID,
+				Data:  jsu,
+			})
+			continue
+		}
+
+		switch printerState.State {
+		case "printing":
+			if printerState.JobUUID == job.UUID {
+
+			}
+		}
+
+	}
 }
 
 func runUpdate() {
@@ -27,14 +83,14 @@ func runUpdate() {
 			updateEvents := make([]*events.Message, 0)
 			for _, p := range printQueue {
 
-				if p.State != "queued" {
+				if p.State != "queued" && p.State != "printing" {
 					continue
 				}
 
 				jsu := &entities.JobStatusUpdate{
 					UUID: p.UUID,
 				}
-				pState, err := matchPrinterToJob(p)
+				pState, err := matchPrintStateToJob(p)
 
 				if err != nil {
 					log.Println("printer not found ", p.PrinterUUID)
@@ -46,7 +102,8 @@ func runUpdate() {
 					continue
 				}
 
-				if pState.State == "awaiting_job" {
+				switch pState.State {
+				case "waiting_job":
 					err = printersState.PrintJob(pState.Printer.UUID, p)
 					if err != nil {
 						log.Println("error printing job ", p.UUID, err)
@@ -58,23 +115,12 @@ func runUpdate() {
 						continue
 					}
 					startDelta = time.Now()
-				}
+					start(p.UUID)
 
-				var sd any
-				var ok bool
-				if sd, ok = p.Slice.Properties["estimated printing time (normal mode)"]; !ok {
-					log.Println("estimated printing time (normal mode) not defined ", p.Slice.Name)
-					continue
-				}
-				var sds string
-				if sds, ok = sd.(string); !ok {
-					log.Println("estimated printing time (normal mode) not string ", p.Slice.Name)
-					continue
-				}
-				sds = strings.ReplaceAll(sds, " ", "")
-				if jsu.Duration, err = time.ParseDuration(sds); err != nil {
-					log.Println("estimated printing time (normal mode) not valid ", p.Slice.Name, sds)
-					continue
+				case "waiting_validation":
+					if pState.JobUUID == p.UUID {
+						finish(p.UUID)
+					}
 				}
 
 				jsu.StartAt = startDelta
@@ -93,7 +139,7 @@ func runUpdate() {
 	}
 }
 
-func matchPrinterToJob(p *coreEntities.PrintJob) (*models.PrinterState, error) {
+func matchPrintStateToJob(p *coreEntities.PrintJob) (*models.PrinterState, error) {
 	if p.PrinterUUID != "" {
 		pState, ok := printersState.GetPrinterState(p.PrinterUUID)
 		if !ok {
@@ -103,4 +149,23 @@ func matchPrinterToJob(p *coreEntities.PrintJob) (*models.PrinterState, error) {
 	}
 	// handle tags
 	return nil, errors.New("no match found")
+}
+
+func sliceDuration(s *coreEntities.ProjectAsset) (time.Duration, error) {
+	var sd any
+	var ok bool
+	if sd, ok = s.Properties["estimated printing time (normal mode)"]; !ok {
+		return 0, fmt.Errorf("estimated printing time (normal mode) not defined %s", s.Name)
+	}
+	var sds string
+	if sds, ok = sd.(string); !ok {
+		return 0, fmt.Errorf("estimated printing time (normal mode) not string %s", s.Name)
+	}
+	sds = strings.ReplaceAll(sds, " ", "")
+	var rtn time.Duration
+	var err error
+	if rtn, err = time.ParseDuration(sds); err != nil {
+		return 0, errors.Join(err, fmt.Errorf("estimated printing time (normal mode) not valid %s", s.Name))
+	}
+	return rtn, nil
 }

@@ -8,4 +8,5 @@ type JobStatusUpdate struct {
 	StartAt  time.Time     `json:"startAt"`
 	EndAt    time.Time     `json:"endAt"`
 	Error    string        `json:"error"`
+	State    string        `json:"state"`
 }

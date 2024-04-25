@@ -12,28 +12,30 @@ import (
 var printerState = make(map[string]*models.PrinterState)
 
 func init() {
-	printerState["mock"] = &models.PrinterState{
-		Printer: state.Printers["mock"],
-		State:   "awaiting_ok",
-	}
 	go runMock()
 }
 
 func runMock() {
 	tick := 0
+	time.Sleep(10 * time.Second)
+	printerState["mock"] = &models.PrinterState{
+		Printer: state.Printers["mock"],
+		State:   "waiting_validation",
+	}
 	mock := printerState["mock"]
 	for {
 		tick += 1
 		time.Sleep(1 * time.Second)
 		if mock.State == "printing" {
 			mock.Duration += 1
+			mock.Progress += 10
 		}
 		if mock.Duration == 15 {
-			mock.State = "awaiting_ok"
+			mock.State = "waiting_validation"
 			mock.Duration = 0
 		}
 		if tick == 10 {
-			mock.State = "awaiting_job"
+			mock.State = "waiting_job"
 		}
 	}
 }
@@ -49,10 +51,11 @@ func PrintJob(uuid string, job *entities.PrintJob) error {
 		return errors.New("printer not found")
 	}
 
-	if ps.State != "awaiting_job" {
+	if ps.State != "waiting_job" {
 		return errors.New("printer not awaiting job")
 	}
-
+	ps.Duration = 0
+	ps.Progress = 0
 	ps.JobUUID = job.UUID
 	ps.State = "printing"
 

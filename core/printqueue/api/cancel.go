@@ -18,7 +18,7 @@ func cancel(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	jobs, err := state.ChangePrintJobState(uuid, "canceled")
+	jobs, err := state.Cancel(uuid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())

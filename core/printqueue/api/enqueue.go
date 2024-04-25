@@ -78,7 +78,7 @@ func enqueue(c echo.Context) error {
 	for i := 0; i < enqueueRequest.Instances; i++ {
 		job := entities.NewPrintJob(slice)
 		job.PrinterUUID = printer.UUID
-		err := state.AddPrintJob(job)
+		err := state.Enqueue(job)
 		if err != nil {
 			log.Println(err)
 		}
