@@ -15,9 +15,10 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader"
 	"github.com/eduardooliveira/stLib/core/events"
-	"github.com/eduardooliveira/stLib/core/integrations/printers"
 	"github.com/eduardooliveira/stLib/core/integrations/slicer"
-	printqueue "github.com/eduardooliveira/stLib/core/printqueue/api"
+	printersApi "github.com/eduardooliveira/stLib/core/printers/api"
+	printersState "github.com/eduardooliveira/stLib/core/printers/state"
+	printQueueApi "github.com/eduardooliveira/stLib/core/printqueue/api"
 	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
@@ -47,11 +48,8 @@ func Run() {
 	}
 	go processing.Run(runtime.Cfg.Library.Path)
 	go processing.RunTempDiscovery()
-	err = state.LoadPrinters()
-	if err != nil {
-		log.Fatal("error loading printers", err)
-	}
 
+	printersState.Init()
 	fmt.Println("starting server...")
 	e := echo.New()
 	e.Use(middleware.CORS())
@@ -72,11 +70,11 @@ func Run() {
 	projects.Register(api.Group("/projects"))
 	tags.Register(api.Group("/tags"))
 	tempfiles.Register(api.Group("/tempfiles"))
-	printers.Register(api.Group("/printers"))
+	printersApi.Register(api.Group("/printers"))
 	downloader.Register(api.Group("/downloader"))
 	system.Register(api.Group("/system"))
 	assettypes.Register(api.Group("/assettypes"))
-	printqueue.Register(api.Group("/printqueue"))
+	printQueueApi.Register(api.Group("/printqueue"))
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", runtime.Cfg.Server.Port)))
 }
