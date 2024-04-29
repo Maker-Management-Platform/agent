@@ -51,7 +51,7 @@ func (kp KlipperPrinter) handleNotifyStatusUpdate(message []byte) []*events.Mess
 	for _, p := range kpStatusUpdate.Params {
 		if param, ok := p.(map[string]any); ok {
 			for k, v := range param {
-				addToStatus(k, v.(map[string]any), status)
+				kp.parseStatus(k, v.(map[string]any), status)
 			}
 		}
 	}
@@ -68,7 +68,7 @@ func (kp KlipperPrinter) handleQuery(message []byte) []*events.Message {
 
 	status := make(map[string]*events.Message, 0)
 	for k, v := range pkResult.Result.Status {
-		addToStatus(k, v, status)
+		kp.parseStatus(k, v, status)
 	}
 	return maputil.Values(status)
 }

@@ -9,6 +9,9 @@ import (
 type KlipperPrinter struct {
 	config                *printerEntities.Config
 	state                 *printerEntities.State
+	bedState              *printerEntities.TemperatureStatus
+	hotEndState           []*printerEntities.TemperatureStatus
+	jobState              *printerEntities.JobStatus
 	ws                    *websocket.Conn
 	bedChangeListeners    map[chan *printerEntities.TemperatureStatus]struct{}
 	hotEndChangeListeners map[chan []*printerEntities.TemperatureStatus]struct{}

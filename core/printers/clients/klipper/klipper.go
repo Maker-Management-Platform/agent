@@ -10,9 +10,13 @@ func NewPrinter(config *printerEntities.Config) printerEntities.Printer {
 	return KlipperPrinter{
 		config:                config,
 		state:                 &printerEntities.State{},
+		bedState:              &printerEntities.TemperatureStatus{},
+		hotEndState:           []*printerEntities.TemperatureStatus{&printerEntities.TemperatureStatus{}},
+		jobState:              &printerEntities.JobStatus{},
 		bedChangeListeners:    make(map[chan *printerEntities.TemperatureStatus]struct{}, 0),
 		hotEndChangeListeners: make(map[chan []*printerEntities.TemperatureStatus]struct{}, 0),
 		jobChangeListeners:    make(map[chan *printerEntities.JobStatus]struct{}, 0),
+		deltaListeners:        make(map[chan []*events.Message]struct{}, 0),
 	}
 }
 
