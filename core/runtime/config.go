@@ -42,6 +42,13 @@ var Cfg *Config
 var dataPath = "/data"
 
 func init() {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(dirname)
+	dataPath = filepath.Join(dirname, "mmp")
+
 	viper.BindEnv("DATA_PATH")
 	if viper.GetString("DATA_PATH") != "" {
 		dataPath = viper.GetString("DATA_PATH")
@@ -61,9 +68,9 @@ func init() {
 		viper.SetDefault("server.port", v)
 	}
 	if v := viper.GetString("LIBRARY_PATH"); v == "" {
-		viper.SetDefault("library.path", "/library")
+		viper.SetDefault("library.path", filepath.Join(dirname, "mmp", "library"))
 	} else {
-		viper.SetDefault("library.path", v)
+		viper.SetDefault("library.path", filepath.Join(dirname, "mmp", "library"))
 	}
 	if v := viper.GetString("MODEL_RENDER_COLOR"); v == "" {
 		viper.SetDefault("render.model_color", "#167DF0")
@@ -88,7 +95,7 @@ func init() {
 	viper.SetConfigType("toml")
 	viper.AutomaticEnv()
 
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		log.Println(err)
 	}
