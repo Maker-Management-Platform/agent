@@ -7,7 +7,7 @@ type Job interface {
 	JobAction()
 }
 
-var queue = make(chan Job, 100)
+var queue = make(chan Job, 9999999)
 
 func init() {
 	go func() {
