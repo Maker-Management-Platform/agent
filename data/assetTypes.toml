@@ -1,24 +1,23 @@
 [image]
-name = "image"
-label = "Images"
-extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
-order = 1
-#[pdf]
-#name = "pdf"
-#label = "PDF's"
-#extensions = [".pdf"]
+  Name = "image"
+  Label = "Images"
+  Extensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]
+  Order = 1
+
 [model]
-name = "model"
-label = "Models"
-extensions = [".stl", ".3fm"]
-order = 0
+  Name = "model"
+  Label = "Models"
+  Extensions = [".stl", ".3fm"]
+  Order = 0
+
 [slice]
-name = "slice"
-label = "Slices"
-extensions = [".gcode"]
-order = 2
+  Name = "slice"
+  Label = "Slices"
+  Extensions = [".gcode"]
+  Order = 2
+
 [source]
-name = "source"
-label = "Sources"
-extensions = [".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"]
-order = 99
+  Name = "source"
+  Label = "Sources"
+  Extensions = [".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"]
+  Order = 99

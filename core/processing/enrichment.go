@@ -6,7 +6,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/processing/enrichment"
 )
 
-var enrichmentQueue = make(chan *ProcessableAsset, 256)
+var enrichmentQueue = make(chan *ProcessableAsset, 9999999)
 
 func init() {
 	renderers := make(map[string]enrichment.Renderer, 0)
