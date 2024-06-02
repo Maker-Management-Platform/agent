@@ -11,7 +11,6 @@ import (
 
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/events"
-	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/labstack/echo/v4"
@@ -67,7 +66,7 @@ func saveSettings(c echo.Context) error {
 }
 
 func runDiscovery(c echo.Context) error {
-	go processing.Run(runtime.Cfg.Library.Path)
+	//go processing.Run(runtime.Cfg.Library.Path)
 	return c.NoContent(http.StatusOK)
 }
 

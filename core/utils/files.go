@@ -98,3 +98,24 @@ func CreateFolder(name string) error {
 
 	return nil
 }
+
+func PathToTags(path string) []string {
+
+	path = strings.Trim(path, "/")
+	tags := strings.Split(path, "/")
+	tagSet := make(map[string]bool)
+	for _, t := range tags {
+		if t != "" {
+			tagSet[t] = true
+		}
+
+	}
+	rtn := make([]string, len(tagSet))
+	i := 0
+	for k := range tagSet {
+		rtn[i] = k
+		i++
+	}
+
+	return rtn
+}

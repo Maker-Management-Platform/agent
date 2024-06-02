@@ -8,7 +8,6 @@ import (
 	"os"
 
 	models "github.com/eduardooliveira/stLib/core/entities"
-	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
@@ -36,11 +35,11 @@ func DownloadAsset(name string, project *models.Project, client *http.Client, re
 		return err
 	}
 
-	processing.EnqueueInitJob(&processing.ProcessableAsset{
+	/*processing.EnqueueInitJob(&processing.ProcessableAsset{
 		Name:    name,
 		Project: project,
 		Origin:  "fs",
-	})
+	})*/
 
 	return nil
 }

@@ -9,9 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
-	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -83,7 +81,8 @@ func new(c echo.Context) error {
 		}
 
 	}
-	var project *entities.Project
+
+	/*var project *entities.Project
 	if project, err = processing.HandlePath(projectFolder); err != nil {
 		log.Printf("error loading the project %q: %v\n", path, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -99,5 +98,8 @@ func new(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
-	}{project.UUID})
+	}{project.UUID})*/
+	return c.JSON(http.StatusOK, struct {
+		UUID string `json:"uuid"`
+	}{"wqe"})
 }

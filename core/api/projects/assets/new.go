@@ -10,7 +10,6 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/entities"
-	"github.com/eduardooliveira/stLib/core/processing"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -58,11 +57,11 @@ func New(c echo.Context) error {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	processing.EnqueueInitJob(&processing.ProcessableAsset{
+	/*processing.EnqueueInitJob(&processing.ProcessableAsset{
 		Name:    files[0].Filename,
 		Project: project,
 		Origin:  "fs",
-	})
+	})*/
 
 	return c.NoContent(http.StatusCreated)
 }
