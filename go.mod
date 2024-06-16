@@ -1,8 +1,8 @@
 module github.com/eduardooliveira/stLib
 
-go 1.21
+go 1.22
 
-toolchain go1.21.4
+toolchain go1.22
 
 require (
 	github.com/BurntSushi/toml v1.2.1

@@ -14,23 +14,15 @@ import (
 type AssetIniter struct {
 	ctx context.Context
 	pa  *types.ProcessableAsset
-	out chan<- *entities.ProjectAsset
 }
 
-func NewAssetIniter(ctx context.Context, pa *types.ProcessableAsset) *AssetIniter {
+func NewAssetIniter(pa *types.ProcessableAsset) *AssetIniter {
 	return &AssetIniter{
-		ctx: ctx,
-		pa:  pa,
+		pa: pa,
 	}
 }
 
-func (ai *AssetIniter) GetRunner(out chan *entities.ProjectAsset) func() error {
-	ai.out = out
-	return ai.run
-}
-
-func (ai *AssetIniter) run() error {
-	defer ai.close()
+func (ai *AssetIniter) Init() ([]*types.ProcessableAsset, error) {
 
 	if a, err := database.GetAssetByProjectAndName(ai.pa.Project.UUID, ai.pa.Name); err == nil && a.ID != "" {
 		ai.pa.Asset = a
@@ -38,45 +30,43 @@ func (ai *AssetIniter) run() error {
 		ai.pa.Asset, err = entities.NewProjectAsset2(ai.pa.Name, ai.pa.Label, ai.pa.Project, ai.pa.Origin)
 		if err != nil {
 			log.Println(err)
-			return err
+			return nil, err
 		}
 	}
 
 	if err := ai.processType(); err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
 
 	nestedAssets, err := enrichment.EnrichAsset(ai.ctx, ai.pa)
 	if err != nil {
 		log.Println(err)
 	}
-
+	rtn := make([]*types.ProcessableAsset, 0)
+	rtn = append(rtn, ai.pa)
 	for _, nestedAsset := range nestedAssets {
 
-		if err := NewAssetIniter(ai.ctx, nestedAsset).GetRunner(nil)(); err != nil {
+		assets, err := NewAssetIniter(nestedAsset).Init()
+		if err != nil {
 			log.Println(err)
 		}
-		if nestedAsset.Asset.AssetType == "image" {
-			ai.pa.Asset.ImageID = nestedAsset.Asset.ID
+
+		for _, a := range assets {
+			if nestedAsset.Asset.AssetType == "image" {
+				ai.pa.Asset.ImageID = a.Asset.ID
+			}
+			rtn = append(rtn, a)
 		}
-		ai.out <- nestedAsset.Asset
+
 	}
 
 	if err := database.SaveAsset(ai.pa.Asset); err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
-	if ai.out != nil {
-		ai.out <- ai.pa.Asset
-	}
-	return nil
-}
 
-func (ai *AssetIniter) close() {
-	if ai.out != nil {
-		close(ai.out)
-	}
+	return rtn, nil
 }
 
 func (ai *AssetIniter) processType() error {

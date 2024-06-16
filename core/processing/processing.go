@@ -9,7 +9,9 @@ import (
 	"github.com/eduardooliveira/stLib/core/entities"
 	"github.com/eduardooliveira/stLib/core/processing/discovery"
 	"github.com/eduardooliveira/stLib/core/processing/initialization"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/runtime"
+	"github.com/eduardooliveira/stLib/core/utils"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -43,14 +45,23 @@ func ProcessFolder(ctx context.Context, root string) error {
 
 	eg, nctx := errgroup.WithContext(ctx)
 	eg.SetLimit(10)
-
+	outs := make([]chan *types.ProcessableProject, 0)
 	for _, p := range projects {
-		eg.Go(initialization.NewProjectIniter(nctx, p).
+		out, runner := utils.Jobber(initialization.NewProjectIniter(p).
+			WithContext(nctx).
 			WithAssetDiscoverer(discovery.FlatAssetDiscoverer{}).
 			PersistOnFinish().
-			GetRunner(nil))
+			Init)
+		eg.Go(runner)
+		outs = append(outs, out)
 	}
 	eg.Wait()
+
+	for _, out := range outs {
+		for p := range out {
+			log.Println(p)
+		}
+	}
 
 	return nil
 }

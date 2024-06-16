@@ -9,6 +9,8 @@ import (
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/core/data/database"
 	models "github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/initialization"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -59,11 +61,16 @@ func move(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	/*processing.EnqueueInitJob(&processing.ProcessableAsset{
+	_, err = initialization.NewAssetIniter(&types.ProcessableAsset{
 		Name:    tempFile.Name,
 		Project: project,
 		Origin:  "fs",
-	})*/
+	}).Init()
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	delete(state.TempFiles, uuid)
 	return c.NoContent(http.StatusOK)

@@ -15,4 +15,5 @@ type ProcessableProject struct {
 	Path     string
 	Root     string
 	FullPath string
+	Project  *entities.Project
 }

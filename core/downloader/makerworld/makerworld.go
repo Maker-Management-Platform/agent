@@ -19,6 +19,7 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"golang.org/x/net/html"
 )
@@ -73,12 +74,19 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 		return err
 	}
 
-	assets := make([]*entities.ProjectAsset, 0)
+	assets := make([]*types.ProcessableAsset, 0)
 	as, err := mwc.fetchCover()
 	if err != nil {
 		log.Println("error fetching cover")
 		return err
 	}
+
+	for _, a := range as {
+		if a.Asset != nil {
+			project.DefaultImageID = a.Asset.ID
+		}
+	}
+
 	assets = append(assets, as...)
 
 	as, err = mwc.fetchModels()
@@ -88,57 +96,63 @@ func Fetch(urlString string, cookies []*http.Cookie, userAgent string) error {
 	}
 	assets = append(assets, as...)
 
-	err = mwc.fetchInstances()
+	_, err = mwc.fetchInstances()
 	if err != nil {
 		log.Println("error fetching models")
 		return err
 	}
 
-	err = mwc.fetchPictures()
+	as, err = mwc.fetchPictures()
 	if err != nil {
 		log.Println("error fetching pictures")
 		return err
+	}
+	assets = append(assets, as...)
+
+	if project.DefaultImageID == "" {
+		for _, a := range assets {
+			if a.Asset != nil && a.Asset.AssetType == "image" {
+				project.DefaultImageID = a.Asset.ID
+				break
+			}
+		}
 	}
 
 	return database.InsertProject(project)
 }
 
-func (mwc *mwClient) fetchCover() (assets []*entities.ProjectAsset, err error) {
+func (mwc *mwClient) fetchCover() ([]*types.ProcessableAsset, error) {
 	req, err := http.NewRequest("GET", mwc.metadata.Props.PageProps.Design.CoverURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("User-Agent", mwc.userAgent)
 
-	assets = make([]*entities.ProjectAsset, 0)
-	err = tools.DownloadAsset(path.Base(mwc.metadata.Props.PageProps.Design.CoverURL), mwc.project, mwc.client, req)
-	if err != nil {
-		log.Println("Error fetchig cover, skiping: ", err)
-		return
-	}
-
-	return
+	return tools.DownloadAsset(path.Base(mwc.metadata.Props.PageProps.Design.CoverURL), mwc.project, mwc.client, req)
 }
 
-func (mwc *mwClient) fetchPictures() (err error) {
+func (mwc *mwClient) fetchPictures() ([]*types.ProcessableAsset, error) {
+	assets := make([]*types.ProcessableAsset, 0)
 	for _, p := range mwc.metadata.Props.PageProps.Design.DesignExtension.DesignPictures {
 		req, err := http.NewRequest("GET", p.URL, nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		req.Header.Add("User-Agent", mwc.userAgent)
 
-		err = tools.DownloadAsset(p.Name, mwc.project, mwc.client, req)
+		a, err := tools.DownloadAsset(p.Name, mwc.project, mwc.client, req)
 		if err != nil {
 			log.Println("Error fetchig image, skiping: ", err)
 			continue
 		}
+		assets = append(assets, a...)
 	}
 
-	return
+	return assets, nil
 }
 
-func (mwc *mwClient) fetchModels() (assets []*entities.ProjectAsset, err error) {
+func (mwc *mwClient) fetchModels() ([]*types.ProcessableAsset, error) {
+	assets := make([]*types.ProcessableAsset, 0)
 	for _, m := range mwc.metadata.Props.PageProps.Design.DesignExtension.ModelFiles {
 		req, err := http.NewRequest("GET", m.ModelURL, nil)
 		if err != nil {
@@ -146,17 +160,19 @@ func (mwc *mwClient) fetchModels() (assets []*entities.ProjectAsset, err error) 
 		}
 		req.Header.Add("User-Agent", mwc.userAgent)
 
-		err = tools.DownloadAsset(m.ModelName, mwc.project, mwc.client, req)
+		a, err := tools.DownloadAsset(m.ModelName, mwc.project, mwc.client, req)
 		if err != nil {
 			log.Println("Error fetchig model, skiping: ", err)
 			continue
 		}
+		assets = append(assets, a...)
 	}
 
-	return
+	return assets, nil
 }
 
-func (mwc *mwClient) fetchInstances() (err error) {
+func (mwc *mwClient) fetchInstances() ([]*types.ProcessableAsset, error) {
+	assets := make([]*types.ProcessableAsset, 0)
 
 	for _, m := range mwc.metadata.Props.PageProps.Design.Instances {
 		sl := rand.Intn(6000-3000) + 3000
@@ -169,7 +185,7 @@ func (mwc *mwClient) fetchInstances() (err error) {
 		}
 		req, err := http.NewRequest("GET", mfData.URL, nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		req.Header.Add("User-Agent", mwc.userAgent)
 
@@ -180,14 +196,16 @@ func (mwc *mwClient) fetchInstances() (err error) {
 		sl = rand.Intn(6000-3000) + 3000
 		log.Println("sleeping: ", sl)
 		time.Sleep(time.Duration(sl) * time.Millisecond)
-		err = tools.DownloadAsset(name, mwc.project, mwc.client, req)
+
+		a, err := tools.DownloadAsset(name, mwc.project, mwc.client, req)
 		if err != nil {
 			log.Println("Failed to download 3MF File, skipping")
 			continue
 		}
+		assets = append(assets, a...)
 	}
 
-	return
+	return assets, nil
 }
 
 func (mwc *mwClient) fetch3MFData(id int) (*mf, error) {

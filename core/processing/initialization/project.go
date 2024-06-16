@@ -2,6 +2,7 @@ package initialization
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/eduardooliveira/stLib/core/data/database"
@@ -9,26 +10,29 @@ import (
 	"github.com/eduardooliveira/stLib/core/processing/discovery"
 	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/utils"
+	"golang.org/x/sync/errgroup"
 )
 
 type ProjectIniter struct {
 	ctx                context.Context
 	processableProject types.ProcessableProject
 	assetDiscoverer    discovery.AssetDiscoverer
-	project            entities.Project
 	persistOnFinish    bool
-	out                chan<- *entities.Project
 }
 
-func NewProjectIniter(ctx context.Context, processableProject types.ProcessableProject) *ProjectIniter {
+func NewProjectIniter(processableProject types.ProcessableProject) *ProjectIniter {
 	return &ProjectIniter{
-		ctx:                ctx,
 		processableProject: processableProject,
 	}
 }
 
+func (pd *ProjectIniter) WithContext(ctx context.Context) *ProjectIniter {
+	pd.ctx = ctx
+	return pd
+}
+
 func (pd *ProjectIniter) WithProject(project entities.Project) *ProjectIniter {
-	pd.project = project
+	pd.processableProject.Project = &project
 	return pd
 }
 
@@ -42,75 +46,64 @@ func (pd *ProjectIniter) PersistOnFinish() *ProjectIniter {
 	return pd
 }
 
-func (pd *ProjectIniter) GetRunner(out chan<- *entities.Project) func() error {
-	pd.out = out
-	return pd.run
-}
-
-func (pd *ProjectIniter) run() error {
-	defer pd.close()
+func (pd *ProjectIniter) Init() (*types.ProcessableProject, error) {
 	pd.LoadProject()
 
-	if pd.assetDiscoverer != nil {
-		assets, err := pd.assetDiscoverer.Discover(pd.processableProject.Path)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		log.Println(len(assets))
+	if pd.assetDiscoverer == nil {
+		return nil, errors.New("asset discoverer not set")
+	}
+	assets, err := pd.assetDiscoverer.Discover(pd.processableProject.Path)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	log.Println(len(assets))
 
-		outChans := make([]<-chan *entities.ProjectAsset, 0)
-		for _, a := range assets {
-			a.Project = &pd.project //TODO: make asset self-contained
-			ai := NewAssetIniter(pd.ctx, a)
-			c := make(chan *entities.ProjectAsset)
-			go ai.GetRunner(c)()
-			outChans = append(outChans, c)
-		}
+	outChans := make([]<-chan []*types.ProcessableAsset, 0)
+	eg := errgroup.Group{}
 
-		out := utils.MergeWait(outChans...)
+	for _, a := range assets {
+		a.Project = pd.processableProject.Project //TODO: make asset self-contained
+		c, runner := utils.Jobber(NewAssetIniter(a).Init)
+		outChans = append(outChans, c)
+		eg.Go(runner)
+	}
 
-		for a := range out {
-			log.Println(a)
-			if a.AssetType == "image" {
-				pd.project.DefaultImageID = a.ID
+	out := utils.MergeWait(outChans...)
+
+	for pas := range out {
+		for _, pa := range pas {
+			if pa.Asset.AssetType == "image" {
+				if pd.processableProject.Project.DefaultImageID == "" || pa.Origin == "fs" {
+					pd.processableProject.Project.DefaultImageID = pa.Asset.ID
+				}
 			}
 		}
 	}
 
 	if pd.persistOnFinish {
-		if err := database.InsertProject(&pd.project); err != nil {
+		if err := database.InsertProject(pd.processableProject.Project); err != nil {
 			log.Println(err)
-			return err
+			return nil, err
 		}
 	}
 
-	if pd.out != nil {
-		pd.out <- &pd.project
-	}
-
-	return nil
+	return &pd.processableProject, nil
 }
 
 func (pd *ProjectIniter) Project() *entities.Project {
-	return &pd.project
-}
-
-func (pd *ProjectIniter) close() {
-	if pd.out != nil {
-		close(pd.out)
-	}
+	return pd.processableProject.Project
 }
 
 func (pd *ProjectIniter) LoadProject() {
-	if pd.project.UUID != "" {
+	if pd.processableProject.Project != nil {
 		return
 	}
 
-	pd.project = *entities.NewProjectFromPath(pd.processableProject.Path)
-	if p, err := database.GetProjectByPathAndName(pd.project.Path, pd.project.Name); err == nil {
-		pd.project = *p
+	pd.processableProject.Project = entities.NewProjectFromPath(pd.processableProject.Path)
+	if p, err := database.GetProjectByPathAndName(pd.processableProject.Project.Path, pd.processableProject.Project.Name); err == nil {
+		pd.processableProject.Project = p
 	} else {
-		pd.project.Tags = append(pd.project.Tags, entities.StringsToTags(utils.PathToTags(pd.project.Path))...)
+		pd.processableProject.Project.Tags = append(pd.processableProject.Project.Tags, entities.StringsToTags(utils.PathToTags(pd.processableProject.Project.Path))...)
 	}
 }

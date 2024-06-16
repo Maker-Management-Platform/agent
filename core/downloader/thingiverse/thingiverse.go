@@ -1,6 +1,7 @@
 package thingiverse
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,8 +15,10 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/utils"
+	"golang.org/x/sync/errgroup"
 )
 
 func Fetch(url string) error {
@@ -56,15 +59,28 @@ func Fetch(url string) error {
 		log.Println("error creating assets folder")
 		return err
 	}
+	eg := errgroup.Group{}
+	fChan, runner := utils.Jobber(func() ([]*types.ProcessableAsset, error) {
+		return fetchFiles(id, project, httpClient)
+	})
+	eg.Go(runner)
 
-	err = fetchFiles(id, project, httpClient)
-	if err != nil {
-		log.Println("error fetching files")
-		return err
+	iChan, runner := utils.Jobber(func() ([]*types.ProcessableAsset, error) {
+		return fetchImages(id, project, httpClient)
+	})
+	eg.Go(runner)
+
+	for pas := range utils.MergeWait(fChan, iChan) {
+		for _, pa := range pas {
+			if pa.Asset.AssetType == "image" {
+				if project.DefaultImageID == "" || pa.Origin == "fs" {
+					project.DefaultImageID = pa.Asset.ID
+				}
+			}
+		}
 	}
-	err = fetchImages(id, project, httpClient)
-	if err != nil {
-		log.Println("error fetching images")
+
+	if err := eg.Wait(); err != nil {
 		return err
 	}
 
@@ -107,7 +123,7 @@ func fetchDetails(id string, project *entities.Project, httpClient *http.Client)
 	return nil
 }
 
-func fetchFiles(id string, project *entities.Project, httpClient *http.Client) error {
+func fetchFiles(id string, project *entities.Project, httpClient *http.Client) ([]*types.ProcessableAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/files"},
@@ -117,34 +133,34 @@ func fetchFiles(id string, project *entities.Project, httpClient *http.Client) e
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var files []*ThingFile
 	if err := json.NewDecoder(res.Body).Decode(&files); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
-
+	outChans := make([]<-chan []*types.ProcessableAsset, 0)
+	eg := errgroup.Group{}
 	for _, file := range files {
-
-		req.URL, _ = url.Parse(file.DownloadURL)
-
-		err := tools.DownloadAsset(file.Name, project, httpClient, req)
-		if err != nil {
-			return err
-		}
-
+		lReq := req.Clone(context.Background())
+		lReq.URL, _ = url.Parse(file.DownloadURL)
+		c, runner := utils.Jobber(func() ([]*types.ProcessableAsset, error) {
+			return tools.DownloadAsset(file.Name, project, httpClient, lReq)
+		})
+		outChans = append(outChans, c)
+		eg.Go(runner)
 	}
 
 	log.Printf("Downloaded %d files\n", len(files))
 
-	return nil
+	return utils.MergeSliceWait(outChans...), eg.Wait()
 }
 
-func fetchImages(id string, project *entities.Project, httpClient *http.Client) error {
+func fetchImages(id string, project *entities.Project, httpClient *http.Client) ([]*types.ProcessableAsset, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    &url.URL{Scheme: "https", Host: "api.thingiverse.com", Path: "/things/" + id + "/images"},
@@ -154,29 +170,31 @@ func fetchImages(id string, project *entities.Project, httpClient *http.Client) 
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var tImages []*ThingImage
 	if err := json.NewDecoder(res.Body).Decode(&tImages); err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Method = "GET"
+
+	outChans := make([]<-chan []*types.ProcessableAsset, 0)
+	eg := errgroup.Group{}
 
 	for _, image := range tImages {
 
 		for _, size := range image.Sizes {
 			if size.Size == "large" && size.Type == "display" {
-
-				req.URL, _ = url.Parse(size.URL)
-
-				err := tools.DownloadAsset(image.Name, project, httpClient, req)
-				if err != nil {
-					return err
-				}
-
+				lReq := req.Clone(context.Background())
+				lReq.URL, _ = url.Parse(size.URL)
+				c, runner := utils.Jobber(func() ([]*types.ProcessableAsset, error) {
+					return tools.DownloadAsset(image.Name, project, httpClient, lReq)
+				})
+				outChans = append(outChans, c)
+				eg.Go(runner)
 			}
 		}
 
@@ -184,7 +202,7 @@ func fetchImages(id string, project *entities.Project, httpClient *http.Client) 
 
 	log.Printf("Downloaded %d images\n", len(tImages))
 
-	return nil
+	return utils.MergeSliceWait(outChans...), eg.Wait()
 }
 
 type ThingImage struct {

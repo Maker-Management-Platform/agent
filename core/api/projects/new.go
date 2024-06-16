@@ -9,7 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/discovery"
+	"github.com/eduardooliveira/stLib/core/processing/initialization"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -82,11 +86,15 @@ func new(c echo.Context) error {
 
 	}
 
-	/*var project *entities.Project
-	if project, err = processing.HandlePath(projectFolder); err != nil {
-		log.Printf("error loading the project %q: %v\n", path, err)
+	pp, err := initialization.NewProjectIniter(types.ProcessableProject{
+		Path: projectFolder,
+	}).WithAssetDiscoverer(discovery.FlatAssetDiscoverer{}).
+		Init()
+	if err != nil {
+		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	project := pp.Project
 
 	project.Description = createProject.Description
 	project.Tags = createProject.Tags
@@ -98,8 +106,5 @@ func new(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, struct {
 		UUID string `json:"uuid"`
-	}{project.UUID})*/
-	return c.JSON(http.StatusOK, struct {
-		UUID string `json:"uuid"`
-	}{"wqe"})
+	}{project.UUID})
 }

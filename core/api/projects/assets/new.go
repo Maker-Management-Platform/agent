@@ -10,6 +10,8 @@ import (
 	"github.com/eduardooliveira/stLib/core/data/database"
 	"github.com/eduardooliveira/stLib/core/downloader/tools"
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/initialization"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/utils"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -55,13 +57,19 @@ func New(c echo.Context) error {
 	defer src.Close()
 	if err = tools.SaveFile(filepath.Join(path, files[0].Filename), src); err != nil {
 		log.Println(err)
-		return c.NoContent(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	/*processing.EnqueueInitJob(&processing.ProcessableAsset{
+
+	_, err = initialization.NewAssetIniter(&types.ProcessableAsset{
 		Name:    files[0].Filename,
 		Project: project,
 		Origin:  "fs",
-	})*/
+	}).Init()
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.NoContent(http.StatusCreated)
 }
