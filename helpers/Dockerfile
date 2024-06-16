@@ -4,6 +4,7 @@ RUN mkdir app
 WORKDIR /app
 COPY . .
 
+RUN go mod tidy
 RUN go build main.go
 RUN ls -la helpers
 RUN pwd
