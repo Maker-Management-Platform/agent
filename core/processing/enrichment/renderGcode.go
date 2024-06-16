@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
@@ -30,15 +31,15 @@ type tmpImg struct {
 	Data   []byte
 }
 
-func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
-	imgName := fmt.Sprintf("%s.r.png", job.GetAsset().ID)
-	imgPath := utils.ToAssetsPath(job.GetAsset().ProjectUUID, imgName)
+func (g *gcodeRenderer) Render(job types.ProcessableAsset) (string, error) {
+	imgName := fmt.Sprintf("%s.r.png", job.Asset.ID)
+	imgPath := utils.ToAssetsPath(job.Asset.ProjectUUID, imgName)
 	if _, err := os.Stat(imgPath); err == nil {
 		return imgName, errors.New("already exists")
 	}
-	system.Publish("render", job.GetAsset().Name)
+	system.Publish("render", job.Asset.Name)
 
-	path := utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name))
+	path := utils.ToLibPath(path.Join(job.Project.FullPath(), job.Asset.Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -81,7 +82,7 @@ func (g *gcodeRenderer) Render(job Enrichable) (string, error) {
 
 	if image.Data != nil {
 
-		utils.CreateAssetsFolder(job.GetProject().UUID)
+		utils.CreateAssetsFolder(job.Project.UUID)
 
 		h := sha1.New()
 		_, err = h.Write(image.Data)

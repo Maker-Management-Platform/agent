@@ -1,6 +1,7 @@
 package stlib
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -44,7 +45,14 @@ func Run() {
 	if err != nil {
 		log.Fatal("error loading assetTypes", err)
 	}
-	go processing.Run(runtime.Cfg.Library.Path)
+
+	go func() {
+		if err := processing.ProcessFolder(context.Background(), runtime.Cfg.Library.Path); err != nil {
+			log.Fatal("error discovering projects", err)
+		}
+		log.Println("discovery finished")
+	}()
+
 	go processing.RunTempDiscovery()
 	err = state.LoadPrinters()
 	if err != nil {

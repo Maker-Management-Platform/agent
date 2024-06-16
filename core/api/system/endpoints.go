@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -67,7 +68,12 @@ func saveSettings(c echo.Context) error {
 }
 
 func runDiscovery(c echo.Context) error {
-	go processing.Run(runtime.Cfg.Library.Path)
+	go func() {
+		err := processing.ProcessFolder(context.Background(), runtime.Cfg.Library.Path)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
 	return c.NoContent(http.StatusOK)
 }
 

@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/state"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
@@ -20,10 +21,10 @@ func New3MFExtractor() *mfExtractor {
 	return &mfExtractor{}
 }
 
-func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
+func (me *mfExtractor) Extract(e types.ProcessableAsset) ([]*Extracted, error) {
 	rtn := make([]*Extracted, 0)
-	baseName := fmt.Sprintf("%s.e", e.GetAsset().ID)
-	path := utils.ToLibPath(filepath.Join(e.GetProject().FullPath(), e.GetAsset().Name))
+	baseName := fmt.Sprintf("%s.e", e.Asset.ID)
+	path := utils.ToLibPath(filepath.Join(e.Project.FullPath(), e.Asset.Name))
 
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -32,7 +33,7 @@ func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
 	}
 	defer archive.Close()
 
-	utils.CreateAssetsFolder(e.GetProject().UUID)
+	utils.CreateAssetsFolder(e.Project.UUID)
 
 	for i, f := range archive.File {
 		ext := filepath.Ext(f.Name)
@@ -46,7 +47,7 @@ func (me *mfExtractor) Extract(e Enrichable) ([]*Extracted, error) {
 			continue
 		}
 		dstName := fmt.Sprintf("%s%d%s", baseName, i, ext)
-		dstFile, err := os.OpenFile(utils.ToAssetsPath(e.GetAsset().ProjectUUID, dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		dstFile, err := os.OpenFile(utils.ToAssetsPath(e.Asset.ProjectUUID, dstName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			log.Println(err)
 			continue

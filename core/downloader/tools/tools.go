@@ -6,16 +6,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
-	models "github.com/eduardooliveira/stLib/core/entities"
-	"github.com/eduardooliveira/stLib/core/processing"
+	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/initialization"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
 
-func DownloadAsset(name string, project *models.Project, client *http.Client, req *http.Request) error {
-	out, err := os.Create(utils.ToLibPath(fmt.Sprintf("%s/%s", project.FullPath(), name)))
+func DownloadAsset(name string, project *entities.Project, client *http.Client, req *http.Request) ([]*types.ProcessableAsset, error) {
+	out, err := os.Create(utils.ToLibPath(filepath.Join(project.FullPath(), name)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer out.Close()
 
@@ -23,26 +25,23 @@ func DownloadAsset(name string, project *models.Project, client *http.Client, re
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	processing.EnqueueInitJob(&processing.ProcessableAsset{
+	return initialization.NewAssetIniter(&types.ProcessableAsset{
 		Name:    name,
 		Project: project,
 		Origin:  "fs",
-	})
-
-	return nil
+	}).Init()
 }
 
 func SaveFile(dst string, f io.Reader) error {

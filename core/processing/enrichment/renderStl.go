@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/Maker-Management-Platform/fauxgl"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/runtime"
 	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
@@ -46,17 +47,17 @@ func NewSTLRenderer() *stlRenderer {
 	}
 }
 
-func (s *stlRenderer) Render(job Enrichable) (string, error) {
-	renderName := fmt.Sprintf("%s.r.png", job.GetAsset().ID)
-	renderSavePath := utils.ToAssetsPath(job.GetAsset().ProjectUUID, renderName)
+func (s *stlRenderer) Render(job types.ProcessableAsset) (string, error) {
+	renderName := fmt.Sprintf("%s.r.png", job.Asset.ID)
+	renderSavePath := utils.ToAssetsPath(job.Asset.ProjectUUID, renderName)
 
 	if _, err := os.Stat(renderSavePath); err == nil {
 		return renderName, errors.New("already exists")
 	}
 
-	system.Publish("render", job.GetAsset().Name)
+	system.Publish("render", job.Asset.Name)
 
-	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.GetProject().FullPath(), job.GetAsset().Name)))
+	mesh, err := fauxgl.LoadSTL(utils.ToLibPath(path.Join(job.Project.FullPath(), job.Asset.Name)))
 	if err != nil {
 		log.Println(err)
 		return "", err
@@ -88,7 +89,7 @@ func (s *stlRenderer) Render(job Enrichable) (string, error) {
 	image := context.Image()
 	image = resize.Resize(uint(s.width), uint(s.height), image, resize.Bilinear)
 
-	utils.CreateAssetsFolder(job.GetProject().UUID)
+	utils.CreateAssetsFolder(job.Project.UUID)
 
 	return renderName, fauxgl.SavePNG(renderSavePath, image)
 }

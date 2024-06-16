@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/eduardooliveira/stLib/core/entities"
+	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/system"
 	"github.com/eduardooliveira/stLib/core/utils"
 )
@@ -20,14 +21,14 @@ func NewGCodeParser() *gCodeParser {
 	return &gCodeParser{}
 }
 
-func (p *gCodeParser) Parse(e Enrichable) error {
-	path := utils.ToLibPath(path.Join(e.GetProject().FullPath(), e.GetAsset().Name))
+func (p *gCodeParser) Parse(e types.ProcessableAsset) error {
+	path := utils.ToLibPath(path.Join(e.Project.FullPath(), e.Asset.Name))
 	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	system.Publish("parser", e.GetAsset().Name)
+	system.Publish("parser", e.Asset.Name)
 
 	scanner := bufio.NewScanner(f)
 
@@ -36,7 +37,7 @@ func (p *gCodeParser) Parse(e Enrichable) error {
 			line := strings.Trim(scanner.Text(), " ;")
 
 			if !strings.HasPrefix(line, "thumbnail begin") {
-				parseComment(e.GetAsset(), line)
+				parseComment(e.Asset, line)
 			}
 
 		}
