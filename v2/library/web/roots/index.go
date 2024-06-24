@@ -33,7 +33,7 @@ func IndexHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	return web.Render(c, http.StatusOK, components.WrapperComponent(components.Wrapper{
+	return web.Render(c, http.StatusOK, components.Wrapper{
 		MainContent: Index(asset),
-	}), true)
+	}, true)
 }

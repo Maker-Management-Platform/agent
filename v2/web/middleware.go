@@ -6,16 +6,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func Render(ctx echo.Context, statusCode int, t templ.Component, htmx bool) error {
+func Render(ctx echo.Context, statusCode int, t components.Wrapper, htmx bool) error {
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)
 
-	c := t
+	c := t.MainContent
 
 	if !htmx || ctx.Request().Header.Get("HX-Request") != "true" {
-		c = components.WrapperComponent(components.Wrapper{
-			MainContent: t,
-		})
+		c = components.WrapperComponent(t)
 	} else {
 		ctx.Response().Header().Set("HX-Push-Url", ctx.Request().URL.String())
 	}
