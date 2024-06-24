@@ -70,7 +70,7 @@ func (ai *AssetIniter) Init() ([]*types.ProcessableAsset, error) {
 }
 
 func (ai *AssetIniter) processType() error {
-	if t, ok := state.ExtensionProjectType[ai.pa.Asset.Extension]; ok {
+	if t, ok := state.ExtensionAssetType[ai.pa.Asset.Extension]; ok {
 		ai.pa.Asset.AssetType = t.Name
 	} else {
 		ai.pa.Asset.AssetType = "other"

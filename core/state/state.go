@@ -13,7 +13,7 @@ import (
 var TempFiles = make(map[string]*entities.TempFile)
 var Printers = make(map[string]*entities.Printer)
 var AssetTypes = make(map[string]*entities.AssetType)
-var ExtensionProjectType = make(map[string]*entities.AssetType)
+var ExtensionAssetType = make(map[string]*entities.AssetType)
 var printersFile string
 var assetTypesFile string
 
@@ -104,7 +104,7 @@ func LoadAssetTypes() error {
 
 	for _, assetType := range AssetTypes {
 		for _, ext := range assetType.Extensions {
-			ExtensionProjectType[ext] = assetType
+			ExtensionAssetType[ext] = assetType
 		}
 	}
 	return err

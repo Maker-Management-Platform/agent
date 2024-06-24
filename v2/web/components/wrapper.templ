@@ -1,0 +1,23 @@
+package components
+
+type Wrapper struct {
+MainContent templ.Component
+}
+
+templ WrapperComponent(model Wrapper) {
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Web Page</title>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.8/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+  <div class="main container mx-auto">
+    @model.MainContent
+  </div>
+  </body>
+</html>
+}

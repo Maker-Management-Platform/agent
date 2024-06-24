@@ -8,3 +8,5 @@ cache
 *.log
 __debug*
 /data
+*templ.go
+*templ.txt
