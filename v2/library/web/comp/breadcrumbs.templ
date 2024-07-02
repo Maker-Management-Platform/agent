@@ -18,7 +18,7 @@ templ BreadCrumbs(asset *entities.Asset) {
 					hx-push-url="true"
 				>Home</a>
 			</li>
-			@crumb(asset)
+			@crumb(asset.Parent)
 		</ul>
 	</div>
 }
