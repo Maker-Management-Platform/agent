@@ -1,9 +1,15 @@
 package entities
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"log/slog"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +22,6 @@ const (
 
 type Asset struct {
 	ID           string     `json:"id" gorm:"primaryKey"`
-	Name         *string    `json:"name"`
 	Label        *string    `json:"label"`
 	Path         *string    `json:"path"`
 	Root         *string    `json:"root"`
@@ -34,11 +39,39 @@ type Asset struct {
 	UpdatedAt    time.Time
 }
 
-func NewAsset(root, path string) *Asset {
-	return &Asset{
-		Root: &root,
-		Path: &path,
+func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
+	ext := filepath.Ext(path)
+
+	data := []byte(filepath.Join(root, path)) // Convert the path string to bytes
+	md5Hash := md5.Sum(data)                  // Generate the MD5 hash
+
+	var asset = &Asset{
+		ID:        hex.EncodeToString(md5Hash[:]),
+		Root:      utils.Ptr(root),
+		Path:      utils.Ptr(path),
+		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
+		Extension: utils.Ptr(ext),
 	}
+	if parent != nil {
+		asset.Parent = parent
+		asset.ParentID = &parent.ID
+	}
+	if isDir {
+		if parent == nil {
+			asset.NodeKind = utils.Ptr(NodeKindRoot)
+		} else {
+			asset.NodeKind = utils.Ptr(NodeKindDir)
+		}
+		return asset
+	}
+	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
+	asset.Kind = utils.Ptr(kind.Name)
+
+	if *asset.Kind == "image" {
+		asset.Thumbnail = utils.Ptr(asset.ID)
+	}
+
+	return asset
 }
 
 func (a *Asset) bubbleThumbnail(tx *gorm.DB) error {

@@ -1,19 +1,18 @@
-package files
+package web
 
 import (
 	"errors"
 	"net/http"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/v2/library/svc"
 	"github.com/eduardooliveira/stLib/v2/web"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func GetFileHandler(c echo.Context) error {
+func (h webHandler) getFileHandler(c echo.Context) error {
 	id := c.Param("assetID")
-	asset, err := svc.GetAsset(id, false)
+	asset, err := h.r.GetAsset(id, false)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.NoContent(http.StatusNotFound)

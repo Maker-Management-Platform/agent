@@ -1,0 +1,41 @@
+package comp
+
+import (
+	"fmt"
+	"github.com/eduardooliveira/stLib/v2/web/helpers"
+)
+
+type PaginationModel struct {
+	UH          *helpers.URLHelper
+	CurrentPage int
+	TotalPages  int
+	Target      string
+}
+
+templ Pagination(pm PaginationModel) {
+	<div class="join">
+		<button
+			class="join-item btn btn-sm"
+			hx-target={ pm.Target }
+			hx-trigger="click"
+			hx-get={ pm.UH.Clone().WithPagePlus(-1).GetURL() }
+			if pm.CurrentPage == 1 {
+				disabled
+			}
+		>
+			«
+		</button>
+		<button class="join-item btn btn-sm">Page { fmt.Sprintf("%d/%d", pm.CurrentPage, pm.TotalPages) }</button>
+		<button
+			class="join-item btn btn-sm"
+			hx-target={ pm.Target }
+			hx-trigger="click"
+			hx-get={ pm.UH.Clone().WithPagePlus(1).GetURL() }
+			if pm.CurrentPage == pm.TotalPages {
+				disabled
+			}
+		>
+			»
+		</button>
+	</div>
+}

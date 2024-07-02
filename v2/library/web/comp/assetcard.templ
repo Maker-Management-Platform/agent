@@ -1,0 +1,35 @@
+package comp
+
+import (
+	"fmt"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+)
+
+templ AssetCard(asset *entities.Asset) {
+	<div class="card bg-base-100 shadow-xl basis-52 max-w-52 m-1 card-compact">
+		if asset.Thumbnail != nil {
+			<figure class="aspect-video">
+				<img
+					src={ fmt.Sprintf("/lib/%s/file", *asset.Thumbnail) }
+					alt={ *asset.Label }
+				/>
+			</figure>
+		}
+		<div class="card-body trucate">
+			<p class="trucate">
+				<a
+					class="trucate"
+					hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
+					hx-target=".asset-view"
+					hx-trigger="click"
+					hx-push-url="true"
+				>{ *asset.Label }</a>
+			</p>
+			<div class="card-actions justify-end">
+				<button type="button" class="btn btn-xs">
+					<span class="mdi mdi-delete"></span>
+				</button>
+			</div>
+		</div>
+	</div>
+}

@@ -7,15 +7,13 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
-	"github.com/eduardooliveira/stLib/v2/library/discovery"
+	"github.com/eduardooliveira/stLib/v2/web/mw"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -52,35 +50,18 @@ func main() {
 	}
 
 	server := echo.New()
-
+	server.Use(mw.CtxMiddleware())
 	server.Use(middleware.CORS())
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 
-	if err := library.Init(*server.Group("/lib")); err != nil {
+	_, err := library.New(server.Group("/lib"))
+	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
 
-	eg := errgroup.Group{} //maybe this should be initialized in the library.Init() function
-	if len(config.Cfg.Library.Paths) == 0 {
-		slog.Warn("No library paths configured")
-	}
-	for _, path := range config.Cfg.Library.Paths {
-		eg.Go(discovery.New(path).Run)
-	}
-
-	eg.Go(func() error {
-		return server.Start(fmt.Sprintf(":%d", config.Cfg.Server.Port))
-	})
-
-	eg.Go(func() error {
-		time.Sleep(time.Minute)
-
-		return nil
-	})
+	//l.ScanAsync()
 
 	slog.Info("Starting agent")
-	if err := eg.Wait(); err != nil {
-		log.Fatalf("Error running agent: %v", err)
-	}
+	log.Fatal(server.Start(fmt.Sprintf(":%d", config.Cfg.Server.Port)))
 }

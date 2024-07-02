@@ -1,0 +1,40 @@
+package comp
+
+import (
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"fmt"
+)
+
+templ BreadCrumbs(asset *entities.Asset) {
+	if asset.Parent != nil {
+	}
+	<div class="breadcrumbs text-sm">
+		<ul>
+			<li>
+				<a
+					hx-get="/lib"
+					hx-target=".asset-view"
+					hx-trigger="click"
+					hx-push-url="true"
+				>Home</a>
+			</li>
+			@crumb(asset)
+		</ul>
+	</div>
+}
+
+templ crumb(asset *entities.Asset) {
+	if asset.Parent != nil {
+		@crumb(asset.Parent)
+	}
+	if asset.Label != nil && *asset.Label != "" {
+		<li>
+			<a
+				hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
+				hx-target=".asset-view"
+				hx-trigger="click"
+				hx-push-url="true"
+			>{ *asset.Label }</a>
+		</li>
+	}
+}

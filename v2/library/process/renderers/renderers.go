@@ -7,9 +7,8 @@ import (
 )
 
 type Renderer interface {
-	Render(asset entities.Asset, cb OnRenderCallback) func() error
+	Render(asset *entities.Asset) (*entities.Asset, error)
 }
-type OnRenderCallback func(*entities.Asset, string, string) error
 
 var extensions = []string{
 	".gcode",

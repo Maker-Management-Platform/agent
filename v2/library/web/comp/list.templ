@@ -1,0 +1,20 @@
+package comp
+
+import (
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
+)
+
+type ListModel struct {
+	Asset      *entities.Asset
+	Pagination corecomp.PaginationModel
+}
+
+templ List(model ListModel) {
+	@corecomp.Pagination(model.Pagination)
+	<div class="flex-1 flex flex-row flex-wrap">
+		for _, a := range model.Asset.NestedAssets {
+			@AssetCard(a)
+		}
+	</div>
+}

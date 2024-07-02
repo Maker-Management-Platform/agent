@@ -7,7 +7,7 @@ import (
 )
 
 type Extractor interface {
-	Extract(asset *entities.Asset, cb func([]*entities.Asset) error) func() error
+	Extract(asset *entities.Asset) ([]*entities.Asset, error)
 }
 
 var extensions = []string{
@@ -24,4 +24,9 @@ func IsExtractable(asset *entities.Asset) bool {
 
 func GetExtractor(asset *entities.Asset) Extractor {
 	return extractors[*asset.Extension]
+}
+
+func Get(asset *entities.Asset) (Extractor, bool) {
+	e, ok := extractors[*asset.Extension]
+	return e, ok
 }

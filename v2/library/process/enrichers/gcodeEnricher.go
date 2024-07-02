@@ -16,35 +16,33 @@ type gCodeEnricher struct {
 	l *slog.Logger
 }
 
-func (g *gCodeEnricher) Enrich(asset *entities.Asset) func() error {
+func (g *gCodeEnricher) Enrich(asset *entities.Asset) error {
 	g.l = slog.With("module", "gcodeEnricher").With("asset", asset.ID)
-	return func() error {
-		if asset.Properties == nil {
-			asset.Properties = make(entities.Properties)
-		}
-
-		f, err := os.Open(filepath.Join(*asset.Root, *asset.Path))
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			if strings.HasPrefix(strings.TrimSpace(scanner.Text()), ";") {
-				line := strings.Trim(scanner.Text(), " ;")
-
-				if !strings.HasPrefix(line, "thumbnail begin") {
-					parseComment(asset, line)
-				}
-
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			return errors.Join(err, errors.New("error reading gcode"))
-		}
-		return nil
+	if asset.Properties == nil {
+		asset.Properties = make(entities.Properties)
 	}
+
+	f, err := os.Open(filepath.Join(*asset.Root, *asset.Path))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.HasPrefix(strings.TrimSpace(scanner.Text()), ";") {
+			line := strings.Trim(scanner.Text(), " ;")
+
+			if !strings.HasPrefix(line, "thumbnail begin") {
+				parseComment(asset, line)
+			}
+
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return errors.Join(err, errors.New("error reading gcode"))
+	}
+	return nil
 }
 
 func parseComment(a *entities.Asset, line string) {
