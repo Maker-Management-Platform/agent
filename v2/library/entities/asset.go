@@ -30,7 +30,7 @@ type Asset struct {
 	NodeKind     *string    `json:"nodeKind"`
 	ParentID     *string    `json:"parentID"`
 	Parent       *Asset     `json:"-"`
-	NestedAssets []*Asset   `json:"nestedAssets" gorm:"foreignKey:ParentID"`
+	NestedAssets []*Asset   `json:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
 	Thumbnail    *string    `json:"thumbnail"`
 	SeenOnScan   *bool      `json:"seenOnScan"`
 	Properties   Properties `json:"properties"`
@@ -64,6 +64,8 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 		}
 		return asset
 	}
+
+	asset.NodeKind = utils.Ptr(NodeKindFile)
 	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
 	asset.Kind = utils.Ptr(kind.Name)
 
@@ -100,6 +102,9 @@ func (a *Asset) bubbleThumbnail(tx *gorm.DB) error {
 }
 
 func (a *Asset) AfterSave(tx *gorm.DB) error {
+	if a.ID == "" {
+		return nil
+	}
 	slog.Debug("AfterSave", "asset", *a.Path)
 	return a.bubbleThumbnail(tx)
 }

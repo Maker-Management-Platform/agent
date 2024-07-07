@@ -6,6 +6,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"gorm.io/gorm"
 )
 
@@ -34,15 +35,19 @@ func (r AssetRepo) LoadParents(a *entities.Asset, dept int, fields ...string) er
 		return errors.New("dept must be greater than 0")
 	}
 	q := database.DB.Model(a)
+
+	parentChain := "Parent"
 	for i := 0; i < dept; i++ {
-		q = q.Preload("Parent", func(q *gorm.DB) *gorm.DB {
-			if len(fields) > 0 {
-				return q.Select(fields)
-			}
-			return q
-		})
+		parentChain += ".Parent"
 	}
-	return q.Find(a).Error
+	q = q.Preload(parentChain, func(q *gorm.DB) *gorm.DB {
+		if len(fields) > 0 {
+			fields = append(fields, "ParentID")
+			return q.Select(fields)
+		}
+		return q
+	})
+	return q.Debug().Find(a).Error
 }
 
 type GetAssetParams struct {
@@ -68,4 +73,14 @@ func (r AssetRepo) GetPagedNested(asset *entities.Asset, page, perPage int) (int
 		Limit(perPage).
 		Order("Label ASC").
 		Find(&asset.NestedAssets).Error
+}
+
+func (r AssetRepo) SetDirtyRoot(root string) error {
+	return database.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).
+		Model(&entities.Asset{}).Update("SeenOnScan", false).Error
+}
+
+func (r AssetRepo) DeleteUnSeenInRoot(root string) error {
+	return database.DB.Model(entities.Asset{}).
+		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), Root: &root}).Error
 }

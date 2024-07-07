@@ -14,6 +14,11 @@ type ResponseModel struct {
 	PushState     string
 }
 
+type ResponseComponents struct {
+	Main   templ.Component
+	AsideR templ.Component
+}
+
 func Render(rm ResponseModel) error {
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)

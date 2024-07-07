@@ -5,7 +5,10 @@ WORKDIR /app
 COPY . .
 
 RUN go mod tidy
-RUN go build main.go
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN templ generate
+RUN go build ./cmd/command/
+
 RUN ls -la helpers
 RUN pwd
 

@@ -32,6 +32,11 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
+	err = h.r.LoadParents(asset, 5, "ID", "Label")
+	if err != nil {
+		return web.Error(c, http.StatusInternalServerError, err.Error())
+	}
+
 	listComp, err := h.list(&listInput{
 		c:     c,
 		Asset: asset,
@@ -40,10 +45,6 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	err = h.r.LoadParents(asset, 5, "ID", "Label")
-	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
-	}
 	return web.Render(web.ResponseModel{
 		Ctx: c,
 		S:   http.StatusOK,

@@ -2,7 +2,7 @@ package comp
 
 templ WrapperComponent(comp templ.Component) {
 	<!DOCTYPE html>
-	<html data-theme="sunset" class="bg-neutral">
+	<html data-theme="dark">
 		<head>
 			<title>Maker Management Platform</title>
 			<meta charset="UTF-8"/>
@@ -10,8 +10,11 @@ templ WrapperComponent(comp templ.Component) {
 			<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.8/dist/full.min.css" rel="stylesheet" type="text/css"/>
 			<script src="https://cdn.tailwindcss.com"></script>
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/css/materialdesignicons.min.css" integrity="sha512-/k658G6UsCvbkGRB3vPXpsPHgWeduJwiWGPCGS14IQw3xpr63AEMdA8nMYG2gmYkXitQxDTn6iiK/2fD4T87qA==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+			<script>
+				htmx.logAll();
+			</script>
 		</head>
-		<body class="flex flex-col min-h-screen bg-neutral">
+		<body class="flex flex-col min-h-screen">
 			<header class="sticky z-50 top-0 pt-2 px-3">
 				@navBar()
 			</header>
@@ -19,8 +22,9 @@ templ WrapperComponent(comp templ.Component) {
 				<main>
 					@comp
 				</main>
+				<aside class="right"></aside>
 			</div>
-			<footer class="sticky z-50 bottom-0 p-4">
+			<footer class="sticky z-50 bottom-0 p-4 bg-primary dark:text-white ">
 				footer contents
 			</footer>
 		</body>

@@ -16,28 +16,25 @@ templ BreadCrumbs(asset *entities.Asset) {
 					hx-push-url="true"
 				>Home</a>
 			</li>
-			if asset != nil  && asset.Parent != nil {
-				@crumb(asset.Parent)
-			}
+			@crumb(asset)
 		</ul>
 	</div>
 }
 
 templ crumb(asset *entities.Asset) {
-	if asset == nil {
-		return
-	}
-	if asset.Parent != nil {
-		@crumb(asset.Parent)
-	}
-	if asset.Label != nil && *asset.Label != "" {
-		<li>
-			<a
-				hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
-				hx-target=".asset-view"
-				hx-trigger="click"
-				hx-push-url="true"
-			>{ *asset.Label }</a>
-		</li>
+	if asset != nil {
+		if asset.Parent != nil {
+			@crumb(asset.Parent)
+		}
+		if asset.Label != nil && *asset.Label != "" {
+			<li>
+				<a
+					hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
+					hx-target=".asset-view"
+					hx-trigger="click"
+					hx-push-url="true"
+				>{ *asset.Label }</a>
+			</li>
+		}
 	}
 }

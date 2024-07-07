@@ -3,32 +3,28 @@ package comp
 import (
 	"fmt"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
+css bgimg(url string) {
+	background-image: { fmt.Sprintf("url(/lib/%s/file)", url) };
+}
+
 templ AssetCard(asset *entities.Asset) {
-	<div class="card bg-base-100 shadow-xl basis-52 max-w-52 m-1 card-compact">
-		if asset.Thumbnail != nil {
-			<figure class="aspect-video">
-				<img
-					src={ fmt.Sprintf("/lib/%s/file", *asset.Thumbnail) }
-					alt={ *asset.Label }
-				/>
-			</figure>
-		}
-		<div class="card-body trucate">
-			<p class="trucate">
-				<a
-					class="trucate"
-					hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
-					hx-target=".asset-view"
-					hx-trigger="click"
-					hx-push-url="true"
-				>{ *asset.Label }</a>
-			</p>
-			<div class="card-actions justify-end">
-				<button type="button" class="btn btn-xs">
-					<span class="mdi mdi-delete"></span>
-				</button>
+	//https://merakiui.com/components/application-ui/cards
+	<div class="flex flex-col items-center justify-center w-full max-w-sm mx-auto m-1">
+		<div
+			class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(asset.Thumbnail)) }
+			hx-get={ fmt.Sprintf("/lib/%s", asset.ID) }
+			hx-target=".asset-view"
+			hx-trigger="click"
+			hx-push-url="true"
+		></div>
+		<div class="w-56 -mt-10 overflow-hidden bg-white rounded-lg shadow-lg md:w-64 dark:bg-gray-800">
+			<h3 class="p-2 font-bold tracking-wide text-center text-gray-800 uppercase dark:text-white trucate whitespace-nowrap">{ *asset.Label }</h3>
+			<div class="flex items-center justify-between px-3 py-2 bg-gray-200 dark:bg-gray-700">
+				<span class="font-bold text-gray-800 dark:text-gray-200">$129</span>
+				<button class="px-2 py-1 text-xs font-semibold text-white uppercase transition-colors duration-300 transform bg-gray-800 rounded hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 focus:outline-none">Add to cart</button>
 			</div>
 		</div>
 	</div>

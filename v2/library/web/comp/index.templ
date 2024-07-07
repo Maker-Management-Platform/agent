@@ -11,10 +11,15 @@ type IndexModel struct {
 
 templ Index(model IndexModel) {
 	<div class="asset-view">
-		@BreadCrumbs(model.Asset)
+		@BreadCrumbs(model.Asset.Parent)
 		<h1>{ *model.Asset.Path }</h1>
 		<div class="main">
 			@model.Main
+		</div>
+		<div class="fixed bottom-20 right-4">
+			<button class="btn btn-active btn-secondary font-bold py-2 px-4 rounded-full shadow-lg dark:text-white ">
+				New
+			</button>
 		</div>
 	</div>
 }

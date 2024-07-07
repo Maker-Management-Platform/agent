@@ -8,34 +8,35 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
+	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
 type discProc struct {
-	d         *Discoverer
-	l         *slog.Logger
-	root      string
-	rootAsset *entities.Asset
+	discoverer *Discoverer
+	l          *slog.Logger
+	root       string
+	rootAsset  *entities.Asset
 }
 
 type Discoverer struct {
-	l *slog.Logger
-	p *process.Processor
-	r *repo.AssetRepo
+	l         *slog.Logger
+	processor *process.Processor
+	repo      *repo.AssetRepo
 }
 
 func New(p *process.Processor, r *repo.AssetRepo) *Discoverer {
 	return &Discoverer{
-		p: p,
-		r: r,
-		l: slog.With("module", "discovery"),
+		processor: p,
+		repo:      r,
+		l:         slog.With("module", "discovery"),
 	}
 }
 
 func (d *Discoverer) Get(root string) *discProc {
 	return &discProc{
-		d:    d,
-		l:    d.l.With("root", root),
-		root: root,
+		discoverer: d,
+		l:          d.l.With("root", root),
+		root:       root,
 	}
 }
 
@@ -56,12 +57,14 @@ func (d *discProc) ProcessPath(path string, parent *entities.Asset) (asset *enti
 
 	asset = entities.NewAssetFromRootPath(d.root, rel, pathInfo.IsDir(), parent)
 
-	err = d.d.r.SaveAsset(*asset)
+	asset.SeenOnScan = utils.Ptr(true)
+
+	err = d.discoverer.repo.SaveAsset(*asset)
 	if err != nil {
 		d.l.Error("Error saving asset", "error", err)
 	}
 
-	d.d.p.Process(asset)
+	d.discoverer.processor.Process(asset)
 
 	if pathInfo.IsDir() {
 		files, err := os.ReadDir(path)
@@ -81,10 +84,21 @@ func (d *discProc) ProcessPath(path string, parent *entities.Asset) (asset *enti
 
 func (d *discProc) Run() error {
 	d.l.Info("Discovering assets")
-	_, err := d.ProcessPath(d.root, nil)
+
+	err := d.discoverer.repo.SetDirtyRoot(d.root)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.ProcessPath(d.root, nil)
 
 	if err != nil {
 		d.l.Error("Error discovering assets", "error", err)
+	}
+
+	err = d.discoverer.repo.DeleteUnSeenInRoot(d.root)
+	if err != nil {
+		return err
 	}
 
 	return err

@@ -68,6 +68,7 @@ func (h webHandler) listHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
+	err = h.r.LoadParents(asset, 5, "ID", "Label")
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
