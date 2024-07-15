@@ -18,6 +18,9 @@ func New(e *echo.Group, r *repo.AssetRepo) error {
 		r: r,
 	}
 	e.GET("", wh.indexHandler)
+	e.GET("/details", wh.getAssetDetails)
+	e.GET("/edit", wh.editAsset)
+	e.POST("/edit", wh.editAsset)
 	e.GET("/:assetID", wh.indexHandler)
 	e.GET("/:assetID/list", wh.listHandler)
 	e.GET("/:assetID/file", wh.getFileHandler)

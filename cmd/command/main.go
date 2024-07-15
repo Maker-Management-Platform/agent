@@ -53,7 +53,7 @@ func main() {
 	server.Use(mw.CtxMiddleware())
 	server.Use(middleware.CORS())
 	server.Use(middleware.Logger())
-	server.Use(middleware.Recover())
+	//server.Use(middleware.Recover())
 
 	_, err := library.New(server.Group("/lib"))
 	if err != nil {

@@ -14,15 +14,15 @@ func (r AssetRepo) SaveAsset(a entities.Asset) error {
 	return database.DB.Omit("NestedAssets").Save(&a).Error
 }
 
-func (r AssetRepo) GetAsset(id string, deep bool) (rtn *entities.Asset, err error) {
-	q := database.DB.Where(&entities.Asset{ID: id})
+func (r AssetRepo) GetAsset(id string, deep bool) (rtn entities.Asset, err error) {
+	q := database.DB.Where("ID", id)
 	if deep {
 		q = q.Preload("NestedAssets.NestedAssets")
 	}
 	return rtn, q.First(&rtn).Error
 }
 
-func (r AssetRepo) GetAssetByRootAndPath(root, path string, deep bool) (rtn *entities.Asset, err error) {
+func (r AssetRepo) GetAssetByRootAndPath(root, path string, deep bool) (rtn entities.Asset, err error) {
 	q := database.DB.Where(&entities.Asset{Root: &root, Path: &path})
 	if deep {
 		q = q.Preload("NestedAssets.NestedAssets")
@@ -83,4 +83,8 @@ func (r AssetRepo) SetDirtyRoot(root string) error {
 func (r AssetRepo) DeleteUnSeenInRoot(root string) error {
 	return database.DB.Model(entities.Asset{}).
 		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), Root: &root}).Error
+}
+
+func (r AssetRepo) UpdateAsset(a *entities.Asset) error {
+	return database.DB.Model(&entities.Asset{ID: a.ID}).Updates(a).Error
 }

@@ -1,25 +1,18 @@
 package comp
 
-import (
-	"github.com/eduardooliveira/stLib/v2/library/entities"
-)
-
-type IndexModel struct {
-	Asset *entities.Asset
-	Main  templ.Component
-}
+import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Index(model IndexModel) {
-	<div class="asset-view">
-		@BreadCrumbs(model.Asset.Parent)
-		<h1>{ *model.Asset.Path }</h1>
-		<div class="main">
-			@model.Main
+	<div class="h-full w-full flex flex-col asset-view">
+		<div class="header">
+			<h1 class="label">{ utils.VoZ(model.Asset.Label) }</h1>
+			<input type="text" id="asset-id" name="assetID" value={ model.Asset.ID }/>
 		</div>
-		<div class="fixed bottom-20 right-4">
-			<button class="btn btn-active btn-secondary font-bold py-2 px-4 rounded-full shadow-lg dark:text-white ">
-				New
-			</button>
+		<div class="flex-initial">
+			@BreadCrumbs(model.Asset.Parent)
+		</div>
+		<div class="flex-auto overflow-y-auto main">
+			@model.Main
 		</div>
 	</div>
 }

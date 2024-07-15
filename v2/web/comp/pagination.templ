@@ -2,15 +2,7 @@ package comp
 
 import (
 	"fmt"
-	"github.com/eduardooliveira/stLib/v2/web/helpers"
 )
-
-type PaginationModel struct {
-	UH          *helpers.URLHelper
-	CurrentPage int
-	TotalPages  int
-	Target      string
-}
 
 templ Pagination(pm PaginationModel) {
 	<div class="join">

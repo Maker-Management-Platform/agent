@@ -4,7 +4,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
@@ -41,6 +43,11 @@ func (d *Discoverer) Get(root string) *discProc {
 }
 
 func (d *discProc) ProcessPath(path string, parent *entities.Asset) (asset *entities.Asset, err error) {
+
+	if d.shouldSkipFile(path) {
+		return nil, nil
+	}
+
 	pathInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -102,4 +109,21 @@ func (d *discProc) Run() error {
 	}
 
 	return err
+}
+
+func (d *discProc) shouldSkipFile(name string) bool {
+
+	if strings.HasPrefix(name, ".") {
+		if config.Cfg.Library.IgnoreDotFiles {
+			return true
+		}
+	}
+
+	for _, blacklist := range config.Cfg.Library.Blacklist {
+		if strings.HasSuffix(name, blacklist) {
+			return true
+		}
+	}
+
+	return false
 }

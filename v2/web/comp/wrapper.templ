@@ -1,8 +1,8 @@
 package comp
 
-templ WrapperComponent(comp templ.Component) {
+templ WrapperComponent(model WrapperModel) {
 	<!DOCTYPE html>
-	<html data-theme="dark">
+	<html data-theme="dark" class="m-0">
 		<head>
 			<title>Maker Management Platform</title>
 			<meta charset="UTF-8"/>
@@ -14,19 +14,47 @@ templ WrapperComponent(comp templ.Component) {
 				htmx.logAll();
 			</script>
 		</head>
-		<body class="flex flex-col min-h-screen">
-			<header class="sticky z-50 top-0 pt-2 px-3">
-				@navBar()
-			</header>
-			<div class="flex-grow">
-				<main>
-					@comp
-				</main>
-				<aside class="right"></aside>
+		<body class="m-0">
+			<div class="h-screen w-screen flex flex-col">
+				<header class="pt-2 px-3">
+					@navBar()
+				</header>
+				<div class="flex-auto overflow-y-auto flex flex-row">
+					<aside class="left bg-yellow-800 hidden">aside</aside>
+					<main class="flex-auto overflow-y-auto">
+						@model.Main
+					</main>
+					<aside class="flex right bg-yellow-800">
+						if model.AsideR != nil {
+							@model.AsideR
+						}
+					</aside>
+				</div>
+				<footer class=" bg-primary dark:text-white px-1">
+					v2.ahah
+				</footer>
 			</div>
-			<footer class="sticky z-50 bottom-0 p-4 bg-primary dark:text-white ">
-				footer contents
-			</footer>
 		</body>
 	</html>
 }
+
+/*
+	<body class="flex flex-col min-h-screen h-screen">
+		<header class="sticky z-50 top-0 pt-2 px-3">
+			@navBar()
+		</header>
+		<div class="flex-grow">
+			<main>
+				@model.Main
+			</main>
+			<aside class="right">
+				if model.AsideR != nil {
+					@model.AsideR
+				}
+			</aside>
+		</div>
+		<footer class="sticky z-50 bottom-0 p-4 bg-primary dark:text-white ">
+			footer contents
+		</footer>
+	</body>
+*/

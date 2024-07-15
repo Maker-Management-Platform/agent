@@ -7,26 +7,21 @@ import (
 )
 
 type ResponseModel struct {
-	Ctx           echo.Context
-	S             int
-	MainComponent templ.Component
-	IsFragment    bool
-	PushState     string
-}
-
-type ResponseComponents struct {
-	Main   templ.Component
-	AsideR templ.Component
+	Ctx          echo.Context
+	S            int
+	WrapperModel comp.WrapperModel
+	IsFragment   bool
+	PushState    string
 }
 
 func Render(rm ResponseModel) error {
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)
 
-	c := rm.MainComponent
+	c := rm.WrapperModel.Main
 
 	if rm.Ctx.Request().Header.Get("HX-Request") != "true" && !rm.IsFragment {
-		c = comp.WrapperComponent(rm.MainComponent)
+		c = comp.WrapperComponent(rm.WrapperModel)
 	}
 
 	if rm.PushState != "" {
@@ -44,7 +39,7 @@ func Error(ctx echo.Context, statusCode int, message string) error {
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)
 
-	if err := comp.WrapperComponent(comp.Error(message)).
+	if err := comp.WrapperComponent(comp.WrapperModel{Main: comp.Error(message)}).
 		Render(ctx.Request().Context(), buf); err != nil {
 		return err
 	}

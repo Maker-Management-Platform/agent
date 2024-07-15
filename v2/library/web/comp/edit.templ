@@ -1,0 +1,20 @@
+package comp
+
+import "github.com/eduardooliveira/stLib/v2/utils"
+
+templ Edit(m *EditModel) {
+	<div>
+		<h1>Edit { m.Action }</h1>
+		<form hx-post="/lib/edit" hx-target="#asset-sidebar">
+			<input type="hidden" name="id" value={ m.Asset.ID }/>
+			<input type="text" name="label" value={ utils.VoZ(m.Asset.Label) }/>
+			<input type="text" name="description" value={ utils.VoZ(m.Asset.Description) }/>
+			<button class="btn btn-sm">Save</button>
+		</form>
+	</div>
+	if m.Action == "save" {
+		<div class="label" hx-swap-oob="innerHTML:.asset-view .header .label">
+			{ utils.VoZ(m.Asset.Label) }
+		</div>
+	}
+}

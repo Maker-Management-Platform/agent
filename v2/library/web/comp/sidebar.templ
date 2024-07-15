@@ -1,0 +1,25 @@
+package comp
+
+templ SideBar() {
+	<div class="flex flex-row-reverse">
+		<div class="flex flex-col bg-blue-400">
+			<button
+				class="btn btn-sm"
+				hx-get="/lib/details"
+				hx-include="#asset-id"
+				hx-target="#asset-sidebar"
+			>d</button>
+			<button
+				class="btn btn-sm"
+				hx-get="/lib/edit"
+				hx-include="#asset-id"
+				hx-target="#asset-sidebar"
+			>e</button>
+			<button class="btn btn-sm">b</button>
+			<button class="btn btn-sm">b</button>
+		</div>
+		<div class="flex bg-green-900" id="asset-sidebar">
+			settings
+		</div>
+	</div>
+}

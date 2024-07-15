@@ -8,6 +8,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/web"
+	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -15,7 +16,7 @@ import (
 func (h webHandler) indexHandler(c echo.Context) error {
 	roots := config.Cfg.Library.Paths
 	var err error
-	var asset *entities.Asset
+	var asset entities.Asset
 	if c.Param("assetID") != "" {
 		asset, err = h.r.GetAsset(c.Param("assetID"), true)
 		if err != nil {
@@ -32,14 +33,14 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	err = h.r.LoadParents(asset, 5, "ID", "Label")
+	err = h.r.LoadParents(&asset, 5, "ID", "Label")
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
 	listComp, err := h.list(&listInput{
 		c:     c,
-		Asset: asset,
+		Asset: &asset,
 	})
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
@@ -48,10 +49,13 @@ func (h webHandler) indexHandler(c echo.Context) error {
 	return web.Render(web.ResponseModel{
 		Ctx: c,
 		S:   http.StatusOK,
-		MainComponent: comp.Index(comp.IndexModel{
-			Asset: asset,
-			Main:  listComp,
-		}),
+		WrapperModel: corecomp.WrapperModel{
+			Main: comp.Index(comp.IndexModel{
+				Asset: &asset,
+				Main:  listComp,
+			}),
+			AsideR: comp.SideBar(),
+		},
 	})
 
 }

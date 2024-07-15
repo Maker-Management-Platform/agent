@@ -21,20 +21,21 @@ const (
 )
 
 type Asset struct {
-	ID           string     `json:"id" gorm:"primaryKey"`
-	Label        *string    `json:"label"`
-	Path         *string    `json:"path"`
-	Root         *string    `json:"root"`
-	Extension    *string    `json:"extension"`
-	Kind         *string    `json:"kind"`
-	NodeKind     *string    `json:"nodeKind"`
-	ParentID     *string    `json:"parentID"`
-	Parent       *Asset     `json:"-"`
-	NestedAssets []*Asset   `json:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
-	Thumbnail    *string    `json:"thumbnail"`
-	SeenOnScan   *bool      `json:"seenOnScan"`
-	Properties   Properties `json:"properties"`
-	Tags         []*Tag     `json:"tags" gorm:"many2many:asset_tags"`
+	ID           string     `form:"id" gorm:"primaryKey"`
+	Label        *string    `form:"label"`
+	Description  *string    `form:"description"`
+	Path         *string    `form:"path"`
+	Root         *string    `form:"root"`
+	Extension    *string    `form:"extension"`
+	Kind         *string    `form:"kind"`
+	NodeKind     *string    `form:"nodeKind"`
+	ParentID     *string    `form:"parentID"`
+	Parent       *Asset     `form:"-"`
+	NestedAssets []*Asset   `form:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
+	Thumbnail    *string    `form:"thumbnail"`
+	SeenOnScan   *bool      `form:"seenOnScan"`
+	Properties   Properties `form:"properties"`
+	Tags         []*Tag     `form:"tags" gorm:"many2many:asset_tags"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -78,7 +79,7 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 
 func (a *Asset) bubbleThumbnail(tx *gorm.DB) error {
 	if a.Thumbnail == nil || a.ParentID == nil {
-		slog.Debug("no thumbnail or parent", "asset", *a.Path, "thumbnail", a.Thumbnail, "parent", a.ParentID)
+		slog.Debug("no thumbnail or parent", "asset", utils.VoZ(a.Path), "thumbnail", utils.VoZ(a.Thumbnail), "parent", utils.VoZ(a.ParentID))
 		return nil
 	}
 
@@ -91,7 +92,7 @@ func (a *Asset) bubbleThumbnail(tx *gorm.DB) error {
 
 	if parent.Thumbnail == nil {
 		parent.Thumbnail = a.Thumbnail
-		slog.Debug("bubbling thumbnail", "asset", *a.Path, "thumbnail", *a.Thumbnail, "parent", *parent.Path)
+		slog.Debug("bubbling thumbnail", "asset", utils.VoZ(a.Path), "thumbnail", utils.VoZ(a.Thumbnail), "parent", utils.VoZ(a.ParentID))
 		if q := tx.Save(parent); q.Error != nil {
 			slog.With("asset", *parent.Path).With("context", "bubbleThumbnail").With("error", q.Error).Error("error saving asset")
 			return q.Error
@@ -105,6 +106,6 @@ func (a *Asset) AfterSave(tx *gorm.DB) error {
 	if a.ID == "" {
 		return nil
 	}
-	slog.Debug("AfterSave", "asset", *a.Path)
+	slog.Debug("AfterSave", "asset", utils.VoZ(a.Path))
 	return a.bubbleThumbnail(tx)
 }

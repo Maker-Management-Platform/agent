@@ -56,7 +56,7 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 
 func (h webHandler) listHandler(c echo.Context) error {
 	var err error
-	var asset *entities.Asset
+	var asset entities.Asset
 	if c.Param("assetID") == "" {
 		return web.Error(c, http.StatusBadRequest, "Asset ID is required")
 	}
@@ -68,14 +68,14 @@ func (h webHandler) listHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	err = h.r.LoadParents(asset, 5, "ID", "Label")
+	err = h.r.LoadParents(&asset, 5, "ID", "Label")
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
 	listComp, err := h.list(&listInput{
 		c:     c,
-		Asset: asset,
+		Asset: &asset,
 	})
 
 	if err != nil {
@@ -87,13 +87,13 @@ func (h webHandler) listHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	u.Path = path.Join("/", "lib", asset.ID)
-
 	return web.Render(web.ResponseModel{
-		Ctx:           c,
-		S:             http.StatusOK,
-		MainComponent: listComp,
-		IsFragment:    true,
-		PushState:     u.String(),
+		Ctx: c,
+		S:   http.StatusOK,
+		WrapperModel: corecomp.WrapperModel{
+			Main: listComp,
+		},
+		IsFragment: true,
+		PushState:  u.String(),
 	})
 }
