@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
@@ -51,8 +52,9 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		S:   http.StatusOK,
 		WrapperModel: corecomp.WrapperModel{
 			Main: comp.Index(comp.IndexModel{
-				Asset: &asset,
-				Main:  listComp,
+				Asset:      &asset,
+				Main:       listComp,
+				AssetTypes: maputil.Values(config.Cfg.Library.AssetTypes),
 			}),
 			AsideR: comp.SideBar(),
 		},

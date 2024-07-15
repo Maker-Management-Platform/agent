@@ -4,9 +4,13 @@ import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Edit(m *EditModel) {
 	<div>
-		<h1>Edit { m.Action }</h1>
+		<h1>Edit</h1>
 		<form hx-post="/lib/edit" hx-target="#asset-sidebar">
 			<input type="hidden" name="id" value={ m.Asset.ID }/>
+			<div>
+				<label class="text-gray-700 dark:text-gray-200" for="label">Label</label>
+				<input value={ utils.VoZ(m.Asset.Label) } id="label" type="text" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring"/>
+			</div>
 			<input type="text" name="label" value={ utils.VoZ(m.Asset.Label) }/>
 			<input type="text" name="description" value={ utils.VoZ(m.Asset.Description) }/>
 			<button class="btn btn-sm">Save</button>

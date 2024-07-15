@@ -53,14 +53,14 @@ func main() {
 	server.Use(mw.CtxMiddleware())
 	server.Use(middleware.CORS())
 	server.Use(middleware.Logger())
-	//server.Use(middleware.Recover())
+	server.Use(middleware.Recover())
 
-	_, err := library.New(server.Group("/lib"))
+	l, err := library.New(server.Group("/lib"))
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
 
-	//l.ScanAsync()
+	l.ScanAsync()
 
 	slog.Info("Starting agent")
 	log.Fatal(server.Start(fmt.Sprintf(":%d", config.Cfg.Server.Port)))

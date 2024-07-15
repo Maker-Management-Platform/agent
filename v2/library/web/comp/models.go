@@ -2,6 +2,7 @@ package comp
 
 import (
 	"github.com/a-h/templ"
+	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/web/helpers"
 
@@ -9,8 +10,9 @@ import (
 )
 
 type IndexModel struct {
-	Asset *entities.Asset
-	Main  templ.Component
+	Asset      *entities.Asset
+	AssetTypes []config.AssetType
+	Main       templ.Component
 }
 
 type ListModel struct {

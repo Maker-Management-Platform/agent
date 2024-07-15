@@ -63,6 +63,7 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 		} else {
 			asset.NodeKind = utils.Ptr(NodeKindDir)
 		}
+		asset.Kind = utils.Ptr("dir")
 		return asset
 	}
 

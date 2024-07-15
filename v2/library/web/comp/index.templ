@@ -3,13 +3,19 @@ package comp
 import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Index(model IndexModel) {
-	<div class="h-full w-full flex flex-col asset-view">
+	<div class="h-full w-full flex flex-col asset-view p-2">
 		<div class="header">
-			<h1 class="label">{ utils.VoZ(model.Asset.Label) }</h1>
-			<input type="text" id="asset-id" name="assetID" value={ model.Asset.ID }/>
+			<h1 class="label text-lg font-semibold text-gray-700 capitalize dark:text-white">{ utils.VoZ(model.Asset.Label) }</h1>
+			<input class="hidden" type="text" id="asset-id" name="assetID" value={ model.Asset.ID }/>
 		</div>
 		<div class="flex-initial">
 			@BreadCrumbs(model.Asset.Parent)
+		</div>
+		<div role="tablist" class="tabs tabs-boxed">
+			<a role="tab" class="tab tab-active">All</a>
+			for _, t := range model.AssetTypes {
+				<a role="tab" class="tab">{ t.Label }</a>
+			}
 		</div>
 		<div class="flex-auto overflow-y-auto main">
 			@model.Main

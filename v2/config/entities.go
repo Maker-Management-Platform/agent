@@ -52,3 +52,7 @@ type AssetType struct {
 	Extensions []string `json:"extensions" mapstructure:"extensions"`
 	Order      int      `json:"order" mapstructure:"order"`
 }
+
+func (a AssetType) Compare(b AssetType) int {
+	return a.Order - b.Order
+}
