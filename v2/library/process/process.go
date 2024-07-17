@@ -31,7 +31,7 @@ func (p *Processor) Process(asset *entities.Asset) *Process {
 	proc := &Process{
 		p:     p,
 		Asset: asset,
-		done:  make(chan struct{}),
+		done:  make(chan error),
 	}
 	if r, ok := renderers.Get(asset); ok {
 		proc.renderer = r
@@ -58,7 +58,7 @@ func (p *Processor) Process(asset *entities.Asset) *Process {
 
 type Process struct {
 	p            *Processor
-	done         chan struct{}
+	done         chan error
 	Asset        *entities.Asset
 	renderer     renderers.Renderer
 	renderState  string
@@ -71,8 +71,8 @@ type Process struct {
 	enrichError  error
 }
 
-func (p *Process) Wait() {
-	<-p.done
+func (p *Process) Wait() error {
+	return <-p.done
 }
 
 func (p *Process) Run() error {
@@ -116,6 +116,7 @@ func (p *Process) Run() error {
 	if p.renderState == "done" || p.extractState == "done" || p.enrichState == "done" {
 		if err := p.p.r.SaveAsset(*p.Asset); err != nil {
 			l.Error("failed to save asset", "error", err)
+			p.done <- err
 			return err
 		}
 	}

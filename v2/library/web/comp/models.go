@@ -34,3 +34,9 @@ type EditModel struct {
 	Errors map[string]string
 	Action string
 }
+
+type NewModel struct {
+	ParentID  string
+	TempFiles []string
+	Errors    map[string]string
+}

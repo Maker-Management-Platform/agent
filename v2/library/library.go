@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/library/api"
 	"github.com/eduardooliveira/stLib/v2/library/discovery"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
@@ -35,7 +36,11 @@ func New(e *echo.Group) (*Library, error) {
 
 	lib.d = discovery.New(lib.p, lib.r)
 
-	if err := web.New(e, lib.r); err != nil {
+	if err := web.New(e.Group("/lib"), lib.r, lib.p); err != nil {
+		return nil, err
+	}
+
+	if err := api.New(*e.Group(""), lib.r); err != nil {
 		return nil, err
 	}
 

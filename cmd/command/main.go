@@ -55,12 +55,12 @@ func main() {
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 
-	l, err := library.New(server.Group("/lib"))
+	_, err := library.New(server.Group(""))
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
 
-	l.ScanAsync()
+	//l.ScanAsync()
 
 	slog.Info("Starting agent")
 	log.Fatal(server.Start(fmt.Sprintf(":%d", config.Cfg.Server.Port)))
