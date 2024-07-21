@@ -21,21 +21,21 @@ const (
 )
 
 type Asset struct {
-	ID           string     `form:"id" gorm:"primaryKey"`
-	Label        *string    `form:"label"`
-	Description  *string    `form:"description"`
-	Path         *string    `form:"path"`
-	Root         *string    `form:"root"`
-	Extension    *string    `form:"extension"`
-	Kind         *string    `form:"kind"`
-	NodeKind     *string    `form:"nodeKind"`
-	ParentID     *string    `form:"parentID"`
+	ID           string     `query:"id" form:"id" gorm:"primaryKey"`
+	Label        *string    `query:"label" form:"label"`
+	Description  *string    `query:"description" form:"description"`
+	Path         *string    `query:"path" form:"path"`
+	Root         *string    `query:"root" form:"root"`
+	Extension    *string    `query:"extension" form:"extension"`
+	Kind         *string    `query:"kind" form:"kind"`
+	NodeKind     *string    `query:"nodeKind" form:"nodeKind"`
+	ParentID     *string    `query:"parentID" form:"parentID"`
 	Parent       *Asset     `form:"-"`
-	NestedAssets []*Asset   `form:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
-	Thumbnail    *string    `form:"thumbnail"`
-	SeenOnScan   *bool      `form:"seenOnScan"`
-	Properties   Properties `form:"properties"`
-	Tags         []*Tag     `form:"tags" gorm:"many2many:asset_tags"`
+	NestedAssets []*Asset   `query:"nestedAssets" form:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
+	Thumbnail    *string    `query:"thumbnail" form:"thumbnail"`
+	SeenOnScan   *bool      `query:"seenOnScan" form:"seenOnScan"`
+	Properties   Properties `query:"properties" form:"properties"`
+	Tags         []*Tag     `query:"tags" form:"tags" gorm:"many2many:asset_tags"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

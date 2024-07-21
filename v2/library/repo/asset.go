@@ -50,17 +50,10 @@ func (r AssetRepo) LoadParents(a *entities.Asset, dept int, fields ...string) er
 	return q.Debug().Find(a).Error
 }
 
-type GetAssetParams struct {
-	Root    string
-	Path    string
-	PerPage int
-	Page    int
-}
-
-func (r AssetRepo) GetPagedNested(asset *entities.Asset, page, perPage int) (int, error) {
+func (r AssetRepo) GetPagedNested(asset, filter *entities.Asset, page, perPage int) (int, error) {
 	var totalRows int64
 	if err := database.DB.Model(entities.Asset{}).
-		Where("parent_id = ?", asset.ID).
+		Where(filter).
 		Count(&totalRows).Error; err != nil {
 		return 0, err
 	}
@@ -68,7 +61,7 @@ func (r AssetRepo) GetPagedNested(asset *entities.Asset, page, perPage int) (int
 	totalPages := int(math.Ceil(float64(totalRows) / float64(perPage)))
 
 	return totalPages, database.DB.
-		Where("parent_id = ?", asset.ID).
+		Where(filter).
 		Offset(page * perPage).
 		Limit(perPage).
 		Order("Label ASC").

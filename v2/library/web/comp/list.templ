@@ -1,12 +1,18 @@
 package comp
 
-import corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
-
 templ List(model ListModel) {
-	@corecomp.Pagination(model.Pagination)
-	<div class="flex-1 flex flex-row flex-wrap">
-		for _, a := range model.Asset.NestedAssets {
-			@AssetCard(&AssetCardModel{Asset: a, UH: model.Pagination.UH})
-		}
+	<div
+		class="flex-1 flex flex-col flex-wrap"
+		id="asset-list"
+		hx-get="/lib/list"
+		hx-include="#asset-id"
+		hx-trigger="nested-assets-update from:body"
+	>
+		@Pagination(model.Pagination)
+		<div class="flex-1 flex flex-row flex-wrap">
+			for _, a := range model.Asset.NestedAssets {
+				@AssetCard(&AssetCardModel{Asset: a})
+			}
+		</div>
 	</div>
 }

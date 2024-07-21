@@ -11,12 +11,7 @@ templ Index(model IndexModel) {
 		<div class="flex-initial">
 			@BreadCrumbs(model.Asset.Parent)
 		</div>
-		<div role="tablist" class="tabs tabs-boxed">
-			<a role="tab" class="tab tab-active">All</a>
-			for _, t := range model.AssetTypes {
-				<a role="tab" class="tab">{ t.Label }</a>
-			}
-		</div>
+		@KindFilter(model.KindFilter)
 		<div class="flex-auto overflow-y-auto main">
 			@model.Main
 		</div>

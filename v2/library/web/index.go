@@ -52,9 +52,12 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		S:   http.StatusOK,
 		WrapperModel: corecomp.WrapperModel{
 			Main: comp.Index(comp.IndexModel{
-				Asset:      &asset,
-				Main:       listComp,
-				AssetTypes: maputil.Values(config.Cfg.Library.AssetTypes),
+				Asset: &asset,
+				Main:  listComp,
+				KindFilter: comp.KindFilterModel{
+					Selected:   c.QueryParam("kind"),
+					AssetTypes: maputil.Values(config.Cfg.Library.AssetTypes),
+				},
 			}),
 			AsideR: comp.SideBar(),
 		},

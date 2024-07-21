@@ -1,6 +1,8 @@
 package web
 
 import (
+	"strings"
+
 	"github.com/a-h/templ"
 	"github.com/eduardooliveira/stLib/v2/web/comp"
 	"github.com/labstack/echo/v4"
@@ -12,6 +14,7 @@ type ResponseModel struct {
 	WrapperModel comp.WrapperModel
 	IsFragment   bool
 	PushState    string
+	Events       []string
 }
 
 func Render(rm ResponseModel) error {
@@ -26,6 +29,10 @@ func Render(rm ResponseModel) error {
 
 	if rm.PushState != "" {
 		rm.Ctx.Response().Header().Set("HX-Push-Url", rm.PushState)
+	}
+
+	if rm.Events != nil && len(rm.Events) > 0 {
+		rm.Ctx.Response().Header().Set("HX-Trigger", strings.Join(rm.Events, ", "))
 	}
 
 	if err := c.Render(rm.Ctx.Request().Context(), buf); err != nil {

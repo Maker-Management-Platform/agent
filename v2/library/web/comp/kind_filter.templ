@@ -1,0 +1,26 @@
+package comp
+
+templ KindFilter(model KindFilterModel) {
+	<form
+		hx-get="/lib/list"
+		hx-include="#asset-id"
+		hx-target="#asset-list"
+	>
+		<div role="tablist" class="tabs tabs-boxed">
+			<button
+				class={ "tab", templ.KV("tab-active", model.Selected == "all"), templ.KV("tab-active", model.Selected == "") }
+				type="submit"
+				name="Kind"
+				value="all"
+			>All</button>
+			for _, t := range model.AssetTypes {
+				<button
+					class={ "tab", templ.KV("tab-active", model.Selected == t.Name) }
+					type="submit"
+					name="Kind"
+					value={ t.Name }
+				>{ t.Label }</button>
+			}
+		</div>
+	</form>
+}

@@ -1,0 +1,33 @@
+package comp
+
+import "fmt"
+
+templ Pagination(pm PaginationModel) {
+	<form
+		hx-get="/lib/list"
+		hx-include="#asset-id"
+		hx-target="#asset-list"
+	>
+		<div class="join" hx-include="#asset-id">
+			<button
+				type="submit"
+				class="join-item btn btn-sm"
+				if pm.CurrentPage == 1 {
+					disabled
+				}
+				name="page"
+				value={ fmt.Sprintf("%d", pm.CurrentPage-1) }
+			>«</button>
+			<button class="join-item btn btn-sm">Page { fmt.Sprintf("%d/%d", pm.CurrentPage, pm.TotalPages) }</button>
+			<button
+				type="submit"
+				class="join-item btn btn-sm"
+				if pm.CurrentPage == pm.TotalPages {
+					disabled
+				}
+				name="page"
+				value={ fmt.Sprintf("%d", pm.CurrentPage+1) }
+			>»</button>
+		</div>
+	</form>
+}

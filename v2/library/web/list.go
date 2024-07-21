@@ -10,9 +10,9 @@ import (
 	"github.com/a-h/templ"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
 	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
-	"github.com/eduardooliveira/stLib/v2/web/mw"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -24,6 +24,16 @@ type listInput struct {
 
 func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 
+	filter := entities.Asset{}
+	err = (&echo.DefaultBinder{}).BindQueryParams(in.c, &filter)
+	if err != nil {
+		return nil, err
+	}
+	filter.ParentID = &in.Asset.ID
+	if utils.VoZ(filter.Kind) == "all" {
+		filter.Kind = nil
+	}
+
 	var page int
 
 	if in.c.QueryParam("page") != "" {
@@ -34,22 +44,16 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 		page = 1
 	}
 
-	pages, err := h.r.GetPagedNested(in.Asset, page-1, 20)
+	pages, err := h.r.GetPagedNested(in.Asset, &filter, page-1, 20)
 	if err != nil {
 		return nil, err
 	}
-	uh := mw.URLHelper(in.c).Clone()
-	uh.SetTotalPages(pages)
-	uh.SetPage(page)
-	uh.WithPath(path.Join("/", "lib", in.Asset.ID, "list"))
 
 	return comp.List(comp.ListModel{
 		Asset: in.Asset,
-		Pagination: corecomp.PaginationModel{
+		Pagination: comp.PaginationModel{
 			TotalPages:  pages,
 			CurrentPage: page,
-			UH:          uh,
-			Target:      ".asset-view .main",
 		},
 	}), nil
 }
@@ -57,10 +61,10 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 func (h webHandler) listHandler(c echo.Context) error {
 	var err error
 	var asset entities.Asset
-	if c.Param("assetID") == "" {
+	if c.QueryParam("assetID") == "" {
 		return web.Error(c, http.StatusBadRequest, "Asset ID is required")
 	}
-	asset, err = h.r.GetAsset(c.Param("assetID"), true)
+	asset, err = h.r.GetAsset(c.QueryParam("assetID"), true)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return web.Error(c, http.StatusNotFound, "Asset not found")
@@ -86,6 +90,11 @@ func (h webHandler) listHandler(c echo.Context) error {
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
+
+	u.Path = path.Join("/", "lib", asset.ID)
+	q := u.Query()
+	q.Del("assetID")
+	u.RawQuery = q.Encode()
 
 	return web.Render(web.ResponseModel{
 		Ctx: c,

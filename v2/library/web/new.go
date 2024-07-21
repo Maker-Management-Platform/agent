@@ -28,8 +28,10 @@ type newAssetRequest struct {
 }
 
 func (h webHandler) newAsset(c echo.Context) error {
-	var ParentID string
-
+	events := []string{}
+	model := &comp.NewModel{
+		TempFiles: []string{},
+	}
 	if c.Request().Method == http.MethodPost {
 		var req newAssetRequest
 		err := c.Bind(&req)
@@ -48,7 +50,7 @@ func (h webHandler) newAsset(c echo.Context) error {
 			}
 			return web.Error(c, http.StatusInternalServerError, err.Error())
 		}
-		ParentID = req.ParentID
+		model.ParentID = req.ParentID
 
 		switch req.Mode {
 		case "import":
@@ -64,28 +66,27 @@ func (h webHandler) newAsset(c echo.Context) error {
 				return err
 			}
 		}
+		events = append(events, "nested-assets-update")
 
 	} else if c.Request().Method == http.MethodGet {
-		ParentID = c.QueryParam("assetID")
+		model.ParentID = c.QueryParam("assetID")
 	}
 	entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
 	if err != nil {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
-	fNames := make([]string, 0)
+
 	for _, e := range entries {
-		fNames = append(fNames, e.Name())
+		model.TempFiles = append(model.TempFiles, e.Name())
 	}
 	return web.Render(web.ResponseModel{
 		Ctx: c,
 		S:   http.StatusOK,
 		WrapperModel: corecomp.WrapperModel{
-			Main: comp.New(&comp.NewModel{
-				ParentID:  ParentID,
-				TempFiles: fNames,
-			}),
+			Main: comp.New(model),
 		},
 		IsFragment: true,
+		Events:     events,
 	})
 }
 
