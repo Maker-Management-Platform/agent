@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y ca-certificates && apt-get clean
 
 WORKDIR /app
 
-COPY --from=go /app/main ./
+COPY --from=go /app/command ./
 
 RUN mkdir /data
 RUN mkdir /data/temp
 RUN mkdir /data/assets
 
-RUN chmod +x main
+RUN chmod +x command
 
 VOLUME [ "/data", "/library" ]
-ENTRYPOINT ["/app/main"]
+ENTRYPOINT ["/app/command", "-data-folder", "/data"]
