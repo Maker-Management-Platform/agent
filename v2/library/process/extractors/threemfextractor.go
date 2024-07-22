@@ -31,8 +31,6 @@ func (t *ThreeMFExtractor) Extract(asset *entities.Asset) ([]*entities.Asset, er
 
 	thumbnail := t.filterThumb(archive.File)
 
-	// elect a tumbnail
-	// itersate over content map assets and ectract tumb
 	for _, f := range archive.File {
 
 		if f.FileInfo().IsDir() {

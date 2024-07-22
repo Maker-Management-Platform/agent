@@ -12,10 +12,18 @@ type Extractor interface {
 
 var extensions = []string{
 	".3mf",
+	".zip",
+	".rar",
+	".7z",
+	".tar",
 }
 
 var extractors = map[string]Extractor{
 	".3mf": &ThreeMFExtractor{},
+	".zip": &StdExtractor{},
+	".rar": &StdExtractor{},
+	".7z":  &StdExtractor{},
+	".tar": &StdExtractor{},
 }
 
 func IsExtractable(asset *entities.Asset) bool {
