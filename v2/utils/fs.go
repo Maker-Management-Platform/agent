@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"io"
 	"os"
 
 	cp "github.com/otiai10/copy"
@@ -27,4 +28,14 @@ func Move(src, dst string) error {
 		return err
 	}
 	return os.RemoveAll(src)
+}
+
+func SaveFile(path string, in io.Reader) error {
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	return err
 }

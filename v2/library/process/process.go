@@ -94,13 +94,17 @@ func (p *Process) Run() error {
 	}
 
 	if p.extractor != nil {
-		if _, err := p.extractor.Extract(p.Asset); err != nil {
+		if nested, err := p.extractor.Extract(p.Asset); err != nil {
 			p.extractError = err
 			p.extractState = "failed"
 			l.Error("failed to extract asset", "error", err)
 		} else {
 			p.extractState = "done"
-			p.Asset.Kind = utils.Ptr(entities.NodeKindBundle)
+			for _, n := range nested {
+				if err := p.p.r.SaveAsset(*n); err != nil {
+					l.Error("failed to save extracted asset", "error", err)
+				}
+			}
 		}
 	}
 

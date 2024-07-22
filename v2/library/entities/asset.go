@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	NodeKindRoot   = "root"
-	NodeKindFile   = "file"
-	NodeKindDir    = "dir"
-	NodeKindBundle = "bundle"
+	NodeKindRoot    = "root"
+	NodeKindFile    = "file"
+	NodeKindDir     = "dir"
+	NodeKindBundle  = "bundle"
+	NodeKindBundled = "bundled"
 )
 
 type Asset struct {
@@ -43,8 +44,8 @@ type Asset struct {
 func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 	ext := filepath.Ext(path)
 
-	data := []byte(filepath.Join(root, path)) // Convert the path string to bytes
-	md5Hash := md5.Sum(data)                  // Generate the MD5 hash
+	data := []byte(filepath.Join(root, path))
+	md5Hash := md5.Sum(data)
 
 	var asset = &Asset{
 		ID:        hex.EncodeToString(md5Hash[:]),
@@ -74,6 +75,30 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 	if *asset.Kind == "image" {
 		asset.Thumbnail = utils.Ptr(asset.ID)
 	}
+
+	return asset
+}
+
+func NewBundledAsset(parent *Asset, path string) *Asset {
+	ext := filepath.Ext(path)
+
+	data := []byte(filepath.Join(*parent.Root, *parent.Path, path))
+	md5Hash := md5.Sum(data)
+
+	var asset = &Asset{
+		ID:        hex.EncodeToString(md5Hash[:]),
+		Root:      parent.Root,
+		Path:      utils.Ptr(path),
+		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
+		Extension: utils.Ptr(ext),
+	}
+
+	asset.Parent = parent
+	asset.ParentID = &parent.ID
+
+	asset.NodeKind = utils.Ptr(NodeKindBundled)
+	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
+	asset.Kind = utils.Ptr(kind.Name)
 
 	return asset
 }
