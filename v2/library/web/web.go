@@ -29,5 +29,6 @@ func New(e *echo.Group, r *repo.AssetRepo, p *process.Processor) error {
 	e.GET("/:assetID", wh.indexHandler)
 	e.GET("/list", wh.listHandler)
 	e.GET("/:assetID/file", wh.getFileHandler)
+	e.GET("/:assetID/extract", wh.extractHandler)
 	return nil
 }

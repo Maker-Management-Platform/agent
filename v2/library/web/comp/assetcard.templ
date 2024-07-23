@@ -2,6 +2,7 @@ package comp
 
 import (
 	"fmt"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
@@ -11,14 +12,22 @@ css bgimg(url string) {
 
 templ AssetCard(m *AssetCardModel) {
 	//https://merakiui.com/components/application-ui/cards
-	<div class="flex flex-col items-center justify-center w-full max-w-sm mx-auto m-1 w-max-128">
-		if utils.VoZ(m.Asset.NodeKind) == "dir" || utils.VoZ(m.Asset.NodeKind) == "bundle" {
+	<div class="asset-card flex flex-col items-center justify-center w-full max-w-sm mx-auto m-1 w-max-128">
+		if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
 			<div
 				class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
 				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
 				hx-target=".asset-view"
 				hx-trigger="click"
 				hx-push-url="true"
+			></div>
+		} else if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundled {
+			<div
+				class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
+				hx-get={ fmt.Sprintf("/lib/%s/extract?target=card", m.Asset.ID) }
+				hx-target="closest .asset-card"
+				hx-trigger="click"
+				hx-confirm="Are you sure you want to expand this asset?"
 			></div>
 		} else {
 			<div class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }></div>
@@ -27,6 +36,9 @@ templ AssetCard(m *AssetCardModel) {
 			<h3 class="p-2 font-bold tracking-wide text-center text-gray-800 uppercase dark:text-white trucate whitespace-nowrap">{ *m.Asset.Label }</h3>
 			<div class="flex items-center justify-between px-3 py-2 bg-gray-200 dark:bg-gray-700">
 				<span class="font-bold text-gray-800 dark:text-gray-200">{ utils.VoZ(m.Asset.NodeKind) } - { utils.VoZ(m.Asset.Kind) }</span>
+				if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
+					@ExpandAssetButton(m.Asset)
+				}
 				<button class="px-2 py-1 text-xs font-semibold text-white uppercase transition-colors duration-300 transform bg-gray-800 rounded hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 focus:outline-none">Add to cart</button>
 			</div>
 		</div>

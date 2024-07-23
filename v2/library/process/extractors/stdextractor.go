@@ -2,6 +2,7 @@ package extractors
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -85,4 +86,39 @@ func (t *StdExtractor) Extract(asset *entities.Asset) ([]*entities.Asset, error)
 
 	asset.NodeKind = utils.Ptr("bundle")
 	return rtn, nil
+}
+
+// TODO: propagate context
+func (t *StdExtractor) ExtractBundled(asset *entities.Asset) error {
+	if asset.Parent == nil || asset.Parent.Root == nil || asset.Parent.Path == nil {
+		return errors.New("invalid parent asset")
+	}
+	fsys, err := archiver.FileSystem(context.Background(), filepath.Join(*asset.Root, *asset.Parent.Path))
+	if err != nil {
+		return err
+	}
+
+	f, err := fsys.Open(utils.VoZ(asset.Path))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	parentDir := filepath.Dir(*asset.Parent.Path)
+	assetBase := filepath.Base(*asset.Path)
+
+	if err := utils.SaveFile(filepath.Join(*asset.Parent.Root, parentDir, assetBase), f); err != nil {
+		return err
+	}
+
+	asset.Path = utils.Ptr(filepath.Join(parentDir, assetBase))
+	asset.Root = asset.Parent.Root
+	asset.NodeKind = utils.Ptr(entities.NodeKindFile)
+
+	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension).Name
+	asset.Kind = utils.Ptr(kind)
+	if kind == "image" {
+		asset.Thumbnail = utils.Ptr(asset.ID)
+	}
+
+	return nil
 }

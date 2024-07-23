@@ -1,0 +1,20 @@
+package comp
+
+import (
+	"fmt"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+)
+
+templ ExpandAssetButton(a *entities.Asset) {
+	//https://merakiui.com/components/application-ui/buttons
+	<button
+		class="px-2 py-1 text-xs font-semibold text-white uppercase transition-colors duration-300 transform bg-gray-800 rounded hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 focus:outline-none"
+		hx-get={ fmt.Sprintf("/lib/%s", a.ID) }
+		hx-target=".asset-view"
+		hx-trigger="click"
+		hx-push-url="true"
+		hx-confirm="Are you sure you want to expand this asset?"
+	>
+		Expand
+	</button>
+}

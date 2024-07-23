@@ -8,6 +8,7 @@ import (
 
 type Extractor interface {
 	Extract(asset *entities.Asset) ([]*entities.Asset, error)
+	ExtractBundled(asset *entities.Asset) error
 }
 
 var extensions = []string{

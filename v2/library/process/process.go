@@ -1,6 +1,7 @@
 package process
 
 import (
+	"errors"
 	"log/slog"
 
 	"github.com/eduardooliveira/stLib/v2/library/entities"
@@ -25,6 +26,21 @@ func New(r *repo.AssetRepo) (*Processor, error) {
 		eg: eg,
 		r:  r,
 	}, nil
+}
+
+func (p *Processor) ProcessBundled(asset *entities.Asset) (*Process, error) {
+	e, ok := extractors.Get(asset.Parent)
+	if !ok {
+		return nil, errors.New("no extractor found for asset")
+	}
+	err := e.ExtractBundled(asset)
+	if err != nil {
+		return nil, err
+	}
+	if err := p.r.SaveAsset(*asset); err != nil {
+		return nil, err
+	}
+	return p.Process(asset), nil
 }
 
 func (p *Processor) Process(asset *entities.Asset) *Process {

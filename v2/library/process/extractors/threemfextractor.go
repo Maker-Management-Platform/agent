@@ -101,3 +101,7 @@ func (t *ThreeMFExtractor) filterThumb(files []*zip.File) string {
 
 	return biggestImage
 }
+
+func (t *ThreeMFExtractor) ExtractBundled(asset *entities.Asset) error {
+	return nil
+}
