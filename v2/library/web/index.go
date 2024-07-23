@@ -27,6 +27,9 @@ func (h webHandler) indexHandler(c echo.Context) error {
 			return web.Error(c, http.StatusInternalServerError, err.Error())
 		}
 	} else {
+		if len(roots) == 0 {
+			return web.Error(c, http.StatusNotFound, "No library paths configured, check library.paths in config.toml")
+		}
 		asset, err = h.r.GetAssetByRootAndPath(roots[0], ".", true)
 	}
 

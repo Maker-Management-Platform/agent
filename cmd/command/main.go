@@ -11,6 +11,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web/mw"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -35,10 +36,9 @@ func main() {
 			log.Fatalf("Error creating data folder: %v", err)
 		}
 	}
-	if _, err := os.Stat(filepath.Join(dataFolder, "img")); os.IsNotExist(err) {
-		if err := os.Mkdir(filepath.Join(dataFolder, "img"), 0755); err != nil {
-			log.Fatalf("Error creating data folder: %v", err)
-		}
+
+	if err := utils.CreateFolder(filepath.Join(dataFolder, "img")); err != nil {
+		log.Fatalf("Error creating data folder: %v", err)
 	}
 
 	if err := config.Init(dataFolder); err != nil {

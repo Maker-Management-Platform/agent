@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/spf13/viper"
 )
 
@@ -12,7 +13,12 @@ var v *viper.Viper
 var configFile string
 
 func Init(dataFolder string) error {
+
 	configFile = filepath.Join(dataFolder, "config.toml")
+	if err := utils.CreateFileIfNotExist(configFile); err != nil {
+		return err
+	}
+
 	v = viper.New()
 	v.SetConfigFile(configFile)
 	defaults()
@@ -41,7 +47,7 @@ func defaults() {
 	v.SetDefault("core.log.enableFile", false)
 	v.SetDefault("core.log.path", "log.log")
 	v.SetDefault("server.port", 8000)
-	v.SetDefault("library.paths", []string{"/library"})
+	v.SetDefault("library.paths", []string{})
 	v.SetDefault("library.blacklist", []string{".git", ".svn", ".hg", ".bzr", ".DS_Store", ".project.stlib", ".thumb.png", ".render.png"})
 	v.SetDefault("library.assetTypes", map[string]AssetType{
 		"model": {

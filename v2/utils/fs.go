@@ -39,3 +39,16 @@ func SaveFile(path string, in io.Reader) error {
 	_, err = io.Copy(out, in)
 	return err
 }
+
+func CreateFileIfNotExist(path string) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		if _, err := os.Create(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
