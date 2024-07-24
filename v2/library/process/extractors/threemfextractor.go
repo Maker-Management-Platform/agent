@@ -2,6 +2,7 @@ package extractors
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -103,5 +104,36 @@ func (t *ThreeMFExtractor) filterThumb(files []*zip.File) string {
 }
 
 func (t *ThreeMFExtractor) ExtractBundled(asset *entities.Asset) error {
+	if asset.Parent == nil || asset.Parent.Root == nil || asset.Parent.Path == nil {
+		return errors.New("invalid parent asset")
+	}
+	archive, err := zip.OpenReader(filepath.Join(*asset.Root, *asset.Parent.Path))
+	if err != nil {
+		return err
+	}
+	defer archive.Close()
+
+	f, err := archive.Open(utils.VoZ(asset.Path))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	parentDir := filepath.Dir(*asset.Parent.Path)
+	assetBase := filepath.Base(*asset.Path)
+
+	if err := utils.SaveFile(filepath.Join(*asset.Parent.Root, parentDir, assetBase), f); err != nil {
+		return err
+	}
+
+	asset.Path = utils.Ptr(filepath.Join(parentDir, assetBase))
+	asset.Root = asset.Parent.Root
+	asset.NodeKind = utils.Ptr(entities.NodeKindFile)
+
+	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension).Name
+	asset.Kind = utils.Ptr(kind)
+	if kind == "image" {
+		asset.Thumbnail = utils.Ptr(asset.ID)
+	}
+
 	return nil
 }

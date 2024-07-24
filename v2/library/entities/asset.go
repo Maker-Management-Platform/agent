@@ -82,7 +82,7 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 func NewBundledAsset(parent *Asset, path string) *Asset {
 	ext := filepath.Ext(path)
 
-	data := []byte(filepath.Join(*parent.Root, *parent.Path, path))
+	data := []byte(filepath.Join(*parent.Root, *parent.Path, path)) //TODO: make consistent with the way its calculated on discovery
 	md5Hash := md5.Sum(data)
 
 	var asset = &Asset{
