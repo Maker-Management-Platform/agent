@@ -47,7 +47,11 @@ func defaults() {
 	v.SetDefault("core.log.enableFile", false)
 	v.SetDefault("core.log.path", "log.log")
 	v.SetDefault("server.port", 8000)
-	v.SetDefault("library.paths", []string{})
+	if utils.IsDocker {
+		v.SetDefault("library.paths", []string{"/library"})
+	} else {
+		v.SetDefault("library.paths", []string{})
+	}
 	v.SetDefault("library.blacklist", []string{".git", ".svn", ".hg", ".bzr", ".DS_Store", ".project.stlib", ".thumb.png", ".render.png"})
 	v.SetDefault("library.assetTypes", map[string]AssetType{
 		"model": {

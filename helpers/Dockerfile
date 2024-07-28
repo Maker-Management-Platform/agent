@@ -27,4 +27,4 @@ RUN mkdir /data/assets
 RUN chmod +x command
 
 VOLUME [ "/data", "/library" ]
-ENTRYPOINT ["/app/command", "-data-folder", "/data"]
+ENTRYPOINT ["/app/command", "-data-folder", "/data", "-docker", "true"]

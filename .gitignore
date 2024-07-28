@@ -1,5 +1,7 @@
 .vscode
 static/node_modules
+frontend/node_modules
+build
 testdata*
 main
 main.exe

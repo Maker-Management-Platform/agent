@@ -21,6 +21,7 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
 	var dataFolder string
 	flag.StringVar(&dataFolder, "data-folder", "", "Data folder")
+	flag.BoolVar(&utils.IsDocker, "docker", false, "Running in docker")
 	flag.Parse()
 
 	if dataFolder == "" {

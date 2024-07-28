@@ -8,6 +8,8 @@ import (
 	cp "github.com/otiai10/copy"
 )
 
+var IsDocker bool
+
 func CreateFolder(name string) error {
 	_, err := os.Stat(name)
 	if err != nil {
