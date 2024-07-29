@@ -12,3 +12,6 @@ __debug*
 /data
 *templ.go
 *templ.txt
+.DS_Store
+cmd/desktop/components
+cmd/desktop/frontend

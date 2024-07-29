@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/http"
+	"path"
 
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/v2/config"
@@ -10,6 +11,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/web"
 	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
+	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -42,7 +44,7 @@ func (h webHandler) indexHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	listComp, err := h.list(&listInput{
+	listComp, _, err := h.list(&listInput{
 		c:     c,
 		Asset: &asset,
 	})
@@ -65,5 +67,74 @@ func (h webHandler) indexHandler(c echo.Context) error {
 			AsideR: comp.SideBar(),
 		},
 	})
+
+}
+
+func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
+	roots := config.Cfg.Library.Paths
+	var err error
+	var asset entities.Asset
+	if chi.URLParam(r, "assetID") != "" {
+		asset, err = h.r.GetAsset(chi.URLParam(r, "assetID"), true)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return web.ResponseModel{
+					S:     http.StatusNotFound,
+					Error: err,
+				}
+			}
+			return web.ResponseModel{
+				S:     http.StatusInternalServerError,
+				Error: err,
+			}
+		}
+	} else {
+		if len(roots) == 0 {
+			return web.ResponseModel{
+				S:     http.StatusNotFound,
+				Error: errors.New("No library paths configured, check library.paths in config.toml"),
+			}
+		}
+		asset, err = h.r.GetAssetByRootAndPath(roots[0], ".", true)
+	}
+
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	err = h.r.LoadParents(&asset, 5, "ID", "Label")
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	listComp, pgModel, err := h.list(&listInput{
+		Asset: &asset,
+		r:     r,
+	})
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+	return web.ResponseModel{
+		S:         http.StatusOK,
+		PushState: path.Join("/lib", asset.ID),
+		Component: comp.Index(comp.IndexModel{
+			Asset: &asset,
+			Main:  listComp,
+			KindFilter: comp.KindFilterModel{
+				Selected:   chi.URLParam(r, "kind"),
+				AssetTypes: maputil.Values(config.Cfg.Library.AssetTypes),
+			},
+			Pagination: *pgModel,
+		}),
+	}
 
 }

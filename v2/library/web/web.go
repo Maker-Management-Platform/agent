@@ -2,9 +2,12 @@ package web
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
+	"github.com/eduardooliveira/stLib/v2/web"
+	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,4 +34,19 @@ func New(e *echo.Group, r *repo.AssetRepo, p *process.Processor) error {
 	e.GET("/:assetID/file", wh.getFileHandler)
 	e.GET("/:assetID/extract", wh.extractHandler)
 	return nil
+}
+
+func NewChi(repo *repo.AssetRepo, p *process.Processor) (http.Handler, error) {
+	wh := &webHandler{
+		l: slog.With("module", "library-web"),
+		r: repo,
+		p: p,
+	}
+	r := chi.NewRouter()
+	r.Get("/", web.R(wh.indexHandlerChi))
+	r.Get("/{assetID}", web.R(wh.indexHandlerChi))
+	r.Get("/list", web.R(wh.listHandlerChi))
+	r.Get("/{assetID}/file", wh.getFileHandlerChi)
+
+	return r, nil
 }

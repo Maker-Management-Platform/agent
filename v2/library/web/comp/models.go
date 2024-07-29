@@ -11,6 +11,7 @@ type IndexModel struct {
 	AssetTypes []config.AssetType
 	KindFilter KindFilterModel
 	Main       templ.Component
+	Pagination PaginationModel
 }
 
 type ListModel struct {
@@ -41,6 +42,7 @@ type NewModel struct {
 type PaginationModel struct {
 	CurrentPage int
 	TotalPages  int
+	OOB         bool
 	Fields      map[string]string
 }
 

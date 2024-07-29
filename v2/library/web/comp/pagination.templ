@@ -7,8 +7,12 @@ templ Pagination(pm PaginationModel) {
 		hx-get="/lib/list"
 		hx-include="#asset-id"
 		hx-target="#asset-list"
+		if pm.OOB {
+			hx-swap-oob="true"
+		}
+		id="pagination"
 	>
-		<div class="join" hx-include="#asset-id">
+		<div class="join">
 			<button
 				type="submit"
 				class="join-item btn btn-sm"

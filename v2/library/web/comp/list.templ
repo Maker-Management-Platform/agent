@@ -8,7 +8,6 @@ templ List(model ListModel) {
 		hx-include="#asset-id"
 		hx-trigger="nested-assets-update from:body"
 	>
-		@Pagination(model.Pagination)
 		<div class="flex-1 flex flex-row flex-wrap">
 			for _, a := range model.Asset.NestedAssets {
 				@AssetCard(&AssetCardModel{Asset: a})

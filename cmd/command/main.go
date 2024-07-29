@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -12,7 +13,10 @@ import (
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
 	"github.com/eduardooliveira/stLib/v2/utils"
+	"github.com/eduardooliveira/stLib/v2/web"
 	"github.com/eduardooliveira/stLib/v2/web/mw"
+	"github.com/go-chi/chi/v5"
+	cmw "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -56,13 +60,26 @@ func main() {
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 
-	l, err := library.New(server.Group(""))
+	r := chi.NewRouter()
+	r.Use(cmw.Logger)
+	r.Use(cmw.Recoverer)
+
+	webH, err := web.New()
+	if err != nil {
+		log.Fatalf("Error initializing web: %v", err)
+	}
+	r.Mount("/", webH)
+
+	_, libH, _, err := library.NewChi()
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
 
-	l.ScanAsync()
+	r.Mount("/lib", libH)
+
+	//l.ScanAsync()
 
 	slog.Info("Starting agent")
-	log.Fatal(server.Start(fmt.Sprintf(":%d", config.Cfg.Server.Port)))
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Cfg.Server.Port), r))
 }

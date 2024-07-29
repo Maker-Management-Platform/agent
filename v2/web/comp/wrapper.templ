@@ -16,15 +16,78 @@ templ WrapperComponent(model WrapperModel) {
 		</head>
 		<body class="m-0">
 			<div class="h-screen w-screen flex flex-col">
-				<header class="pt-2 px-3">
-					@navBar()
-				</header>
-				<div class="flex-auto overflow-y-auto flex flex-row">
-					<aside class="left bg-yellow-800 hidden">aside</aside>
-					<main class="flex-auto overflow-y-auto">
+				<div class="flex-auto overflow-y-auto flex flex-row p-2">
+					<aside class="left">
+						<ul
+							hx-target=".main"
+							class="menu bg-base-200 rounded-box"
+						>
+							<li>
+								<a
+									class="tooltip tooltip-right"
+									data-tip="Home"
+									hx-get="/"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+										></path>
+									</svg>
+								</a>
+							</li>
+							<li>
+								<a
+									class="tooltip tooltip-right"
+									data-tip="Library"
+									hx-get="/lib"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										class="h-5 w-5"
+										stroke="currentColor"
+									>
+										<title>folder-outline</title>
+										<path
+											stroke-width="2"
+											d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z"
+										></path>
+									</svg>
+								</a>
+							</li>
+							<li>
+								<a class="tooltip tooltip-right" data-tip="Stats">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+										></path>
+									</svg>
+								</a>
+							</li>
+						</ul>
+					</aside>
+					<main class="flex-auto overflow-y-auto main">
 						@model.Main
 					</main>
-					<aside class="flex right">
+					<aside class="flex right-aside">
 						if model.AsideR != nil {
 							@model.AsideR
 						}
@@ -37,24 +100,3 @@ templ WrapperComponent(model WrapperModel) {
 		</body>
 	</html>
 }
-
-/*
-	<body class="flex flex-col min-h-screen h-screen">
-		<header class="sticky z-50 top-0 pt-2 px-3">
-			@navBar()
-		</header>
-		<div class="flex-grow">
-			<main>
-				@model.Main
-			</main>
-			<aside class="right">
-				if model.AsideR != nil {
-					@model.AsideR
-				}
-			</aside>
-		</div>
-		<footer class="sticky z-50 bottom-0 p-4 bg-primary dark:text-white ">
-			footer contents
-		</footer>
-	</body>
-*/

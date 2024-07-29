@@ -19,16 +19,17 @@ import (
 
 type listInput struct {
 	c     echo.Context
+	r     *http.Request
 	Asset *entities.Asset
 }
 
-func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
+func (h webHandler) list(in *listInput) (rtn templ.Component, pgModel *comp.PaginationModel, err error) {
 
 	filter := entities.Asset{}
-	err = (&echo.DefaultBinder{}).BindQueryParams(in.c, &filter)
+	/*err = (&echo.DefaultBinder{}).BindQueryParams(in.c, &filter)
 	if err != nil {
 		return nil, err
-	}
+	}*/
 	filter.ParentID = &in.Asset.ID
 	if utils.VoZ(filter.Kind) == "all" {
 		filter.Kind = nil
@@ -36,8 +37,8 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 
 	var page int
 
-	if in.c.QueryParam("page") != "" {
-		page, _ = strconv.Atoi(in.c.QueryParam("page"))
+	if in.r.URL.Query().Get("page") != "" {
+		page, _ = strconv.Atoi(in.r.URL.Query().Get("page"))
 	}
 
 	if page < 1 {
@@ -46,16 +47,19 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, err error) {
 
 	pages, err := h.r.GetPagedNested(in.Asset, &filter, page-1, 20)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return comp.List(comp.ListModel{
-		Asset: in.Asset,
-		Pagination: comp.PaginationModel{
+			Asset: in.Asset,
+			Pagination: comp.PaginationModel{
+				TotalPages:  pages,
+				CurrentPage: page,
+			},
+		}), &comp.PaginationModel{
 			TotalPages:  pages,
 			CurrentPage: page,
-		},
-	}), nil
+		}, nil
 }
 
 func (h webHandler) listHandler(c echo.Context) error {
@@ -77,7 +81,7 @@ func (h webHandler) listHandler(c echo.Context) error {
 		return web.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	listComp, err := h.list(&listInput{
+	listComp, _, err := h.list(&listInput{
 		c:     c,
 		Asset: &asset,
 	})
@@ -105,4 +109,72 @@ func (h webHandler) listHandler(c echo.Context) error {
 		IsFragment: true,
 		PushState:  u.String(),
 	})
+}
+
+func (h webHandler) listHandlerChi(r *http.Request) web.ResponseModel {
+	var err error
+	var asset entities.Asset
+	if r.URL.Query().Get("assetID") == "" {
+		return web.ResponseModel{
+			S:     http.StatusBadRequest,
+			Error: errors.New("Asset ID is required"),
+		}
+	}
+	asset, err = h.r.GetAsset(r.URL.Query().Get("assetID"), true)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return web.ResponseModel{
+				S:     http.StatusNotFound,
+				Error: err,
+			}
+		}
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	err = h.r.LoadParents(&asset, 5, "ID", "Label")
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	listComp, pgModel, err := h.list(&listInput{
+		Asset: &asset,
+		r:     r,
+	})
+
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	u, err := url.Parse(r.URL.String())
+	if err != nil {
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
+	}
+
+	u.Path = path.Join("/", "lib", asset.ID)
+	q := u.Query()
+	q.Del("assetID")
+	u.RawQuery = q.Encode()
+
+	pgModel.OOB = true
+	return web.ResponseModel{
+		S:          http.StatusOK,
+		Component:  listComp,
+		IsFragment: true,
+		PushState:  u.String(),
+		OOB: []templ.Component{
+			comp.Pagination(*pgModel),
+		},
+	}
 }

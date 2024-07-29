@@ -2,6 +2,7 @@ package library
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/api"
@@ -47,6 +48,35 @@ func New(e *echo.Group) (*Library, error) {
 	return lib, nil
 }
 
+func NewChi() (*Library, http.Handler, http.Handler, error) {
+	lib := &Library{}
+
+	var err error
+
+	lib.r, err = repo.New()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	lib.p, err = process.New(lib.r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	lib.d = discovery.New(lib.p, lib.r)
+
+	webH, err := web.NewChi(lib.r, lib.p)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	/*apiH, err := api.NewChi(lib.r)
+	if err != nil {
+		return nil, nil, nil, err
+	}*/
+
+	return lib, webH, nil, nil
+}
 func (l Library) Scan() error {
 	eg := errgroup.Group{}
 	if len(config.Cfg.Library.Paths) == 0 {
