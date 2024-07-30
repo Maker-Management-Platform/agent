@@ -70,14 +70,14 @@ func main() {
 	}
 	r.Mount("/", webH)
 
-	_, libH, _, err := library.NewChi()
+	l, libH, _, err := library.NewChi()
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
 
 	r.Mount("/lib", libH)
 
-	//l.ScanAsync()
+	l.ScanAsync()
 
 	slog.Info("Starting agent")
 

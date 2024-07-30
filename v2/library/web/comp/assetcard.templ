@@ -12,10 +12,10 @@ css bgimg(url string) {
 
 templ AssetCard(m *AssetCardModel) {
 	//https://merakiui.com/components/application-ui/cards
-	<div class="asset-card flex flex-col items-center justify-center w-full max-w-sm mx-auto m-1 w-max-128">
+	<div class="asset-card flex flex-col items-center justify-center w-max-56 w-56 my-2 mx-auto">
 		if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
 			<div
-				class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
+				class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
 				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
 				hx-target=".asset-view"
 				hx-trigger="click"
@@ -23,16 +23,16 @@ templ AssetCard(m *AssetCardModel) {
 			></div>
 		} else if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundled {
 			<div
-				class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
+				class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
 				hx-get={ fmt.Sprintf("/lib/%s/extract?target=card", m.Asset.ID) }
 				hx-target="closest .asset-card"
 				hx-trigger="click"
 				hx-confirm="Are you sure you want to expand this asset?"
 			></div>
 		} else {
-			<div class={ "w-full h-64 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }></div>
+			<div class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }></div>
 		}
-		<div class="w-56 -mt-10 overflow-hidden bg-white rounded-lg shadow-lg md:w-64 dark:bg-gray-800">
+		<div class="w-32 -mt-10 overflow-hidden bg-white rounded-lg shadow-lg md:w-32 dark:bg-gray-800">
 			<h3 class="p-2 font-bold tracking-wide text-center text-gray-800 uppercase dark:text-white trucate whitespace-nowrap">{ *m.Asset.Label }</h3>
 			<div class="flex items-center justify-between px-3 py-2 bg-gray-200 dark:bg-gray-700">
 				<span class="font-bold text-gray-800 dark:text-gray-200">{ utils.VoZ(m.Asset.NodeKind) } - { utils.VoZ(m.Asset.Kind) }</span>
