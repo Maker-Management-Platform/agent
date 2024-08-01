@@ -10,12 +10,14 @@ import (
 	"image"
 	"image/png"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
 type gCodeRenderer struct {
@@ -41,7 +43,13 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
 	}
 
-	f, err := os.Open(filepath.Join(*asset.Root, *asset.Path))
+	var fPath string
+	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
+		fPath = filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), path.Base(*asset.Path))
+	} else {
+		fPath = filepath.Join(*asset.Root, *asset.Path)
+	}
+	f, err := os.Open(fPath)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ templ AssetCard(m *AssetCardModel) {
 		<div class="w-32 -mt-10 overflow-hidden bg-white rounded-lg shadow-lg md:w-32 dark:bg-gray-800">
 			<h3 class="p-2 font-bold tracking-wide text-center text-gray-800 uppercase dark:text-white trucate whitespace-nowrap">{ *m.Asset.Label }</h3>
 			<div class="flex items-center justify-between px-3 py-2 bg-gray-200 dark:bg-gray-700">
-				<span class="font-bold text-gray-800 dark:text-gray-200">{ utils.VoZ(m.Asset.NodeKind) } - { utils.VoZ(m.Asset.Kind) }</span>
+				<span class="font-bold text-gray-800 dark:text-gray-200">{ string(utils.VoZ(m.Asset.NodeKind)) } - { utils.VoZ(m.Asset.Kind) }</span>
 				if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
 					@ExpandAssetButton(m.Asset)
 				}

@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
@@ -42,11 +45,20 @@ func (h webHandler) getFileHandlerChi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.r.LoadParents(&asset, 1); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if chi.URLParam(r, "download") != "" {
 		w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(*asset.Path))
 	} else {
 		w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(*asset.Path))
 	}
 
+	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
+		http.ServeFile(w, r, filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), filepath.Base(*asset.Path)))
+		return
+	}
 	http.ServeFile(w, r, filepath.Join(*asset.Root, *asset.Path))
 }

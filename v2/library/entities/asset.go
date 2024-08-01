@@ -13,12 +13,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type NodeKind string
+
 const (
-	NodeKindRoot    = "root"
-	NodeKindFile    = "file"
-	NodeKindDir     = "dir"
-	NodeKindBundle  = "bundle"
-	NodeKindBundled = "bundled"
+	NodeKindRoot    NodeKind = "root"
+	NodeKindFile    NodeKind = "file"
+	NodeKindDir     NodeKind = "dir"
+	NodeKindBundle  NodeKind = "bundle"
+	NodeKindBundled NodeKind = "bundled"
 )
 
 type Asset struct {
@@ -29,7 +31,7 @@ type Asset struct {
 	Root         *string    `query:"root" form:"root"`
 	Extension    *string    `query:"extension" form:"extension"`
 	Kind         *string    `query:"kind" form:"kind"`
-	NodeKind     *string    `query:"nodeKind" form:"nodeKind"`
+	NodeKind     *NodeKind  `query:"nodeKind" form:"nodeKind"`
 	ParentID     *string    `query:"parentID" form:"parentID"`
 	Parent       *Asset     `form:"-"`
 	NestedAssets []*Asset   `query:"nestedAssets" form:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`

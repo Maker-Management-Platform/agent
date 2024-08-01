@@ -84,7 +84,7 @@ func (t *StdExtractor) Extract(asset *entities.Asset) ([]*entities.Asset, error)
 		rtn = append(rtn, za)
 	}
 
-	asset.NodeKind = utils.Ptr("bundle")
+	asset.NodeKind = utils.Ptr(entities.NodeKindBundle)
 	return rtn, nil
 }
 
@@ -95,30 +95,33 @@ func (t *StdExtractor) ExtractBundled(asset *entities.Asset) error {
 	}
 	fsys, err := archiver.FileSystem(context.Background(), filepath.Join(*asset.Root, *asset.Parent.Path))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open bundle: %w", err)
 	}
 
 	f, err := fsys.Open(utils.VoZ(asset.Path))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open bundled: %w", err)
 	}
 	defer f.Close()
-	parentDir := filepath.Dir(*asset.Parent.Path)
+
+	tempPath := filepath.Join(config.Cfg.Core.DataFolder, "temp", *asset.ParentID)
+	if err := utils.CreateFolder(tempPath); err != nil {
+		return fmt.Errorf("failed to create temp folder: %w", err)
+	}
+
 	assetBase := filepath.Base(*asset.Path)
 
-	if err := utils.SaveFile(filepath.Join(*asset.Parent.Root, parentDir, assetBase), f); err != nil {
+	if err := utils.SaveFile(filepath.Join(tempPath, assetBase), f); err != nil {
 		return err
 	}
 
-	asset.Path = utils.Ptr(filepath.Join(parentDir, assetBase))
-	asset.Root = asset.Parent.Root
-	asset.NodeKind = utils.Ptr(entities.NodeKindFile)
+	if asset.Properties == nil {
+		asset.Properties = make(map[string]interface{})
+	}
+	asset.Properties["mmp_extracted"] = utils.Ptr(true)
 
-	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension).Name
-	asset.Kind = utils.Ptr(kind)
-	if kind == "image" {
+	if utils.VoZ(asset.Kind) == "image" {
 		asset.Thumbnail = utils.Ptr(asset.ID)
 	}
-
 	return nil
 }

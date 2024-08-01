@@ -5,11 +5,13 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/nfnt/resize"
 )
 
@@ -61,7 +63,14 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
 	}
 
-	mesh, err := fauxgl.LoadSTL(filepath.Join(*asset.Root, *asset.Path))
+	var fPath string
+	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
+		fPath = filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), path.Base(*asset.Path))
+	} else {
+		fPath = filepath.Join(*asset.Root, *asset.Path)
+	}
+
+	mesh, err := fauxgl.LoadSTL(fPath)
 	if err != nil {
 		log.Println(err)
 		return nil, err

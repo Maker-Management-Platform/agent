@@ -70,7 +70,7 @@ func (t *ThreeMFExtractor) Extract(asset *entities.Asset) ([]*entities.Asset, er
 
 	}
 
-	asset.NodeKind = utils.Ptr("bundle")
+	asset.NodeKind = utils.Ptr(entities.NodeKindBundled)
 	return rtn, nil
 }
 
@@ -118,22 +118,25 @@ func (t *ThreeMFExtractor) ExtractBundled(asset *entities.Asset) error {
 		return err
 	}
 	defer f.Close()
-	parentDir := filepath.Dir(*asset.Parent.Path)
+
+	tempPath := filepath.Join(config.Cfg.Core.DataFolder, "temp", *asset.ParentID)
+	if err := utils.CreateFolder(tempPath); err != nil {
+		return fmt.Errorf("failed to create temp folder: %w", err)
+	}
+
 	assetBase := filepath.Base(*asset.Path)
 
-	if err := utils.SaveFile(filepath.Join(*asset.Parent.Root, parentDir, assetBase), f); err != nil {
+	if err := utils.SaveFile(filepath.Join(tempPath, assetBase), f); err != nil {
 		return err
 	}
 
-	asset.Path = utils.Ptr(filepath.Join(parentDir, assetBase))
-	asset.Root = asset.Parent.Root
-	asset.NodeKind = utils.Ptr(entities.NodeKindFile)
+	if asset.Properties == nil {
+		asset.Properties = make(map[string]interface{})
+	}
+	asset.Properties["mmp_extracted"] = utils.Ptr(true)
 
-	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension).Name
-	asset.Kind = utils.Ptr(kind)
-	if kind == "image" {
+	if utils.VoZ(asset.Kind) == "image" {
 		asset.Thumbnail = utils.Ptr(asset.ID)
 	}
-
 	return nil
 }

@@ -47,6 +47,7 @@ func NewChi(repo *repo.AssetRepo, p *process.Processor) (http.Handler, error) {
 	r.Get("/{assetID}", web.R(wh.indexHandlerChi))
 	r.Get("/list", web.R(wh.listHandlerChi))
 	r.Get("/{assetID}/file", wh.getFileHandlerChi)
+	r.Get("/{assetID}/extract", web.R(wh.extractHandlerChi))
 
 	return r, nil
 }
