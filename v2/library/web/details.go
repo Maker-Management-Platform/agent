@@ -6,28 +6,29 @@ import (
 
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/web"
-	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
-	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func (h webHandler) getAssetDetails(c echo.Context) error {
-	id := c.QueryParam("assetID")
+func (h webHandler) getAssetDetails(r *http.Request) web.ResponseModel {
+	id := r.URL.Query().Get("assetID")
 	asset, err := h.r.GetAsset(id, false)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.NoContent(http.StatusNotFound)
+			return web.ResponseModel{
+				S:     http.StatusNotFound,
+				Error: err,
+			}
 		}
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return web.ResponseModel{
+			S:     http.StatusInternalServerError,
+			Error: err,
+		}
 	}
-	return web.Render(web.ResponseModel{
-		Ctx: c,
-		S:   http.StatusOK,
-		WrapperModel: corecomp.WrapperModel{
-			Main: comp.Details(&comp.DetailsModel{
-				Asset: &asset,
-			}),
-		},
+	return web.ResponseModel{
+		S: http.StatusOK,
+		Component: comp.Details(&comp.DetailsModel{
+			Asset: &asset,
+		}),
 		IsFragment: true,
-	})
+	}
 }

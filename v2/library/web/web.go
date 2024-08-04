@@ -25,7 +25,7 @@ func New(e *echo.Group, r *repo.AssetRepo, p *process.Processor) error {
 		p: p,
 	}
 	e.GET("", wh.indexHandler)
-	e.GET("/details", wh.getAssetDetails)
+	//e.GET("/details", wh.getAssetDetails)
 	e.GET("/edit", wh.editAsset)
 	e.POST("/edit", wh.editAsset)
 	//e.GET("/new", wh.newAsset)
@@ -49,6 +49,9 @@ func NewChi(repo *repo.AssetRepo, p *process.Processor) (http.Handler, error) {
 	r.Get("/list", web.R(wh.listHandlerChi))
 	r.Get("/{assetID}/file", wh.getFileHandlerChi)
 	r.Get("/{assetID}/extract", web.R(wh.extractHandlerChi))
+
+	r.Get("/details", web.R(wh.getAssetDetails))
+
 	r.Get("/new", web.R(wh.newAsset))
 	r.With(httpin.NewInput(newAssetRequest{})).Post("/new", web.R(wh.newAsset))
 

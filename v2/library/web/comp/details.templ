@@ -3,7 +3,7 @@ package comp
 import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Details(m *DetailsModel) {
-	<div>
+	<div class="w-96 p-2">
 		<h1>{ utils.VoZ(m.Asset.Label) }</h1>
 		<p>{ utils.VoZ(m.Asset.Kind) }</p>
 	</div>
