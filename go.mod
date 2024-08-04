@@ -10,7 +10,7 @@ require (
 	github.com/glebarez/sqlite v1.10.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/gorilla/websocket v1.4.1
-	github.com/labstack/echo/v4 v4.10.2
+	github.com/labstack/echo/v4 v4.12.0
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/morkid/paginate v1.1.7
 	github.com/otiai10/copy v1.14.0
@@ -31,6 +31,8 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fogleman/simplify v0.0.0-20170216171241-d32f302d5046 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/ggicci/httpin v0.19.0 // indirect
+	github.com/ggicci/owl v0.8.2 // indirect
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
@@ -87,7 +89,7 @@ require (
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0
-	github.com/labstack/gommon v0.4.0 // indirect
+	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -98,5 +100,5 @@ require (
 	golang.org/x/net v0.25.0
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 )

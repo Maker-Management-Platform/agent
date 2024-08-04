@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,16 +14,17 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
-	"github.com/go-chi/chi/v5"
-	"github.com/labstack/echo/v4"
+	"github.com/ggicci/httpin"
+	"gorm.io/gorm"
 )
 
 type newAssetRequest struct {
-	Mode     string `form:"mode"`
-	ParentID string `form:"parentID"`
-	Urls     string `form:"urls"`
-	TempFile string `form:"tempFile"`
-	Folder   string `form:"folder"`
+	Mode     string         `in:"form=mode"`
+	ParentID string         `in:"form=parentID"`
+	Urls     string         `in:"form=urls"`
+	TempFile string         `in:"form=tempFile"`
+	Folder   string         `in:"form=folder"`
+	Files    []*httpin.File `in:"form=files"`
 }
 
 func (h webHandler) newAsset(r *http.Request) web.ResponseModel {
@@ -31,43 +33,59 @@ func (h webHandler) newAsset(r *http.Request) web.ResponseModel {
 		TempFiles: []string{},
 	}
 	if r.Method == http.MethodPost {
-		/*var req newAssetRequest
-		err := c.Bind(&req)
-		if err != nil {
-			return web.Error(c, http.StatusBadRequest, err.Error())
-		}
+		req := r.Context().Value(httpin.Input).(*newAssetRequest)
 
 		if req.ParentID == "" {
-			return web.Error(c, http.StatusBadRequest, "missing parentID")
+			return web.ResponseModel{
+				Error: errors.New("missing parentID"),
+				S:     http.StatusBadRequest,
+			}
 		}
 
 		parent, err := h.r.GetAsset(req.ParentID, false)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return web.Error(c, http.StatusNotFound, err.Error())
+				return web.ResponseModel{
+					Error: err,
+					S:     http.StatusNotFound,
+				}
 			}
-			return web.Error(c, http.StatusInternalServerError, err.Error())
+			return web.ResponseModel{
+				Error: err,
+				S:     http.StatusInternalServerError,
+			}
 		}
 		model.ParentID = req.ParentID
 
-		switch req.Mode {
-		case "import":
-			if err := h.handleDownload(c, parent, req); err != nil {
-				return err
-			}
-		case "upload":
-			if err := h.handleUpload(c, parent, req); err != nil {
-				return err
-			}
-		case "tempFiles":
-			if err := h.handleTempFiles(c, parent, req); err != nil {
-				return err
+		reqHandlers := map[string]func(r *http.Request, parent entities.Asset, req newAssetRequest) (error, int){
+			"import":    h.handleDownload,
+			"upload":    h.handleUpload,
+			"tempFiles": h.handleTempFiles,
+		}
+		if req.Mode == "" {
+			return web.ResponseModel{
+				Error: errors.New("missing mode"),
+				S:     http.StatusBadRequest,
 			}
 		}
+		if _, ok := reqHandlers[req.Mode]; !ok {
+			return web.ResponseModel{
+				Error: errors.New("invalid mode"),
+				S:     http.StatusBadRequest,
+			}
+		}
+		if err, s := reqHandlers[req.Mode](r, parent, *req); err != nil {
+			return web.ResponseModel{
+				Error: err,
+				S:     s,
+			}
+		}
+
 		events = append(events, "nested-assets-update")
-		*/
+
 	} else if r.Method == http.MethodGet {
-		model.ParentID = chi.URLParam(r, "assetID")
+		h.l.Info("new", "GET", r.URL.Query().Get("assetID"))
+		model.ParentID = r.URL.Query().Get("assetID")
 	}
 	entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
 	if err != nil {
@@ -88,9 +106,9 @@ func (h webHandler) newAsset(r *http.Request) web.ResponseModel {
 	}
 }
 
-func (h webHandler) handleDownload(c echo.Context, parent entities.Asset, req newAssetRequest) error {
+func (h webHandler) handleDownload(r *http.Request, parent entities.Asset, req newAssetRequest) (error, int) {
 	if req.Urls == "" {
-		return web.Error(c, http.StatusBadRequest, "missing urls")
+		return errors.New("missing urls"), http.StatusBadRequest
 	}
 	h.l.Info("new", "urls", req.Urls)
 
@@ -101,32 +119,29 @@ func (h webHandler) handleDownload(c echo.Context, parent entities.Asset, req ne
 		P:      h.p,
 	})
 	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return err, http.StatusInternalServerError
 	}
-	return nil
+	return nil, http.StatusOK
 }
 
-func (h webHandler) handleUpload(c echo.Context, parent entities.Asset, req newAssetRequest) error {
-	form, err := c.MultipartForm()
-	if err != nil {
-		h.l.Error("new", "err", err)
-		return err
-	}
-	files := form.File["files"]
+func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req newAssetRequest) (error, int) {
+	var err error
+
+	files := req.Files
 	if len(files) == 0 && req.Folder == "" {
-		return web.Error(c, http.StatusBadRequest, "no files or folder")
+		return errors.New("no files or folder"), http.StatusBadRequest
 	}
 
 	if req.Folder != "" {
 		err = utils.CreateFolder(filepath.Join(*parent.Root, *parent.Path, req.Folder))
 		if err != nil {
-			return fmt.Errorf("creating folder: %v", err)
+			return fmt.Errorf("creating folder: %v", err), http.StatusInternalServerError
 		}
 		f := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, req.Folder), true, &parent)
 
 		if err := h.r.SaveAsset(*f); err != nil {
 			h.l.Error("new", "err", err)
-			return err
+			return err, http.StatusInternalServerError
 		}
 		parent = *f
 	}
@@ -135,45 +150,45 @@ func (h webHandler) handleUpload(c echo.Context, parent entities.Asset, req newA
 		src, err := file.Open()
 		if err != nil {
 			h.l.Error("new", "err", err)
-			return err
+			return err, http.StatusInternalServerError
 		}
 		defer src.Close()
-		err = tools.SaveFile(filepath.Join(*parent.Root, *parent.Path, file.Filename), src)
+		err = tools.SaveFile(filepath.Join(*parent.Root, *parent.Path, file.Filename()), src)
 		if err != nil {
 			h.l.Error("new", "err", err)
-			return err
+			return err, http.StatusInternalServerError
 		}
 
-		a := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, file.Filename), false, &parent)
+		a := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, file.Filename()), false, &parent)
 		if err := h.r.SaveAsset(*a); err != nil {
 			h.l.Error("new", "err", err)
-			return err
+			return err, http.StatusInternalServerError
 		}
 		if err := h.p.Process(a).Wait(); err != nil {
 			h.l.Error("new", "err", err)
-			return err
+			return err, http.StatusInternalServerError
 		}
 
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
-func (h webHandler) handleTempFiles(c echo.Context, parent entities.Asset, req newAssetRequest) error {
+func (h webHandler) handleTempFiles(r *http.Request, parent entities.Asset, req newAssetRequest) (error, int) {
 	if req.TempFile == "" {
-		return web.Error(c, http.StatusBadRequest, "missing Temp File")
+		return errors.New("missing Temp File"), http.StatusBadRequest
 	}
 	err := utils.Move(filepath.Join(config.Cfg.Core.DataFolder, "temp", req.TempFile),
 		filepath.Join(*parent.Root, *parent.Path, req.TempFile))
 	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return err, http.StatusInternalServerError
 	}
 	a := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, req.TempFile), false, &parent)
 	if err := h.r.SaveAsset(*a); err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return err, http.StatusInternalServerError
 	}
 	if err := h.p.Process(a).Wait(); err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return err, http.StatusInternalServerError
 	}
-	return nil
+	return nil, http.StatusOK
 }

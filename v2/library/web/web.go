@@ -7,6 +7,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/web"
+	"github.com/ggicci/httpin"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -49,6 +50,7 @@ func NewChi(repo *repo.AssetRepo, p *process.Processor) (http.Handler, error) {
 	r.Get("/{assetID}/file", wh.getFileHandlerChi)
 	r.Get("/{assetID}/extract", web.R(wh.extractHandlerChi))
 	r.Get("/new", web.R(wh.newAsset))
+	r.With(httpin.NewInput(newAssetRequest{})).Post("/new", web.R(wh.newAsset))
 
 	return r, nil
 }
