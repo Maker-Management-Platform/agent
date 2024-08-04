@@ -1,0 +1,34 @@
+.asset-card {
+    position: relative;
+
+    .img {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        transition: transform 500ms ease;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 20%;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.85) 90%);
+    }
+
+    .controls {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 1;
+        display: none;
+    }
+}
+
+.asset-card:has(:hover) {
+    .controls {
+        display: flex;
+    }
+
+}

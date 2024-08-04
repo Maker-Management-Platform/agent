@@ -104,3 +104,10 @@ func R(rr RenderRequest) http.HandlerFunc {
 
 	}
 }
+
+func RComponent(c templ.Component) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		c.Render(r.Context(), w)
+	}
+}

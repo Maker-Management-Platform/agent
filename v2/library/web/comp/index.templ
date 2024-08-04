@@ -12,38 +12,29 @@ templ Index(model IndexModel) {
 				</div>
 				@Pagination(model.Pagination)
 				<div class="flex-none">
-					<div class="dropdown dropdown-end">
-						<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-							<div class="w-10 rounded-full">
-								<img
-									alt="Tailwind CSS Navbar component"
-									src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-								/>
-							</div>
-						</div>
-						<ul
-							tabindex="0"
-							class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
-						>
-							<li>
-								<a class="justify-between">
-									Profile
-									<span class="badge">New</span>
-								</a>
-							</li>
-							<li><a>Settings</a></li>
-							<li><a>Logout</a></li>
-						</ul>
-					</div>
+					<button
+						class="btn btn-square btn-ghost"
+						hx-get="/lib/new"
+						hx-target="#asset-sidebar"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="inline-block h-5 w-5 stroke-current"
+						><title>note-plus</title><path d="M19 13C19.7 13 20.37 13.13 21 13.35V9L15 3H5C3.89 3 3 3.89 3 5V19C3 20.11 3.9 21 5 21H13.35C13.13 20.37 13 19.7 13 19C13 15.69 15.69 13 19 13M14 4.5L19.5 10H14V4.5M23 18V20H20V23H18V20H15V18H18V15H20V18H23Z"></path></svg>
+					</button>
 				</div>
 			</div>
 		</div>
 		<div class="flex-initial">
 			@BreadCrumbs(model.Asset.Parent)
 		</div>
-		@KindFilter(model.KindFilter)
-		<div class="flex-auto overflow-y-auto main">
-			@model.Main
-		</div>
+		<main class="flex flex-auto overflow-y-auto main">
+			<div class="flex flex-row flex-auto overflow-y-auto">
+				@model.Main
+			</div>
+			<aside class="bg-base-200" id="asset-sidebar"></aside>
+		</main>
 	</div>
 }

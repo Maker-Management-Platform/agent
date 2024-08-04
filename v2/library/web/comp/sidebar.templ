@@ -1,7 +1,11 @@
 package comp
 
 templ SideBar() {
-	<div class="flex flex-row-reverse mt-1">
+	<aside
+		hx-target="#right-aside"
+		hx-swap-oob="true"
+		class="flex flex-row-reverse mt-1"
+	>
 		<div class="flex flex-col bg-blue-400">
 			<button
 				class="btn btn-sm"
@@ -25,5 +29,5 @@ templ SideBar() {
 			<button class="btn btn-sm">b</button>
 		</div>
 		<div class="flex" id="asset-sidebar"></div>
-	</div>
+	</aside>
 }

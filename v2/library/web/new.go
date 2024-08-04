@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,9 +13,8 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
-	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
+	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type newAssetRequest struct {
@@ -27,13 +25,13 @@ type newAssetRequest struct {
 	Folder   string `form:"folder"`
 }
 
-func (h webHandler) newAsset(c echo.Context) error {
+func (h webHandler) newAsset(r *http.Request) web.ResponseModel {
 	events := []string{}
 	model := &comp.NewModel{
 		TempFiles: []string{},
 	}
-	if c.Request().Method == http.MethodPost {
-		var req newAssetRequest
+	if r.Method == http.MethodPost {
+		/*var req newAssetRequest
 		err := c.Bind(&req)
 		if err != nil {
 			return web.Error(c, http.StatusBadRequest, err.Error())
@@ -67,27 +65,27 @@ func (h webHandler) newAsset(c echo.Context) error {
 			}
 		}
 		events = append(events, "nested-assets-update")
-
-	} else if c.Request().Method == http.MethodGet {
-		model.ParentID = c.QueryParam("assetID")
+		*/
+	} else if r.Method == http.MethodGet {
+		model.ParentID = chi.URLParam(r, "assetID")
 	}
 	entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
 	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
+		return web.ResponseModel{
+			Error: err,
+			S:     http.StatusInternalServerError,
+		}
 	}
 
 	for _, e := range entries {
 		model.TempFiles = append(model.TempFiles, e.Name())
 	}
-	return web.Render(web.ResponseModel{
-		Ctx: c,
-		S:   http.StatusOK,
-		WrapperModel: corecomp.WrapperModel{
-			Main: comp.New(model),
-		},
-		IsFragment: true,
+	return web.ResponseModel{
+		S:          http.StatusOK,
+		Component:  comp.New(model),
 		Events:     events,
-	})
+		IsFragment: true,
+	}
 }
 
 func (h webHandler) handleDownload(c echo.Context, parent entities.Asset, req newAssetRequest) error {

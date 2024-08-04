@@ -3,12 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/frontend"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
@@ -63,6 +65,19 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(cmw.Logger)
 	r.Use(cmw.Recoverer)
+
+	fs.WalkDir(frontend.FS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		log.Println(path, d.Name())
+		return nil
+	})
+
+	r.Handle("/dist/*", http.FileServerFS(frontend.FS))
 
 	webH, err := web.New()
 	if err != nil {

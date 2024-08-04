@@ -1,8 +1,8 @@
 package comp
 
 import (
-	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"fmt"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
 )
 
 templ BreadCrumbs(asset *entities.Asset) {
@@ -12,6 +12,7 @@ templ BreadCrumbs(asset *entities.Asset) {
 				<a
 					hx-get="/lib"
 					hx-target=".asset-view"
+					hx-swap="outerHTML"
 					hx-trigger="click"
 					hx-push-url="true"
 				>Home</a>
