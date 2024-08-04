@@ -36,12 +36,15 @@ templ AssetCard(m *AssetCardModel) {
 			<div class="truncate px-2 text-white">{ *m.Asset.Label }</div>
 		</div>
 		<div class="controls relative z-10 p-1">
-			<button class="btn btn-xs">a</button>
 			<div class="dropdown" onclick="event.stopPropagation();">
-				<div tabindex="0" role="button" class="btn btn-xs">Click</div>
+				<div tabindex="0" role="button" class="btn btn-xs">menu</div>
 				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-					<li><a>Item 1</a></li>
-					<li><a>Item 2</a></li>
+					<li>
+						<a
+							hx-get={ fmt.Sprintf("/lib/details?assetID=%s", m.Asset.ID) }
+							hx-target="#asset-sidebar"
+						>Details</a>
+					</li>
 				</ul>
 			</div>
 		</div>
