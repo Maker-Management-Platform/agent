@@ -9,6 +9,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
+	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
 	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
 	"github.com/go-chi/chi/v5"
@@ -71,7 +72,6 @@ func (h webHandler) indexHandler(c echo.Context) error {
 }
 
 func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
-	roots := config.Cfg.Library.Paths
 	var err error
 	var asset entities.Asset
 	if chi.URLParam(r, "assetID") != "" {
@@ -89,13 +89,28 @@ func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
 			}
 		}
 	} else {
-		if len(roots) == 0 {
+		if len(config.Cfg.Library.FileSystems) == 0 || (len(config.Cfg.Library.FileSystems) == 1 && config.Cfg.Library.FileSystems[0].Path == "change_me") {
 			return web.ResponseModel{
 				S:     http.StatusNotFound,
 				Error: errors.New("No library paths configured, check library.paths in config.toml"),
 			}
 		}
-		asset, err = h.r.GetAssetByRootAndPath(roots[0], ".", true)
+		roots, err := h.r.GetAssetRoots(true)
+		if err != nil {
+			return web.ResponseModel{
+				S:     http.StatusInternalServerError,
+				Error: err,
+			}
+		}
+		if len(roots) > 1 {
+			asset = entities.Asset{
+				ID:           "",
+				Label:        utils.Ptr("Libraries"),
+				NestedAssets: roots,
+			}
+		} else {
+			asset = utils.VoZ(roots[0])
+		}
 	}
 
 	if err != nil {
@@ -105,11 +120,14 @@ func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
 		}
 	}
 
-	err = h.r.LoadParents(&asset, 5, "ID", "Label")
-	if err != nil {
-		return web.ResponseModel{
-			S:     http.StatusInternalServerError,
-			Error: err,
+	if asset.ID != "" {
+
+		err = h.r.LoadParents(&asset, 5, "ID", "Label")
+		if err != nil {
+			return web.ResponseModel{
+				S:     http.StatusInternalServerError,
+				Error: err,
+			}
 		}
 	}
 

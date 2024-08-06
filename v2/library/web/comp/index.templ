@@ -1,6 +1,9 @@
 package comp
 
-import "github.com/eduardooliveira/stLib/v2/utils"
+import (
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
+)
 
 templ Index(model IndexModel) {
 	<div class="h-full w-full flex flex-col asset-view pl-2">
@@ -17,6 +20,9 @@ templ Index(model IndexModel) {
 						hx-get="/lib/details"
 						hx-include="#asset-id"
 						hx-target="#asset-sidebar"
+						if  model.Asset.ID== "" {
+							disabled
+						}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -29,6 +35,9 @@ templ Index(model IndexModel) {
 						hx-get="/lib/new"
 						hx-include="#asset-id"
 						hx-target="#asset-sidebar"
+						if utils.VoZ(model.Asset.NodeKind) == entities.NodeKindBundle || model.Asset.ID== "" {
+							disabled
+						}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

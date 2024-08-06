@@ -22,6 +22,14 @@ func (r AssetRepo) GetAsset(id string, deep bool) (rtn entities.Asset, err error
 	return rtn, q.First(&rtn).Error
 }
 
+func (r AssetRepo) GetAssetRoots(deep bool) (rtn []*entities.Asset, err error) {
+	q := database.DB.Debug().Where(&entities.Asset{NodeKind: utils.Ptr(entities.NodeKindRoot)})
+	if deep {
+		q = q.Preload("NestedAssets.NestedAssets")
+	}
+	return rtn, q.Find(&rtn).Error
+}
+
 func (r AssetRepo) GetAssetByRootAndPath(root, path string, deep bool) (rtn entities.Asset, err error) {
 	q := database.DB.Where(&entities.Asset{Root: &root, Path: &path})
 	if deep {
@@ -71,6 +79,15 @@ func (r AssetRepo) GetPagedNested(asset, filter *entities.Asset, page, perPage i
 func (r AssetRepo) SetDirtyRoot(root string) error {
 	return database.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).
 		Model(&entities.Asset{}).Update("SeenOnScan", false).Error
+}
+
+func (r AssetRepo) SetDirtyFS(fsName string) error {
+	return database.DB.Model(&entities.Asset{}).Where("fs_name", fsName).Update("SeenOnScan", false).Error
+}
+
+func (r AssetRepo) DeleteUnSeenInFS(fsName string) error {
+	return database.DB.Model(entities.Asset{}).
+		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), FSName: &fsName}).Error
 }
 
 func (r AssetRepo) DeleteUnSeenInRoot(root string) error {

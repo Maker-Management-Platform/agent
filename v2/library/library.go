@@ -88,9 +88,21 @@ func (l Library) Scan() error {
 	return eg.Wait()
 }
 
+func (l Library) ScanFS() error {
+	eg := errgroup.Group{}
+	if len(config.Cfg.Library.FileSystems) == 0 || (len(config.Cfg.Library.FileSystems) == 1 && config.Cfg.Library.FileSystems[0].Path == "change_me") {
+		slog.Warn("invalid library file systems configured")
+		return nil
+	}
+	for _, cfs := range config.Cfg.Library.FileSystems {
+		eg.Go(l.d.GetForFS(cfs).Run)
+	}
+	return eg.Wait()
+}
+
 func (l *Library) ScanAsync() {
 	go func() {
-		if err := l.Scan(); err != nil {
+		if err := l.ScanFS(); err != nil {
 			slog.Error("Error scanning library", "error", err)
 		}
 	}()

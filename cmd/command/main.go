@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
@@ -65,17 +64,6 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(cmw.Logger)
 	r.Use(cmw.Recoverer)
-
-	fs.WalkDir(frontend.FS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		log.Println(path, d.Name())
-		return nil
-	})
 
 	r.Handle("/dist/*", http.FileServerFS(frontend.FS))
 

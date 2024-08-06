@@ -44,10 +44,12 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, pgModel *comp.Pagi
 	if page < 1 {
 		page = 1
 	}
-
-	pages, err := h.r.GetPagedNested(in.Asset, &filter, page-1, 20)
-	if err != nil {
-		return nil, nil, err
+	var pages int
+	if in.Asset.ID != "" {
+		pages, err = h.r.GetPagedNested(in.Asset, &filter, page-1, 20)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return comp.List(comp.ListModel{

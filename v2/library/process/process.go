@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/process/enrichers"
 	"github.com/eduardooliveira/stLib/v2/library/process/extractors"
@@ -49,18 +50,20 @@ func (p *Processor) Process(asset *entities.Asset) *Process {
 		Asset: asset,
 		done:  make(chan error),
 	}
-	if r, ok := renderers.Get(asset); ok {
+	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled && !config.Cfg.Library.RenderBundles {
+		proc.renderState = "skipped"
+	} else if r, ok := renderers.Get(asset); ok {
 		proc.renderer = r
 		proc.renderState = "pending"
 	} else {
 		proc.renderState = "skipped"
 	}
-	if e, ok := extractors.Get(asset); ok {
+	/*if e, ok := extractors.Get(asset); ok {
 		proc.extractor = e
 		proc.extractState = "pending"
 	} else {
 		proc.extractState = "skipped"
-	}
+	}*/
 	if e, ok := enrichers.Get(asset); ok {
 		proc.enricher = e
 		proc.enrichState = "pending"
@@ -73,18 +76,15 @@ func (p *Processor) Process(asset *entities.Asset) *Process {
 }
 
 type Process struct {
-	p            *Processor
-	done         chan error
-	Asset        *entities.Asset
-	renderer     renderers.Renderer
-	renderState  string
-	renderError  error
-	extractor    extractors.Extractor
-	extractState string
-	extractError error
-	enricher     enrichers.Enricher
-	enrichState  string
-	enrichError  error
+	p           *Processor
+	done        chan error
+	Asset       *entities.Asset
+	renderer    renderers.Renderer
+	renderState string
+	renderError error
+	enricher    enrichers.Enricher
+	enrichState string
+	enrichError error
 }
 
 func (p *Process) Wait() error {
@@ -109,31 +109,16 @@ func (p *Process) Run() error {
 		}
 	}
 
-	if p.extractor != nil {
-		if nested, err := p.extractor.Extract(p.Asset); err != nil {
-			p.extractError = err
-			p.extractState = "failed"
-			l.Error("failed to extract asset", "error", err)
-		} else {
-			p.extractState = "done"
-			for _, n := range nested {
-				if err := p.p.r.SaveAsset(*n); err != nil {
-					l.Error("failed to save extracted asset", "error", err)
-				}
-			}
-		}
-	}
-
 	if p.enricher != nil {
-		if err := p.enricher.Enrich(p.Asset); err != nil {
+		/*if err := p.enricher.Enrich(p.Asset); err != nil {
 			p.enrichError = err
 			p.enrichState = "failed"
 			l.Error("failed to enrich asset", "error", err)
 		} else {
-			p.enrichState = "done"
-		}
+			}*/
+		p.enrichState = "done"
 	}
-	if p.renderState == "done" || p.extractState == "done" || p.enrichState == "done" {
+	if p.renderState == "done" || p.enrichState == "done" {
 		if err := p.p.r.SaveAsset(*p.Asset); err != nil {
 			l.Error("failed to save asset", "error", err)
 			p.done <- err

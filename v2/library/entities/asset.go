@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/library/sys"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,8 @@ type Asset struct {
 	Description  *string    `query:"description" form:"description"`
 	Path         *string    `query:"path" form:"path"`
 	Root         *string    `query:"root" form:"root"`
+	FSKind       *string    `query:"fsKind" form:"fsKind"`
+	FSName       *string    `query:"fsName" form:"fsName"`
 	Extension    *string    `query:"extension" form:"extension"`
 	Kind         *string    `query:"kind" form:"kind"`
 	NodeKind     *NodeKind  `query:"nodeKind" form:"nodeKind"`
@@ -71,6 +74,56 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 	}
 
 	asset.NodeKind = utils.Ptr(NodeKindFile)
+	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
+	asset.Kind = utils.Ptr(kind.Name)
+
+	if *asset.Kind == "image" {
+		asset.Thumbnail = utils.Ptr(asset.ID)
+	}
+
+	return asset
+}
+
+func NewAsset(fs sys.FS, path string, isDir bool, parent *Asset) *Asset {
+	ext := filepath.Ext(path)
+
+	data := []byte(filepath.Join(fs.Name, fs.Path, path))
+	md5Hash := md5.Sum(data)
+
+	var asset = &Asset{
+		ID:        hex.EncodeToString(md5Hash[:]),
+		Path:      utils.Ptr(path),
+		Root:      utils.Ptr(fs.Path),
+		FSName:    utils.Ptr(fs.Name),
+		FSKind:    utils.Ptr(fs.Kind),
+		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
+		Extension: utils.Ptr(ext),
+	}
+	if parent != nil {
+		asset.Parent = parent
+		asset.ParentID = &parent.ID
+	}
+
+	if fs.Kind == "bundle" {
+		asset.NodeKind = utils.Ptr(NodeKindBundled)
+	} else if sys.IsBundle(path) {
+		asset.NodeKind = utils.Ptr(NodeKindBundle)
+	} else if isDir {
+		if parent == nil {
+			asset.NodeKind = utils.Ptr(NodeKindRoot)
+			asset.Label = utils.Ptr(fs.Name)
+		} else {
+			asset.NodeKind = utils.Ptr(NodeKindDir)
+		}
+	} else {
+		asset.NodeKind = utils.Ptr(NodeKindFile)
+	}
+
+	if isDir {
+		asset.Kind = utils.Ptr("dir")
+		return asset
+	}
+
 	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
 	asset.Kind = utils.Ptr(kind.Name)
 

@@ -12,10 +12,13 @@ type Config struct {
 		Port int `json:"port" mapstructure:"port"`
 	} `json:"server" mapstructure:"server"`
 	Library struct {
-		Paths          []string   `json:"paths" mapstructure:"paths"`
-		Blacklist      []string   `json:"blacklist" mapstructure:"blacklist"`
-		IgnoreDotFiles bool       `json:"ignoreDotFiles" mapstructure:"ignoreDotFiles"`
-		AssetTypes     AssetTypes `json:"assetTypes" mapstructure:"assetTypes"`
+		Paths          []string    `json:"paths" mapstructure:"paths"`
+		FileSystems    FileSystems `json:"fileSystems" mapstructure:"fileSystems"`
+		Blacklist      []string    `json:"blacklist" mapstructure:"blacklist"`
+		IgnoreDotFiles bool        `json:"ignoreDotFiles" mapstructure:"ignoreDotFiles"`
+		RenderBundles  bool        `json:"renderBundles" mapstructure:"renderBundles"`
+		ExtractImages  bool        `json:"extractImages" mapstructure:"extractImages"`
+		AssetTypes     AssetTypes  `json:"assetTypes" mapstructure:"assetTypes"`
 	} `json:"library" mapstructure:"library"`
 	Render struct {
 		MaxWorkers      int    `json:"maxWorkers" mapstructure:"maxWorkers"`
@@ -55,4 +58,31 @@ type AssetType struct {
 
 func (a AssetType) Compare(b AssetType) int {
 	return a.Order - b.Order
+}
+
+type FileSystem struct {
+	Name string `json:"name" mapstructure:"name"`
+	Path string `json:"path" mapstructure:"path"`
+	Kind string `json:"kind" mapstructure:"kind"`
+}
+
+type FileSystems []FileSystem
+
+func (f FileSystems) ByKind(kind string) []FileSystem {
+	rtn := make([]FileSystem, 0)
+	for _, fsKind := range f {
+		if fsKind.Kind == kind {
+			rtn = append(rtn, fsKind)
+		}
+	}
+	return rtn
+}
+
+func (f FileSystems) ByPath(path string) FileSystem {
+	for _, fsKind := range f {
+		if fsKind.Path == path {
+			return fsKind
+		}
+	}
+	return FileSystem{}
 }

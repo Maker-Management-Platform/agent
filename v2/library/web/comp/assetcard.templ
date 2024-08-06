@@ -17,22 +17,17 @@ templ AssetCard(m *AssetCardModel) {
 	>
 		<div
 			class={ "img flex-basis-56 w-full bgimg_b670 rounded-lg bg-gray-300 bg-cover bg-center", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
-			if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
+			if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle|| utils.VoZ(m.Asset.NodeKind) == entities.NodeKindRoot ||utils.VoZ(m.Asset.Kind) == "dir" {
 				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
 				hx-target=".asset-view"
 				hx-trigger="click"
 				hx-push-url="true"
 			}
-			if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundled {
-				hx-get={ fmt.Sprintf("/lib/%s/extract?target=card", m.Asset.ID) }
-				hx-target="closest .asset-card"
-				hx-trigger="click"
-				hx-confirm="Are you sure you want to expand this asset?"
-			}
 		>
 			<div class="overlay rounded-lg"></div>
 		</div>
 		<div class="z-10 flex max-w-56 justify-center pb-2">
+			@NodeKindIcon(m.Asset)
 			<div class="truncate px-2 text-white">{ *m.Asset.Label }</div>
 		</div>
 		<div class="controls relative z-10 p-1">
@@ -51,37 +46,25 @@ templ AssetCard(m *AssetCardModel) {
 	</div>
 }
 
-templ AssetCard2(m *AssetCardModel) {
-	//https://merakiui.com/components/application-ui/cards
-	<div class="asset-card flex flex-col items-center justify-center w-max-56 w-56 my-2 mx-auto">
-		if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
-			<div
-				class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
-				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
-				hx-target=".asset-view"
-				hx-trigger="click"
-				hx-push-url="true"
-			></div>
-		} else if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundled {
-			<div
-				class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
-				hx-get={ fmt.Sprintf("/lib/%s/extract?target=card", m.Asset.ID) }
-				hx-target="closest .asset-card"
-				hx-trigger="click"
-				hx-confirm="Are you sure you want to expand this asset?"
-			></div>
-		} else {
-			<div class={ "w-full h-56 bg-gray-300 bg-center bg-cover rounded-lg shadow-md", bgimg(utils.VoZ(m.Asset.Thumbnail)) }></div>
-		}
-		<div class="w-32 -mt-10 overflow-hidden bg-white rounded-lg shadow-lg md:w-32 dark:bg-gray-800">
-			<h3 class="p-2 font-bold tracking-wide text-center text-gray-800 uppercase dark:text-white trucate whitespace-nowrap">{ *m.Asset.Label }</h3>
-			<div class="flex items-center justify-between px-3 py-2 bg-gray-200 dark:bg-gray-700">
-				<span class="font-bold text-gray-800 dark:text-gray-200">{ string(utils.VoZ(m.Asset.NodeKind)) } - { utils.VoZ(m.Asset.Kind) }</span>
-				if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle {
-					@ExpandAssetButton(m.Asset)
-				}
-				<button class="px-2 py-1 text-xs font-semibold text-white uppercase transition-colors duration-300 transform bg-gray-800 rounded hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 focus:outline-none">Add to cart</button>
-			</div>
-		</div>
-	</div>
+templ NodeKindIcon(asset *entities.Asset) {
+	switch utils.VoZ(asset.NodeKind) {
+		case entities.NodeKindDir:
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-outline</title><path stroke-width="2" d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z"></path></svg>
+		case entities.NodeKindBundle:
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-zip-outline</title><path d="M20 6H12L10 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V8C22 6.9 21.1 6 20 6M20 18H16V16H14V18H4V8H14V10H16V8H20V18M16 12V10H18V12H16M14 12H16V14H14V12M18 16H16V14H18V16Z"></path></svg>
+	}
+	switch utils.VoZ(asset.Kind) {
+		case "file":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>file-outline</title><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.9 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z"></path></svg>
+		case "image":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>image-outline</title><path d="M3 4V20H21V4H3M19 8L14 13L10 9L5 14H19V8Z"></path></svg>
+		case "model":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>cube-outline</title><path d="M12 2L2 6V18L12 22L22 18V6L12 2M12 4L18.4 7.5L12 10.5L5.6 7.5L12 4M4 16V8.8L12 12.8L20 8.8V16L12 20.2L4 16Z"></path></svg>
+		case "slice":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>file-code-outline</title><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.9 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z"></path></svg>
+		case "source":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>file-code-outline</title><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.9 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z"></path></svg>
+		case "other":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>file-outline</title><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.9 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z"></path></svg>
+	}
 }

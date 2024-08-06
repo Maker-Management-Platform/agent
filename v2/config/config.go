@@ -49,10 +49,18 @@ func defaults() {
 	v.SetDefault("server.port", 8000)
 	if utils.IsDocker {
 		v.SetDefault("library.paths", []string{"/library"})
+		v.SetDefault("library.fileSystems", []map[string]string{
+			{"name": "Main Library", "path": "/library", "kind": "local"},
+		})
 	} else {
 		v.SetDefault("library.paths", []string{})
+		v.SetDefault("library.fileSystems", []map[string]string{
+			{"name": "Main Library", "path": "change_me", "kind": "local"},
+		})
 	}
 	v.SetDefault("library.blacklist", []string{".git", ".svn", ".hg", ".bzr", ".DS_Store", ".project.stlib", ".thumb.png", ".render.png"})
+	v.SetDefault("library.renderBundles", false)
+	v.SetDefault("library.extractImages", false)
 	v.SetDefault("library.assetTypes", map[string]AssetType{
 		"model": {
 			Name:       "model",

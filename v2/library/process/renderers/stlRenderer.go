@@ -5,12 +5,12 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/sys"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/nfnt/resize"
 )
@@ -63,19 +63,32 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
 	}
 
-	var fPath string
-	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
-		fPath = filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), path.Base(*asset.Path))
-	} else {
-		fPath = filepath.Join(*asset.Root, *asset.Path)
+	fs, err := sys.GetFS(utils.VoZ(asset.FSKind), utils.VoZ(asset.FSName), *asset.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
 
-	mesh, err := fauxgl.LoadSTL(fPath)
+	f, err := fs.Open(utils.VoZ(asset.Path))
+	if err != nil {
+		return nil, err
+	}
+
+	resolver, err := fauxgl.LoadSTLF(f)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+	f.Close()
 
+	f, err = fs.Open(utils.VoZ(asset.Path))
+	if err != nil {
+		return nil, err
+	}
+	mesh, err := resolver(f)
+
+	if err != nil {
+		return nil, err
+	}
 	// fit mesh in a bi-unit cube centered at the origin
 	mesh.BiUnitCube()
 

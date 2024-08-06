@@ -10,13 +10,13 @@ import (
 	"image"
 	"image/png"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/sys"
 	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
@@ -43,13 +43,12 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
 	}
 
-	var fPath string
-	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
-		fPath = filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), path.Base(*asset.Path))
-	} else {
-		fPath = filepath.Join(*asset.Root, *asset.Path)
+	fs, err := sys.GetFS(utils.VoZ(asset.FSKind), utils.VoZ(asset.FSName), *asset.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
-	f, err := os.Open(fPath)
+
+	f, err := fs.Open(utils.VoZ(asset.Path))
 	if err != nil {
 		return nil, err
 	}
