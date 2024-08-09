@@ -1,18 +1,23 @@
 {
-  "name": "ui-core",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "devDependencies": {
-    "autoprefixer": "^10.4.15",
-    "daisyui": "latest",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.3",
-    "vite": "^4.4.11"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
+    "name": "vite-starter",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.4.20",
+        "daisyui": "^4.12.10",
+        "postcss": "^8.4.41",
+        "postcss-import": "^16.1.0",
+        "tailwindcss": "^3.4.7",
+        "vite": "^5.3.5",
+        "vite-plugin-lib-inject-css": "^2.1.1"
+    },
+    "dependencies": {
+        "three": "^0.167.1"
+    }
 }

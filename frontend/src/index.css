@@ -1,0 +1,4 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "./css/asset-card.css";
+@import "tailwindcss/utilities";

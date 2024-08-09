@@ -1,8 +1,20 @@
-FROM golang:1.22 AS go
+FROM node:20-alpine AS node
 
 RUN mkdir app
 WORKDIR /app
 COPY . .
+
+WORKDIR frontend
+RUN ls -la
+RUN npm install
+run npx tailwindcss -c ./tailwind.config.js -i ./src/index.css -o ./public/index.css
+run npm run build 
+
+FROM golang:1.22 AS go
+
+RUN mkdir app
+WORKDIR /app
+COPY --from=node /app .
 
 RUN go mod tidy
 RUN go install github.com/a-h/templ/cmd/templ@latest

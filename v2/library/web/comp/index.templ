@@ -56,7 +56,9 @@ templ Index(model IndexModel) {
 			<div class="flex flex-row flex-auto overflow-y-auto">
 				@model.Main
 			</div>
-			<aside class="bg-base-200" id="asset-sidebar"></aside>
+			<aside class="bg-base-200" id="asset-sidebar">
+				@View3D()
+			</aside>
 		</main>
 	</div>
 }
