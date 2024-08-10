@@ -30,8 +30,15 @@ templ AssetCard(m *AssetCardModel) {
 			@NodeKindIcon(m.Asset)
 			<div class="truncate px-2 text-white">{ *m.Asset.Label }</div>
 		</div>
-		<div class="controls relative z-10 p-1">
-			<div class="dropdown" onclick="event.stopPropagation();">
+		<div class="controls relative z-10 p-1" onclick="event.stopPropagation();">
+			if utils.VoZ(m.Asset.Kind) == "model" {
+				<button
+					type="button"
+					class="btn btn-sm add-model"
+					data-model-id={ m.Asset.ID }
+				>v</button>
+			}
+			<div class="dropdown">
 				<div tabindex="0" role="button" class="btn btn-xs">menu</div>
 				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
 					<li>

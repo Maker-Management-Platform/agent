@@ -44,8 +44,8 @@ class ModelMesh {
 }
 
 
-function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
-    const state = State(
+export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
+    const state = new State(
         [],
         [],
         parent,
@@ -66,7 +66,7 @@ function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
     state.renderer.setSize(parent.offsetWidth, parent.offsetHeight);
     parent.appendChild(state.renderer.domElement);
 
-    // state.camera = new THREE.PerspectiveCamera( 60, parent.offsetWidth / parent.offsetHeight, 1, 1000 );
+    state.camera = new THREE.PerspectiveCamera(60, parent.offsetWidth / parent.offsetHeight, 1, 1000);
     state.camera.position.set(400, 200, 0);
     state.camera.lookAt(0, 0, 0);
 
@@ -160,7 +160,7 @@ function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
                     return;
                 }
 
-                state.loader.load(`/lib/${model.project_uuid}/file?download=true`, function (geometry) {
+                state.loader.load(`/lib/${model.id}/file?download=true`, function (geometry) {
 
                     const mesh = new THREE.Mesh(geometry, material);
 
