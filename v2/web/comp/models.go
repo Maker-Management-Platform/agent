@@ -8,6 +8,7 @@ import (
 type WrapperModel struct {
 	Main   templ.Component
 	AsideR templ.Component
+	Other  map[string]templ.Component
 }
 
 type PaginationModel struct {

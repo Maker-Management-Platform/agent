@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/a-h/templ"
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
@@ -97,6 +98,8 @@ func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
 			},
 			Pagination: *pgModel,
 		}),
+		Others: map[string]templ.Component{
+			"right-aside": comp.GlobSidebar(),
+		},
 	}
-
 }

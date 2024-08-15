@@ -3,7 +3,7 @@ tmp_dir = "tmp"
 
 [build]
 bin = "./tmp/main"
-cmd = "templ generate && npx tailwindcss -c ./frontend/tailwind.config.js -i ./frontend/src/index.css -o ./frontend/public/index.css && npm --prefix ./frontend run  build && go build -o ./tmp/main ./cmd/command/"
+cmd = "TEMPL_EXPERIMENT=rawgo templ generate && npx tailwindcss -c ./frontend/tailwind.config.js -i ./frontend/src/index.css -o ./frontend/public/index.css && npm --prefix ./frontend run  build && go build -o ./tmp/main ./cmd/command/"
 delay = 1000
 exclude_dir = ["assets", "tmp", "vendor", "node_modules"]
 exclude_file = [

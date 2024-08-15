@@ -44,6 +44,7 @@ func NewChi(repo *repo.AssetRepo, p *process.Processor) (http.Handler, error) {
 		p: p,
 	}
 	r := chi.NewRouter()
+	r.Get("/sidebar", web.R(wh.sidebarHandler))
 	r.Get("/", web.R(wh.indexHandlerChi))
 	r.Get("/{assetID}", web.R(wh.indexHandlerChi))
 	r.Get("/list", web.R(wh.listHandlerChi))

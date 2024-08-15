@@ -1,47 +1,22 @@
 import { createViewer3D } from "./viewer"
+import Alpine from 'alpinejs'
 
-var viewer = null;
-var models = [];
-var viewerEl = null;
-(function () {
-    viewerEl = document.getElementById('viewer')
-    setControlEvents(viewerEl);
 
-    document.body.addEventListener('htmx:load', function (evt) {
-        var newViewerEl = evt.detail.elt.querySelector('.viewer-container');
-        if (newViewerEl) {
-            console.log('newViewerEl', newViewerEl)
-            if (viewer) {
-                console.log('destroying viewer')
-                viewer.destroy();
-            }
-            // initialize buttons for the view wrapper
-            console.log('creating viewer')
-            viewer = createViewer3D(newViewerEl);
-            viewer.setModels(models.map(m => { return { id: m } }));
+Alpine.store('lib', () => ({
+    models: [],
+    viewer: null,
+    init() {
+        Alpine.store('context').current = 'lib'
+        if (!this.$refs.libGlobSidebar) {
+            console.log('no sidebar')
+            document.getElementsByTagName('body')[0]
+                .dispatchEvent(new CustomEvent("load-side", {
+                    detail: { context: 'lib' }
+                }))
+        } else {
+            console.log('sidebar exists')
+            this.viewer = createViewer3D(this.$refs.viewerContainer);
+            this.viewer.setModels(this.models.map(m => { return { id: m } }));
         }
-        addListeners();
-    });
-})()
-
-function addListeners() {
-    document.querySelectorAll('button.add-model').forEach((el) => {
-        el.addEventListener('click', function (e) {
-            var m = e.currentTarget.dataset.modelId;
-            if (models.indexOf(m) === -1) {
-                models.push(m);
-            }
-            viewerEl.classList.remove('hidden');
-            viewer.setModels(models.map(m => { return { id: m } }));
-        })
-    })
-}
-
-function setControlEvents(viewerEl) {
-    if (!viewerEl) {
-        return;
-    }
-    viewerEl.querySelector('.close').addEventListener('click', function (e) {
-        viewerEl.classList.add('hidden');
-    })
-}
+    },
+}))

@@ -16,6 +16,7 @@ type ResponseModel struct {
 	Error        error
 	Component    templ.Component
 	OOB          []templ.Component
+	Others       map[string]templ.Component
 	WrapperModel comp.WrapperModel
 	IsFragment   bool
 	PushState    string
@@ -87,7 +88,7 @@ func R(rr RenderRequest) http.HandlerFunc {
 		w.WriteHeader(rm.S)
 		fComponent := rm.Component
 		if !isFragment {
-			fComponent = comp.WrapperComponent(comp.WrapperModel{Main: rm.Component})
+			fComponent = comp.WrapperComponent(comp.WrapperModel{Main: rm.Component, Other: rm.Others})
 		}
 		if err := fComponent.Render(r.Context(), w); err != nil {
 			if isFragment {
@@ -96,8 +97,8 @@ func R(rr RenderRequest) http.HandlerFunc {
 				comp.WrapperComponent(comp.WrapperModel{Main: comp.Error(err.Error())}).Render(r.Context(), w)
 			}
 		}
-		if isFragment && rm.OOB != nil {
-			for _, c := range rm.OOB {
+		if isFragment && rm.Others != nil {
+			for _, c := range rm.Others {
 				c.Render(r.Context(), w)
 			}
 		}

@@ -64,6 +64,7 @@ export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
 
     state.renderer.setPixelRatio(parent.offsetWidth / parent.offsetHeight);
     state.renderer.setSize(parent.offsetWidth, parent.offsetHeight);
+    state.renderer.domElement.setAttribute("hx-preserve", "true");
     parent.appendChild(state.renderer.domElement);
 
     state.camera = new THREE.PerspectiveCamera(60, parent.offsetWidth / parent.offsetHeight, 1, 1000);

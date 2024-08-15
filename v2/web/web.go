@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/a-h/templ"
 	"github.com/eduardooliveira/stLib/v2/web/comp"
@@ -20,6 +21,11 @@ func New() (http.Handler, error) {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", R(wh.indexHandler))
+	mux.HandleFunc("/global/{part}", func(w http.ResponseWriter, r *http.Request) {
+		base := path.Base(r.URL.Path)
+		context := r.URL.Query().Get("context")
+		http.Redirect(w, r, path.Join("/", context, base), http.StatusMovedPermanently)
+	})
 	return mux, nil
 }
 
