@@ -8,6 +8,15 @@ There are also plans to distribute MMP as an installable application using wails
 
 This version is highly experimental, so feedback is highly important.
 
+
+## Setting up for development
+Run npm install in the frontend folder
+
+install air https://github.com/air-verse/air   
+`go install github.com/air-verse/air@latest`
+
+run `air --  -data-folder data` in the repo folder
+
 ## Join us for discussion
 ![Discord Shield](https://discordapp.com/api/guilds/1013417395777450034/widget.png?style=shield)  
 Join discord if you need any support https://discord.gg/SqxKE3Ve4Z
