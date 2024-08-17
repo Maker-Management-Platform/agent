@@ -3,8 +3,16 @@ package comp
 import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Details(m *DetailsModel) {
-	<div class="w-96 p-2">
-		<h1>{ utils.VoZ(m.Asset.Label) }</h1>
-		<p>{ utils.VoZ(m.Asset.Kind) }</p>
+	<div
+		class="flex flex-col w-96"
+		:class="tab == 'details' ? '' : 'hidden'"
+		hx-get="/lib/details"
+		hx-trigger="tab-details from:body"
+		hx-vals="js:{assetID:event.detail.assetID}"
+	>
+		if m!=nil {
+			<h1>{ utils.VoZ(m.Asset.Label) }</h1>
+			<p>{ utils.VoZ(m.Asset.Kind) }</p>
+		}
 	</div>
 }

@@ -5,12 +5,10 @@ import (
 	"net/http"
 
 	"github.com/eduardooliveira/stLib/v2/config"
-	"github.com/eduardooliveira/stLib/v2/library/api"
 	"github.com/eduardooliveira/stLib/v2/library/discovery"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/library/web"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -20,35 +18,7 @@ type Library struct {
 	d *discovery.Discoverer
 }
 
-func New(e *echo.Group) (*Library, error) {
-	lib := &Library{}
-
-	var err error
-
-	lib.r, err = repo.New()
-	if err != nil {
-		return nil, err
-	}
-
-	lib.p, err = process.New(lib.r)
-	if err != nil {
-		return nil, err
-	}
-
-	lib.d = discovery.New(lib.p, lib.r)
-
-	if err := web.New(e.Group("/lib"), lib.r, lib.p); err != nil {
-		return nil, err
-	}
-
-	if err := api.New(*e.Group(""), lib.r); err != nil {
-		return nil, err
-	}
-
-	return lib, nil
-}
-
-func NewChi() (*Library, http.Handler, http.Handler, error) {
+func New() (*Library, http.Handler, http.Handler, error) {
 	lib := &Library{}
 
 	var err error
@@ -65,7 +35,7 @@ func NewChi() (*Library, http.Handler, http.Handler, error) {
 
 	lib.d = discovery.New(lib.p, lib.r)
 
-	webH, err := web.NewChi(lib.r, lib.p)
+	webH, err := web.New(lib.r, lib.p)
 	if err != nil {
 		return nil, nil, nil, err
 	}

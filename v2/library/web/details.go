@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (h webHandler) getAssetDetails(r *http.Request) web.ResponseModel {
+func (h webHandler) getAssetDetailsHandler(r *http.Request) web.ResponseModel {
 	id := r.URL.Query().Get("assetID")
 	asset, err := h.r.GetAsset(id, false)
 	if err != nil {

@@ -12,11 +12,8 @@ import (
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
-	"github.com/eduardooliveira/stLib/v2/web/mw"
 	"github.com/go-chi/chi/v5"
 	cmw "github.com/go-chi/chi/v5/middleware"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -61,18 +58,12 @@ func main() {
 	}
 
 	//eg := errgroup.Group{}
-	server := echo.New()
-	server.HideBanner = true
-	server.Use(mw.CtxMiddleware())
-	server.Use(middleware.CORS())
-	server.Use(middleware.Logger())
-	server.Use(middleware.Recover())
 
 	r := chi.NewRouter()
 	r.Use(cmw.Logger)
 	r.Use(cmw.Recoverer)
 
-	l, libH, _, err := library.NewChi()
+	l, libH, _, err := library.New()
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}

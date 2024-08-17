@@ -2,4 +2,7 @@
 //import "./css/main.css";
 //import "./css/changeme.css"
 import 'htmx.org';
-import "./viewer/main.js"
+import "./lib/main.js"
+import Alpine from 'alpinejs'
+window.Alpine = Alpine
+Alpine.start()

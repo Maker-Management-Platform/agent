@@ -12,19 +12,21 @@ templ WrapperComponent(model WrapperModel) {
 				//htmx.logAll();
 			</script>
 		</head>
-		<body class="m-0">
+		<body class="m-0" x-data x-init="Alpine.store('context',{'current':''})">
 			<div class="h-screen w-screen flex flex-col">
-				<div class="flex-auto overflow-y-auto flex flex-row p-2">
-					<aside class="left">
+				<div class="flex-auto overflow-y-auto flex flex-row">
+					<aside class="p-1">
 						<ul
 							hx-target=".main"
 							class="menu bg-base-200 rounded-box"
+							hx-boost="true"
 						>
 							<li>
 								<a
 									class="tooltip tooltip-right"
 									data-tip="Home"
-									hx-get="/"
+									href="/"
+									:class="$store.context.current == '' ? 'active' : ''"
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -46,7 +48,8 @@ templ WrapperComponent(model WrapperModel) {
 								<a
 									class="tooltip tooltip-right"
 									data-tip="Library"
-									hx-get="/lib"
+									href="/lib"
+									:class="$store.context.current == 'lib' ? 'active' : ''"
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -82,14 +85,21 @@ templ WrapperComponent(model WrapperModel) {
 							</li>
 						</ul>
 					</aside>
-					<main class="flex-auto overflow-y-auto main">
+					<main class="flex-auto flex overflow-y-auto main">
 						@model.Main
 					</main>
-					<aside class="flex" id="right-aside">
-						if model.AsideR != nil {
-							@model.AsideR
+					/*<aside
+						class="flex"
+						id="right-aside"
+						hx-trigger="load-side from:body"
+						hx-get="/global/sidebar"
+						hx-vals="js:{'context':event.detail.context}"
+					>
+						if o, ok := model.Other["right-aside"]; ok {
+							@o
+							{{delete(model.Other, "right-aside")}}
 						}
-					</aside>
+					</aside>*/
 				</div>
 				<footer class=" bg-primary dark:text-white px-1">
 					v2.ahah

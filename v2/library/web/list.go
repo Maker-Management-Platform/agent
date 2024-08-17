@@ -12,7 +12,6 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
-	corecomp "github.com/eduardooliveira/stLib/v2/web/comp"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -64,56 +63,7 @@ func (h webHandler) list(in *listInput) (rtn templ.Component, pgModel *comp.Pagi
 		}, nil
 }
 
-func (h webHandler) listHandler(c echo.Context) error {
-	var err error
-	var asset entities.Asset
-	if c.QueryParam("assetID") == "" {
-		return web.Error(c, http.StatusBadRequest, "Asset ID is required")
-	}
-	asset, err = h.r.GetAsset(c.QueryParam("assetID"), true)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return web.Error(c, http.StatusNotFound, "Asset not found")
-		}
-		return web.Error(c, http.StatusInternalServerError, err.Error())
-	}
-
-	err = h.r.LoadParents(&asset, 5, "ID", "Label")
-	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
-	}
-
-	listComp, _, err := h.list(&listInput{
-		c:     c,
-		Asset: &asset,
-	})
-
-	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
-	}
-
-	u, err := url.Parse(c.Request().URL.String())
-	if err != nil {
-		return web.Error(c, http.StatusInternalServerError, err.Error())
-	}
-
-	u.Path = path.Join("/", "lib", asset.ID)
-	q := u.Query()
-	q.Del("assetID")
-	u.RawQuery = q.Encode()
-
-	return web.Render(web.ResponseModel{
-		Ctx: c,
-		S:   http.StatusOK,
-		WrapperModel: corecomp.WrapperModel{
-			Main: listComp,
-		},
-		IsFragment: true,
-		PushState:  u.String(),
-	})
-}
-
-func (h webHandler) listHandlerChi(r *http.Request) web.ResponseModel {
+func (h webHandler) listHandler(r *http.Request) web.ResponseModel {
 	var err error
 	var asset entities.Asset
 	if r.URL.Query().Get("assetID") == "" {

@@ -27,7 +27,7 @@ type newAssetRequest struct {
 	Files    []*httpin.File `in:"form=files"`
 }
 
-func (h webHandler) newAsset(r *http.Request) web.ResponseModel {
+func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 	events := []string{}
 	model := &comp.NewModel{
 		TempFiles: []string{},

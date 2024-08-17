@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (h webHandler) getFileHandlerChi(w http.ResponseWriter, r *http.Request) {
+func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "assetID")
 	if id == "" {
 		http.Error(w, "Asset ID is required", http.StatusBadRequest)

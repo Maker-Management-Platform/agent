@@ -6,7 +6,7 @@ import (
 )
 
 templ Index(model IndexModel) {
-	<div class="h-full w-full flex flex-col asset-view pl-2">
+	<div class="flex-auto flex flex-col p-1 asset-view">
 		<input class="hidden" type="text" id="asset-id" name="assetID" value={ model.Asset.ID }/>
 		<div class="header flex flex-row">
 			<div class="navbar bg-base-200 rounded-box">
@@ -53,12 +53,7 @@ templ Index(model IndexModel) {
 			@BreadCrumbs(model.Asset.Parent)
 		</div>
 		<main class="flex flex-auto overflow-y-auto main">
-			<div class="flex flex-row flex-auto overflow-y-auto">
-				@model.Main
-			</div>
-			<aside class="bg-base-200" id="asset-sidebar">
-				@View3D()
-			</aside>
+			@model.Main
 		</main>
 	</div>
 }

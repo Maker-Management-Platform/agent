@@ -11,7 +11,6 @@ css bgimg(url string) {
 }
 
 templ AssetCard(m *AssetCardModel) {
-	//https://merakiui.com/components/application-ui/cards
 	<div
 		class="asset-card justi mx-auto my-2 flex h-56 grow-0 basis-56 flex-col items-center justify-end shadow-md"
 	>
@@ -20,6 +19,7 @@ templ AssetCard(m *AssetCardModel) {
 			if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle|| utils.VoZ(m.Asset.NodeKind) == entities.NodeKindRoot ||utils.VoZ(m.Asset.Kind) == "dir" {
 				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
 				hx-target=".asset-view"
+				hx-swap="outerHTML"
 				hx-trigger="click"
 				hx-push-url="true"
 			}
@@ -35,7 +35,7 @@ templ AssetCard(m *AssetCardModel) {
 				<button
 					type="button"
 					class="btn btn-sm add-model"
-					data-model-id={ m.Asset.ID }
+					@click={ fmt.Sprintf("addModel('%s')", m.Asset.ID) }
 				>v</button>
 			}
 			<div class="dropdown">
@@ -43,8 +43,7 @@ templ AssetCard(m *AssetCardModel) {
 				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
 					<li>
 						<a
-							hx-get={ fmt.Sprintf("/lib/details?assetID=%s", m.Asset.ID) }
-							hx-target="#asset-sidebar"
+							@click={ fmt.Sprintf("openTab('details', {assetID:'%s'})", m.Asset.ID) }
 						>Details</a>
 					</li>
 				</ul>

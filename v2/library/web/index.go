@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/a-h/templ"
 	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
@@ -15,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
+func (h webHandler) indexHandler(r *http.Request) web.ResponseModel {
 	var err error
 	var asset entities.Asset
 	if chi.URLParam(r, "assetID") != "" {
@@ -88,7 +89,7 @@ func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
 	return web.ResponseModel{
 		S:         http.StatusOK,
 		PushState: path.Join("/lib", asset.ID),
-		Component: comp.Index(comp.IndexModel{
+		Component: maybeWrapComponent(r, comp.Index(comp.IndexModel{
 			Asset: &asset,
 			Main:  listComp,
 			KindFilter: comp.KindFilterModel{
@@ -96,7 +97,13 @@ func (h webHandler) indexHandlerChi(r *http.Request) web.ResponseModel {
 				AssetTypes: maputil.Values(config.Cfg.Library.AssetTypes),
 			},
 			Pagination: *pgModel,
-		}),
+		})),
 	}
+}
 
+func maybeWrapComponent(r *http.Request, c templ.Component) templ.Component {
+	if r.Header.Get("Hx-Boosted") == "true" || r.Header.Get("Hx-Request") != "true" {
+		return comp.Wrapper(c)
+	}
+	return c
 }

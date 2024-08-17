@@ -15,11 +15,8 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
-	"github.com/eduardooliveira/stLib/v2/web/mw"
 	"github.com/go-chi/chi/v5"
 	cmw "github.com/go-chi/chi/v5/middleware"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -55,12 +52,6 @@ func main() {
 		log.Fatalf("Error initializing database: %v", err)
 	}
 
-	server := echo.New()
-	server.Use(mw.CtxMiddleware())
-	server.Use(middleware.CORS())
-	server.Use(middleware.Logger())
-	server.Use(middleware.Recover())
-
 	r := chi.NewRouter()
 	r.Use(cmw.Logger)
 	r.Use(cmw.Recoverer)
@@ -73,7 +64,7 @@ func main() {
 	}
 	r.Mount("/", webH)
 
-	l, libH, _, err := library.NewChi()
+	l, libH, _, err := library.New()
 	if err != nil {
 		log.Fatalf("Error initializing library: %v", err)
 	}
