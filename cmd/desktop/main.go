@@ -49,7 +49,7 @@ func main() {
 		}
 	}
 
-	if err := config.Init(dataFolder); err != nil {
+	if err := config.Load(dataFolder); err != nil {
 		log.Fatalf("Error initializing config: %v", err)
 	}
 

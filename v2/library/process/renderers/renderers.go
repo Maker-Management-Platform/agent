@@ -1,18 +1,11 @@
 package renderers
 
 import (
-	"slices"
-
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 )
 
 type Renderer interface {
 	Render(asset *entities.Asset) (*entities.Asset, error)
-}
-
-var extensions = []string{
-	".gcode",
-	".stl",
 }
 
 var renderers = map[string]Renderer{}
@@ -23,14 +16,6 @@ func Init() error {
 		".stl":   NewSTLRenderer(),
 	}
 	return nil
-}
-
-func IsRenderable(asset *entities.Asset) bool {
-	return slices.Contains(extensions, *asset.Extension)
-}
-
-func GetRenderer(asset *entities.Asset) Renderer {
-	return renderers[*asset.Extension]
 }
 
 func Get(asset *entities.Asset) (Renderer, bool) {

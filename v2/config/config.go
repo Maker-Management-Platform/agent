@@ -12,7 +12,7 @@ var Cfg *Config
 var v *viper.Viper
 var configFile string
 
-func Init(dataFolder string) error {
+func Load(dataFolder string) error {
 
 	configFile = filepath.Join(dataFolder, "config.toml")
 	if err := utils.CreateFileIfNotExist(configFile); err != nil {
@@ -83,7 +83,7 @@ func defaults() {
 		"source": {
 			Name:       "source",
 			Label:      "Sources",
-			Extensions: []string{".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt"},
+			Extensions: []string{".stp", ".step", ".ste", ".fbx", ".f3d", ".f3z", ".iam", ".ipt", ".scad"},
 			Order:      99,
 		},
 	})

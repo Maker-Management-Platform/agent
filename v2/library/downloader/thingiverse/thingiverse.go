@@ -32,6 +32,8 @@ type ThingyDownloader struct {
 	http  *http.Client
 }
 
+var matcher = regexp.MustCompile(`thing:(\d+)`)
+
 func New(r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
 	rtn := &ThingyDownloader{
 		l:     slog.With("module", "thingiverse"),
@@ -50,8 +52,7 @@ func New(r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
 
 func (t *ThingyDownloader) Fetch(url string, parent *entities.Asset) error {
 
-	r := regexp.MustCompile(`thing:(\d+)`)
-	matches := r.FindStringSubmatch(url)
+	matches := matcher.FindStringSubmatch(url)
 
 	if len(matches) == 0 {
 		return errors.New("url doesn't match thingiverse schema")

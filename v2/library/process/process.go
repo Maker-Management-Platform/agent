@@ -23,6 +23,7 @@ func New(r *repo.AssetRepo) (*Processor, error) {
 	eg := &errgroup.Group{}
 	eg.SetLimit(10)
 	renderers.Init()
+	enrichers.Init()
 	return &Processor{
 		eg: eg,
 		r:  r,

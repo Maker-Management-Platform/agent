@@ -1,8 +1,6 @@
 package enrichers
 
 import (
-	"slices"
-
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 )
 
@@ -10,20 +8,13 @@ type Enricher interface {
 	Enrich(asset *entities.Asset) error
 }
 
-var extensions = []string{
-	".gcode",
-}
+var enrichers = map[string]Enricher{}
 
-var enrichers = map[string]Enricher{
-	".gcode": &gCodeEnricher{},
-}
-
-func IsEnrichable(asset *entities.Asset) bool {
-	return slices.Contains(extensions, *asset.Extension)
-}
-
-func GetEnricher(asset *entities.Asset) Enricher {
-	return enrichers[*asset.Extension]
+func Init() error {
+	enrichers = map[string]Enricher{
+		".gcode": &gCodeEnricher{},
+	}
+	return nil
 }
 
 func Get(asset *entities.Asset) (Enricher, bool) {
