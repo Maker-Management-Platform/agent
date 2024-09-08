@@ -9,7 +9,7 @@ import (
 
 func (h webHandler) indexHandler(r *http.Request) ResponseModel {
 	return ResponseModel{
-		S: http.StatusOK,
+		Status: http.StatusOK,
 		Component: comp.WrapperComponent(comp.WrapperModel{
 			Main: templ.NopComponent,
 		}),

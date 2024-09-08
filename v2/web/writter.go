@@ -7,19 +7,16 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/eduardooliveira/stLib/v2/web/comp"
-	"github.com/labstack/echo/v4"
 )
 
 type ResponseModel struct {
-	Ctx          echo.Context
-	S            int
-	Error        error
-	Component    templ.Component
-	OOB          []templ.Component
-	WrapperModel comp.WrapperModel
-	IsFragment   bool
-	PushState    string
-	Events       []string
+	Status     int
+	Error      error
+	Component  templ.Component
+	OOB        []templ.Component
+	IsFragment bool
+	PushState  string
+	Events     []string
 }
 
 type RenderRequest func(r *http.Request) ResponseModel
@@ -46,8 +43,10 @@ func R(rr RenderRequest) http.HandlerFunc {
 		if rm.Events != nil && len(rm.Events) > 0 {
 			w.Header().Add("HX-Trigger", strings.Join(rm.Events, ", "))
 		}
-
-		w.WriteHeader(rm.S)
+		if rm.Status == 0 {
+			rm.Status = http.StatusOK
+		}
+		w.WriteHeader(rm.Status)
 		fComponent := rm.Component
 		if !isFragment {
 			fComponent = comp.WrapperComponent(comp.WrapperModel{Main: rm.Component})

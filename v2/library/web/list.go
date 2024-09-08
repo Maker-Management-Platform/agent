@@ -68,29 +68,29 @@ func (h webHandler) listHandler(r *http.Request) web.ResponseModel {
 	var asset entities.Asset
 	if r.URL.Query().Get("assetID") == "" {
 		return web.ResponseModel{
-			S:     http.StatusBadRequest,
-			Error: errors.New("Asset ID is required"),
+			Status: http.StatusBadRequest,
+			Error:  errors.New("Asset ID is required"),
 		}
 	}
 	asset, err = h.r.GetAsset(r.URL.Query().Get("assetID"), true)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return web.ResponseModel{
-				S:     http.StatusNotFound,
-				Error: err,
+				Status: http.StatusNotFound,
+				Error:  err,
 			}
 		}
 		return web.ResponseModel{
-			S:     http.StatusInternalServerError,
-			Error: err,
+			Status: http.StatusInternalServerError,
+			Error:  err,
 		}
 	}
 
 	err = h.r.LoadParents(&asset, 5, "ID", "Label")
 	if err != nil {
 		return web.ResponseModel{
-			S:     http.StatusInternalServerError,
-			Error: err,
+			Status: http.StatusInternalServerError,
+			Error:  err,
 		}
 	}
 
@@ -101,16 +101,16 @@ func (h webHandler) listHandler(r *http.Request) web.ResponseModel {
 
 	if err != nil {
 		return web.ResponseModel{
-			S:     http.StatusInternalServerError,
-			Error: err,
+			Status: http.StatusInternalServerError,
+			Error:  err,
 		}
 	}
 
 	u, err := url.Parse(r.URL.String())
 	if err != nil {
 		return web.ResponseModel{
-			S:     http.StatusInternalServerError,
-			Error: err,
+			Status: http.StatusInternalServerError,
+			Error:  err,
 		}
 	}
 
@@ -121,7 +121,7 @@ func (h webHandler) listHandler(r *http.Request) web.ResponseModel {
 
 	pgModel.OOB = true
 	return web.ResponseModel{
-		S:          http.StatusOK,
+		Status:     http.StatusOK,
 		Component:  listComp,
 		IsFragment: true,
 		PushState:  u.String(),

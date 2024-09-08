@@ -7,11 +7,12 @@ import (
 )
 
 type IndexModel struct {
-	Asset      *entities.Asset
-	AssetTypes []config.AssetType
-	KindFilter KindFilterModel
-	Main       templ.Component
-	Pagination PaginationModel
+	Asset       *entities.Asset
+	AssetTypes  []config.AssetType
+	KindFilter  KindFilterModel
+	Main        templ.Component
+	Pagination  PaginationModel
+	SearchModel SearchModel
 }
 
 type ListModel struct {
@@ -49,4 +50,12 @@ type PaginationModel struct {
 type KindFilterModel struct {
 	AssetTypes []config.AssetType
 	Selected   string
+}
+
+type SearchModel struct {
+	Search bool   `in:"query=search"`
+	Global bool   `in:"query=global"`
+	Parent string `in:"query=parent"`
+	Name   string `in:"query=name"`
+	Tags   string `in:"query=tags"`
 }

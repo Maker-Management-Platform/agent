@@ -11,8 +11,45 @@ templ Details(m *DetailsModel) {
 		hx-vals="js:{assetID:event.detail.assetID}"
 	>
 		if m!=nil {
-			<h1>{ utils.VoZ(m.Asset.Label) }</h1>
-			<p>{ utils.VoZ(m.Asset.Kind) }</p>
+			<div
+				class={ "hero h-56 bg-gray-300", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
+			>
+				<div class="hero-overlay bg-opacity-60"></div>
+				<div class="hero-content text-neutral-content text-left">
+					<div class="max-w-80">
+						<h1 class="mb-5 text-5xl font-bold truncate">{ utils.VoZ(m.Asset.Label) }</h1>
+					</div>
+				</div>
+			</div>
+			<div class="flex flex-col">
+				<div class="flex flex-row justify-between">
+					<p class="text-lg font-bold">Description</p>
+				</div>
+				<div class="flex flex-col">
+					<p>{ utils.VoZ(m.Asset.Description) }</p>
+				</div>
+				<div class="flex flex-row justify-between">
+					<p class="text-lg font-bold">Properties</p>
+				</div>
+				<div class="overflow-x-auto">
+					<table class="table table-xs">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>value</th>
+							</tr>
+						</thead>
+						<tbody>
+							for k ,_ := range m.Asset.Properties {
+								<tr>
+									<td>{ k }</td>
+									<td>Quality Control Specialist</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
 		}
 	</div>
 }

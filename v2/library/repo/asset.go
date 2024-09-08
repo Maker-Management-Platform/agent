@@ -2,7 +2,9 @@ package repo
 
 import (
 	"errors"
+	"fmt"
 	"math"
+	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
@@ -97,4 +99,14 @@ func (r AssetRepo) DeleteUnSeenInRoot(root string) error {
 
 func (r AssetRepo) UpdateAsset(a *entities.Asset) error {
 	return database.DB.Model(&entities.Asset{ID: a.ID}).Updates(a).Error
+}
+
+func (r AssetRepo) SearchAsset(label string, tags string) ([]*entities.Asset, error) {
+	var assets []*entities.Asset
+	q := database.DB.Debug().Model(&entities.Asset{}).Where("label LIKE ?", fmt.Sprintf("%%%s%%", label))
+	for i, t := range strings.Split(tags, ",") {
+		q.Joins(fmt.Sprintf("LEFT JOIN project_tags as project_tags%d on project_tags%d.project_uuid = projects.uuid", i, i)).
+			Where(fmt.Sprintf("project_tags%d.tag_value = ?", i), t)
+	}
+	return assets, q.Find(&assets).Error
 }

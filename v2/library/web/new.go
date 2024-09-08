@@ -37,8 +37,8 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 
 		if req.ParentID == "" {
 			return web.ResponseModel{
-				Error: errors.New("missing parentID"),
-				S:     http.StatusBadRequest,
+				Error:  errors.New("missing parentID"),
+				Status: http.StatusBadRequest,
 			}
 		}
 
@@ -46,13 +46,13 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return web.ResponseModel{
-					Error: err,
-					S:     http.StatusNotFound,
+					Error:  err,
+					Status: http.StatusNotFound,
 				}
 			}
 			return web.ResponseModel{
-				Error: err,
-				S:     http.StatusInternalServerError,
+				Error:  err,
+				Status: http.StatusInternalServerError,
 			}
 		}
 		model.ParentID = req.ParentID
@@ -64,20 +64,20 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 		}
 		if req.Mode == "" {
 			return web.ResponseModel{
-				Error: errors.New("missing mode"),
-				S:     http.StatusBadRequest,
+				Error:  errors.New("missing mode"),
+				Status: http.StatusBadRequest,
 			}
 		}
 		if _, ok := reqHandlers[req.Mode]; !ok {
 			return web.ResponseModel{
-				Error: errors.New("invalid mode"),
-				S:     http.StatusBadRequest,
+				Error:  errors.New("invalid mode"),
+				Status: http.StatusBadRequest,
 			}
 		}
 		if err, s := reqHandlers[req.Mode](r, parent, *req); err != nil {
 			return web.ResponseModel{
-				Error: err,
-				S:     s,
+				Error:  err,
+				Status: s,
 			}
 		}
 
@@ -90,8 +90,8 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 	entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
 	if err != nil {
 		return web.ResponseModel{
-			Error: err,
-			S:     http.StatusInternalServerError,
+			Error:  err,
+			Status: http.StatusInternalServerError,
 		}
 	}
 
@@ -99,7 +99,7 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 		model.TempFiles = append(model.TempFiles, e.Name())
 	}
 	return web.ResponseModel{
-		S:          http.StatusOK,
+		Status:     http.StatusOK,
 		Component:  comp.New(model),
 		Events:     events,
 		IsFragment: true,

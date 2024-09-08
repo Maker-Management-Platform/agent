@@ -35,3 +35,13 @@ func RenderIndex(path string) error {
 	}).Render(context.Background(), f)
 
 }
+
+func RenderFragment(frag templ.Component) func(r *http.Request) ResponseModel {
+	return func(r *http.Request) ResponseModel {
+		return ResponseModel{
+			Status:     http.StatusOK,
+			IsFragment: true,
+			Component:  frag,
+		}
+	}
+}

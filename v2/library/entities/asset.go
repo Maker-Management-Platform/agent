@@ -25,23 +25,23 @@ const (
 )
 
 type Asset struct {
-	ID           string     `query:"id" form:"id" gorm:"primaryKey"`
-	Label        *string    `query:"label" form:"label"`
-	Description  *string    `query:"description" form:"description"`
-	Path         *string    `query:"path" form:"path"`
-	Root         *string    `query:"root" form:"root"`
-	FSKind       *string    `query:"fsKind" form:"fsKind"`
-	FSName       *string    `query:"fsName" form:"fsName"`
-	Extension    *string    `query:"extension" form:"extension"`
-	Kind         *string    `query:"kind" form:"kind"`
-	NodeKind     *NodeKind  `query:"nodeKind" form:"nodeKind"`
-	ParentID     *string    `query:"parentID" form:"parentID"`
-	Parent       *Asset     `form:"-"`
-	NestedAssets []*Asset   `query:"nestedAssets" form:"nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
-	Thumbnail    *string    `query:"thumbnail" form:"thumbnail"`
-	SeenOnScan   *bool      `query:"seenOnScan" form:"seenOnScan"`
-	Properties   Properties `query:"properties" form:"properties"`
-	Tags         []*Tag     `query:"tags" form:"tags" gorm:"many2many:asset_tags"`
+	ID           string     `query:"id" in:"form=id" gorm:"primaryKey"`
+	Label        *string    `query:"label" in:"form=label"`
+	Description  *string    `query:"description" in:"form=description"`
+	Path         *string    `query:"path" in:"form=path"`
+	Root         *string    `query:"root" in:"form=root"`
+	FSKind       *string    `query:"fsKind" in:"form=fsKind"`
+	FSName       *string    `query:"fsName" in:"form=fsName"`
+	Extension    *string    `query:"extension" in:"form=extension"`
+	Kind         *string    `query:"kind" in:"form=kind"`
+	NodeKind     *NodeKind  `query:"nodeKind" in:"form=nodeKind"`
+	ParentID     *string    `query:"parentID" in:"form=parentID"`
+	Parent       *Asset     `in:"form=-"`
+	NestedAssets []*Asset   `query:"nestedAssets" in:"form=nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
+	Thumbnail    *string    `query:"thumbnail" in:"form=thumbnail"`
+	SeenOnScan   *bool      `query:"seenOnScan" in:"form=seenOnScan"`
+	Properties   Properties `query:"properties" in:"form=properties"`
+	Tags         []*Tag     `query:"tags" in:"form=tags" gorm:"many2many:asset_tags"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

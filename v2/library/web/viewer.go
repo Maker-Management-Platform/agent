@@ -9,8 +9,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func (h webHandler) getAssetDetailsHandler(r *http.Request) web.ResponseModel {
+func (h webHandler) viewerListAsset(r *http.Request) web.ResponseModel {
 	id := r.URL.Query().Get("assetID")
+	if id == "" {
+		return web.ResponseModel{
+			Status: http.StatusBadRequest,
+			Error:  errors.New("Asset ID is required"),
+		}
+	}
 	asset, err := h.r.GetAsset(id, false)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -25,10 +31,8 @@ func (h webHandler) getAssetDetailsHandler(r *http.Request) web.ResponseModel {
 		}
 	}
 	return web.ResponseModel{
-		Status: http.StatusOK,
-		Component: comp.Details(&comp.DetailsModel{
-			Asset: &asset,
-		}),
+		Status:     http.StatusOK,
+		Component:  comp.ViewerAssetElement(asset),
 		IsFragment: true,
 	}
 }

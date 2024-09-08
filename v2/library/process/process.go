@@ -111,13 +111,13 @@ func (p *Process) Run() error {
 	}
 
 	if p.enricher != nil {
-		/*if err := p.enricher.Enrich(p.Asset); err != nil {
+		if err := p.enricher.Enrich(p.Asset); err != nil {
 			p.enrichError = err
 			p.enrichState = "failed"
 			l.Error("failed to enrich asset", "error", err)
 		} else {
-			}*/
-		p.enrichState = "done"
+			p.enrichState = "done"
+		}
 	}
 	if p.renderState == "done" || p.enrichState == "done" {
 		if err := p.p.r.SaveAsset(*p.Asset); err != nil {

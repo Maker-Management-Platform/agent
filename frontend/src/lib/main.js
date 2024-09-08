@@ -1,6 +1,6 @@
 import { createViewer3D } from "./viewer"
 import Alpine from 'alpinejs'
-
+import htmx from 'htmx.org'
 
 Alpine.data('lib', () => ({
     tab: '',
@@ -30,8 +30,18 @@ Alpine.data('lib', () => ({
         this.tab = tab
     },
     addModel(model) {
+        if (this.models.includes(model)) {
+            return
+        }
         this.models.push(model)
         this.viewer.setModels(this.models.map(m => { return { id: m } }));
         this.tab = 'viewer'
+
+        document.getElementsByTagName("body")[0].dispatchEvent(new CustomEvent('viewer-model-list-add', { detail: { assetID: model } }))
     },
+    deleteModel(el, model) {
+        this.models = this.models.filter(m => m !== model)
+        this.viewer.setModels(this.models.map(m => { return { id: m } }));
+        el.parentElement.parentElement.remove()
+    }
 }))
