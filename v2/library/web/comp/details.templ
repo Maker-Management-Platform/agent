@@ -4,7 +4,7 @@ import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Details(m *DetailsModel) {
 	<div
-		class="flex flex-col w-96"
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
 		:class="tab == 'details' ? '' : 'hidden'"
 		hx-get="/lib/details"
 		hx-trigger="tab-details from:body"

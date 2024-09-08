@@ -2,24 +2,29 @@ package comp
 
 templ New(m *NewModel) {
 	<div
-		class="w-96 p-2"
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
+		:class="tab == 'new' ? '' : 'hidden'"
+		hx-get="/lib/new"
+		hx-trigger="tab-new from:body"
+		hx-vals="js:{assetID:event.detail.assetID}"
 	>
-		<form hx-post="/lib/new" hx-target="#asset-sidebar">
-			<h1>Import</h1>
-			<input name="mode" type="hidden" value="import"/>
-			<input name="parentID" type="hidden" value={ m.ParentID }/>
-			<textarea name="urls" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring" rows="5"></textarea>
-			<button class="btn btn-sm">Import</button>
-		</form>
-		<form hx-post="/lib/new" hx-target="#asset-sidebar" enctype="multipart/form-data">
-			<h1>New</h1>
-			<input name="mode" type="hidden" value="upload"/>
-			<input name="parentID" type="hidden" value={ m.ParentID }/>
-			<input name="folder" type="text" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring"/>
-			<input type="file" name="files" multiple class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring"/>
-			<button class="btn btn-sm">Save</button>
-		</form>
-		/*<form hx-post="/lib/new" hx-target="#asset-sidebar">
+		if m!=nil {
+			<form hx-post="/lib/new" hx-vals="unset">
+				<h1>Import</h1>
+				<input name="mode" type="hidden" value="import"/>
+				<input name="parentID" type="hidden" value={ m.ParentID }/>
+				<textarea name="urls" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring" rows="5"></textarea>
+				<button class="btn btn-sm">Import</button>
+			</form>
+			<form hx-post="/lib/new" hx-vals="unset" enctype="multipart/form-data">
+				<h1>New</h1>
+				<input name="mode" type="hidden" value="upload"/>
+				<input name="parentID" type="hidden" value={ m.ParentID }/>
+				<input name="folder" type="text" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring"/>
+				<input type="file" name="files" multiple class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring"/>
+				<button class="btn btn-sm">Save</button>
+			</form>
+			/*<form hx-post="/lib/new" hx-target="#asset-sidebar">
 			<h1>Move Uploaded gcode</h1>
 			<input name="mode" type="hidden" value="tempFiles"/>
 			<input name="parentID" type="hidden" value={ m.ParentID }/>
@@ -31,5 +36,6 @@ templ New(m *NewModel) {
 			<button class="btn btn-sm">Move here</button>
 		</form>
 		*/
+		}
 	</div>
 }

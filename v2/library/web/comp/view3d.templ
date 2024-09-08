@@ -7,7 +7,10 @@ import (
 )
 
 templ View3D() {
-	<div class="flex flex-col w-96" :class="tab == 'viewer' ? '' : 'hidden'">
+	<div
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
+		:class="tab == 'viewer' ? '' : 'hidden'"
+	>
 		<p>3D Viewer</p>
 		<div
 			class="h-72 viewer-container bg-slate-400"

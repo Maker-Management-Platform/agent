@@ -1,9 +1,6 @@
 package comp
 
-import (
-	"github.com/eduardooliveira/stLib/v2/library/entities"
-	"github.com/eduardooliveira/stLib/v2/utils"
-)
+import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Index(model IndexModel) {
 	<div class="flex-auto flex flex-col p-1 asset-view">
@@ -16,7 +13,7 @@ templ Index(model IndexModel) {
 				@Pagination(model.Pagination)
 				<div class="flex-none">
 					<div class="dropdown dropdown-end">
-						<div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+						<div tabindex="0" role="button" class="btn btn-ghost btn-square">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
@@ -32,22 +29,6 @@ templ Index(model IndexModel) {
 							</div>
 						</div>
 					</div>
-					<button
-						class="btn btn-square btn-ghost"
-						hx-get="/lib/new"
-						hx-include="#asset-id"
-						hx-target="#asset-sidebar"
-						if utils.VoZ(model.Asset.NodeKind) == entities.NodeKindBundle || model.Asset.ID== "" {
-							disabled
-						}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							class="inline-block h-5 w-5 stroke-current"
-						><title>note-plus</title><path d="M19 13C19.7 13 20.37 13.13 21 13.35V9L15 3H5C3.89 3 3 3.89 3 5V19C3 20.11 3.9 21 5 21H13.35C13.13 20.37 13 19.7 13 19C13 15.69 15.69 13 19 13M14 4.5L19.5 10H14V4.5M23 18V20H20V23H18V20H15V18H18V15H20V18H23Z"></path></svg>
-					</button>
 				</div>
 			</div>
 		</div>

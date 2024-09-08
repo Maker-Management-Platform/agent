@@ -4,8 +4,21 @@ templ Sidebar() {
 	<aside class="flex flex-row-reverse p-1" x-ref="libSidebar">
 		<ul class="self-start menu bg-base-200 rounded-box">
 			<li>
-				<a
-					class="tooltip tooltip-left"
+				<button
+					class="btn btn-square btn-ghost tooltip tooltip-left"
+					data-tip="New"
+					@click="openTab('new')"
+					:class="$data.tab == 'new' ? 'active' : ''"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						class="inline-block h-5 w-5 stroke-current"
+					><title>note-plus</title><path d="M19 13C19.7 13 20.37 13.13 21 13.35V9L15 3H5C3.89 3 3 3.89 3 5V19C3 20.11 3.9 21 5 21H13.35C13.13 20.37 13 19.7 13 19C13 15.69 15.69 13 19 13M14 4.5L19.5 10H14V4.5M23 18V20H20V23H18V20H15V18H18V15H20V18H23Z"></path></svg>
+				</button>
+				<button
+					class="btn btn-square btn-ghost tooltip tooltip-left"
 					data-tip="3D View"
 					@click="openTab('viewer')"
 					:class="$data.tab == 'viewer' ? 'active' : ''"
@@ -15,21 +28,21 @@ templ Sidebar() {
 						viewBox="0 0 24 24"
 						class="inline-block h-5 w-5 stroke-current"
 					><title>cube</title><path d="M12,2L2,7V17L12,22L22,17V7L12,2M12,4.54L19.76,8.5L12,12.46L4.24,8.5L12,4.54M12,13.46L4.24,9.5L12,5.54L19.76,9.5L12,13.46M4,19V9.89L12,14.46L20,9.89V19L12,23.46L4,19Z"></path></svg>
-				</a>
+				</button>
 			</li>
 			<li>
-				<a
-					class="tooltip tooltip-left"
+				<button
+					class="btn btn-square btn-ghost tooltip tooltip-left"
 					data-tip="details"
 					@click="openTab('details')"
 					:class="$data.tab == 'details' ? 'active' : ''"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline-block h-5 w-5x stroke-current"><title>information-outline</title><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"></path></svg>
-				</a>
+				</button>
 			</li>
 			<li>
-				<a
-					class="tooltip tooltip-left"
+				<button
+					class="btn btn-square btn-ghost tooltip tooltip-left"
 					data-tip="edit"
 					@click="openTab('edit')"
 					:class="$data.tab == 'edit' ? 'active' : ''"
@@ -39,10 +52,11 @@ templ Sidebar() {
 						viewBox="0 0 24 24"
 						class="inline-block h-5 w-5 stroke-current"
 					><title>edit</title><path d="M20,6.41L17.41,4L6,15.41V18H8.59L20,6.59V6.41M18.5,3.5L20.5,5.5L18.5,7.5L16.5,5.5L18.5,3.5M4,20H18V22H4A2,2 0 0,1 2,20V6H4V20Z"></path></svg>
-				</a>
+				</button>
 			</li>
 		</ul>
-		<div class="flex-auto pr-1">
+		<div class="flex-auto px-1">
+			@New(nil)
 			@View3D()
 			@Details(nil)
 			@Edit(nil)

@@ -919,13 +919,6 @@ html {
   padding: 0px;
 }
 
-.btn-circle {
-  height: 3rem;
-  width: 3rem;
-  border-radius: 9999px;
-  padding: 0px;
-}
-
 :where(.btn:is(input[type="checkbox"])),
 :where(.btn:is(input[type="radio"])) {
   width: auto;
@@ -2595,20 +2588,6 @@ input.tab:checked + .tab-content,
   padding: 0px;
 }
 
-.btn-circle:where(.btn-md) {
-  height: 3rem;
-  width: 3rem;
-  border-radius: 9999px;
-  padding: 0px;
-}
-
-.btn-circle:where(.btn-lg) {
-  height: 4rem;
-  width: 4rem;
-  border-radius: 9999px;
-  padding: 0px;
-}
-
 .join.join-vertical {
   flex-direction: column;
 }
@@ -3288,10 +3267,6 @@ input.tab:checked + .tab-content,
 
 .pb-2 {
   padding-bottom: 0.5rem;
-}
-
-.pr-1 {
-  padding-right: 0.25rem;
 }
 
 .pt-1 {

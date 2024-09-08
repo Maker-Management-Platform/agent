@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
@@ -104,9 +103,9 @@ func (r AssetRepo) UpdateAsset(a *entities.Asset) error {
 func (r AssetRepo) SearchAsset(label string, tags string) ([]*entities.Asset, error) {
 	var assets []*entities.Asset
 	q := database.DB.Debug().Model(&entities.Asset{}).Where("label LIKE ?", fmt.Sprintf("%%%s%%", label))
-	for i, t := range strings.Split(tags, ",") {
-		q.Joins(fmt.Sprintf("LEFT JOIN project_tags as project_tags%d on project_tags%d.project_uuid = projects.uuid", i, i)).
-			Where(fmt.Sprintf("project_tags%d.tag_value = ?", i), t)
-	}
+	/*for i, t := range strings.Split(tags, ",") {
+		q.Joins(fmt.Sprintf("LEFT JOIN tags as tags%d on tags%d.asset_id = assets.id", i, i)).
+			Where(fmt.Sprintf("tags%d.value = ?", i), t)
+	}*/
 	return assets, q.Find(&assets).Error
 }
