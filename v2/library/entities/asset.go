@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/eduardooliveira/stLib/v2/config"
-	"github.com/eduardooliveira/stLib/v2/library/sys"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"gorm.io/gorm"
 )
@@ -30,8 +30,8 @@ type Asset struct {
 	Description  *string    `query:"description" in:"form=description"`
 	Path         *string    `query:"path" in:"form=path"`
 	Root         *string    `query:"root" in:"form=root"`
-	FSKind       *string    `query:"fsKind" in:"form=fsKind"`
-	FSName       *string    `query:"fsName" in:"form=fsName"`
+	FSKind       string     `query:"fsKind" in:"form=fsKind"`
+	FSName       string     `query:"fsName" in:"form=fsName"`
 	Extension    *string    `query:"extension" in:"form=extension"`
 	Kind         *string    `query:"kind" in:"form=kind"`
 	NodeKind     *NodeKind  `query:"nodeKind" in:"form=nodeKind"`
@@ -84,18 +84,18 @@ func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
 	return asset
 }
 
-func NewAsset(fs sys.FS, path string, isDir bool, parent *Asset) *Asset {
+func NewAsset(fs libfs.LibFS, path string, isDir bool, parent *Asset) *Asset {
 	ext := filepath.Ext(path)
 
-	data := []byte(filepath.Join(fs.Name, fs.Path, path))
+	data := []byte(filepath.Join(fs.GetName(), fs.GetLocation(), path))
 	md5Hash := md5.Sum(data)
 
 	var asset = &Asset{
 		ID:        hex.EncodeToString(md5Hash[:]),
 		Path:      utils.Ptr(path),
-		Root:      utils.Ptr(fs.Path),
-		FSName:    utils.Ptr(fs.Name),
-		FSKind:    utils.Ptr(fs.Kind),
+		Root:      utils.Ptr(fs.GetLocation()),
+		FSName:    fs.GetName(), // if is root
+		FSKind:    fs.Kind(),
 		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
 		Extension: utils.Ptr(ext),
 	}
@@ -104,14 +104,14 @@ func NewAsset(fs sys.FS, path string, isDir bool, parent *Asset) *Asset {
 		asset.ParentID = &parent.ID
 	}
 
-	if fs.Kind == "bundle" {
+	if fs.Kind() == "bundle" {
 		asset.NodeKind = utils.Ptr(NodeKindBundled)
-	} else if sys.IsBundle(path) {
+	} else if libfs.IsBundle(path) {
 		asset.NodeKind = utils.Ptr(NodeKindBundle)
 	} else if isDir {
 		if parent == nil {
 			asset.NodeKind = utils.Ptr(NodeKindRoot)
-			asset.Label = utils.Ptr(fs.Name)
+			asset.Label = utils.Ptr(fs.GetName())
 		} else {
 			asset.NodeKind = utils.Ptr(NodeKindDir)
 		}

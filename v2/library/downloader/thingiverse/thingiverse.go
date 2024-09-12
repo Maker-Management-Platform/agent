@@ -15,6 +15,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/downloader/tools"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/utils"
@@ -30,6 +31,7 @@ type ThingyDownloader struct {
 	thing *Thing
 	eg    *errgroup.Group
 	http  *http.Client
+	fSys  libfs.LibFS
 }
 
 var matcher = regexp.MustCompile(`thing:(\d+)`)
@@ -43,6 +45,7 @@ func New(r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
 		eg:    &errgroup.Group{},
 		http:  &http.Client{},
 		thing: &Thing{},
+		fSys:  libfs.GetDefaultFS(),
 	}
 	if rtn.token == "" {
 		return nil, errors.New("thingiverse config not set")
@@ -50,7 +53,7 @@ func New(r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
 	return rtn, nil
 }
 
-func (t *ThingyDownloader) Fetch(url string, parent *entities.Asset) error {
+func (t *ThingyDownloader) Fetch(url string, parent entities.Asset) error {
 
 	matches := matcher.FindStringSubmatch(url)
 
@@ -68,12 +71,12 @@ func (t *ThingyDownloader) Fetch(url string, parent *entities.Asset) error {
 		return fmt.Errorf("fetching %v: %v", id, err)
 	}
 	path := filepath.Join(*parent.Path, fmt.Sprintf("%v-%s", t.thing.ID, t.thing.Name))
-	err = utils.CreateFolder(filepath.Join(*parent.Root, path))
+	err = t.fSys.Mkdir(path)
 	if err != nil {
 		return fmt.Errorf("creating folder: %v", err)
 	}
 
-	t.asset = entities.NewAssetFromRootPath(*parent.Root, path, true, parent)
+	t.asset = entities.NewAsset(t.fSys, path, true, &parent)
 	t.asset.Label = utils.Ptr(t.thing.Name)
 	t.asset.Description = utils.Ptr(t.thing.Description)
 
@@ -145,7 +148,7 @@ func (t ThingyDownloader) fetchFiles() error {
 		lReq := req.Clone(context.Background())
 		lReq.URL, _ = url.Parse(file.DownloadURL)
 		t.eg.Go(func() error {
-			err := tools.DownloadFile(file.Name, *t.asset, t.http, lReq)
+			err := tools.DownloadFile(t.fSys, file.Name, *t.asset, t.http, lReq)
 			if err != nil {
 				return fmt.Errorf("downloading %v: %v", file.Name, err)
 			}
@@ -184,7 +187,7 @@ func (t ThingyDownloader) fetchImages() error {
 				lReq := req.Clone(context.Background())
 				lReq.URL, _ = url.Parse(size.URL)
 				t.eg.Go(func() error {
-					err := tools.DownloadFile(image.Name, *t.asset, t.http, lReq)
+					err := tools.DownloadFile(t.fSys, image.Name, *t.asset, t.http, lReq)
 					if err != nil {
 						return fmt.Errorf("downloading %v: %v", image.Name, err)
 					}
@@ -201,9 +204,9 @@ func (t ThingyDownloader) fetchImages() error {
 }
 
 func (t ThingyDownloader) processFile(name string) error {
-	i := entities.NewAssetFromRootPath(*t.asset.Root, filepath.Join(*t.asset.Path, name), false, t.asset)
+	i := entities.NewAsset(t.fSys, filepath.Join(*t.asset.Path, name), false, t.asset)
 	if err := t.r.SaveAsset(*i); err != nil {
-		return fmt.Errorf("saving image: %v", err)
+		return fmt.Errorf("saving asset: %v", err)
 	}
 	return t.p.Process(i).Wait()
 }

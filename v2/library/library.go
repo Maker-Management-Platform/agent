@@ -6,6 +6,7 @@ import (
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/discovery"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/library/web"
@@ -22,6 +23,10 @@ func New() (*Library, http.Handler, http.Handler, error) {
 	lib := &Library{}
 
 	var err error
+
+	if err = libfs.LoadFSs(); err != nil {
+		return nil, nil, nil, err
+	}
 
 	lib.r, err = repo.New()
 	if err != nil {
@@ -47,16 +52,6 @@ func New() (*Library, http.Handler, http.Handler, error) {
 
 	return lib, webH, nil, nil
 }
-func (l Library) Scan() error {
-	eg := errgroup.Group{}
-	if len(config.Cfg.Library.Paths) == 0 {
-		slog.Warn("No library paths configured")
-	}
-	for _, path := range config.Cfg.Library.Paths {
-		eg.Go(l.d.Get(path).Run)
-	}
-	return eg.Wait()
-}
 
 func (l Library) ScanFS() error {
 	eg := errgroup.Group{}
@@ -64,8 +59,8 @@ func (l Library) ScanFS() error {
 		slog.Warn("invalid library file systems configured")
 		return nil
 	}
-	for _, cfs := range config.Cfg.Library.FileSystems {
-		eg.Go(l.d.GetForFS(cfs).Run)
+	for _, ffs := range libfs.GetFSs() {
+		eg.Go(l.d.DiscoverFS(ffs).Run)
 	}
 	return eg.Wait()
 }

@@ -3,13 +3,13 @@ package web
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
-	"github.com/eduardooliveira/stLib/v2/library/sys"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
@@ -31,28 +31,43 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
+	if chi.URLParam(r, "download") != "" {
+		w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(*asset.Path))
+	} else {
+		w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(*asset.Path))
+	}
+
+	if shouldCacheFile(asset) {
 		if err := h.r.LoadParents(&asset, 1); err != nil {
 			h.l.Error("get file", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		_, err := os.Stat(filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), filepath.Base(*asset.Path)))
+		cacheFS, err := libfs.GetLibFS("cache")
+		if err != nil {
+			h.l.Error("get file", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		cachePath := filepath.Join(utils.VoZ(asset.ParentID), filepath.Base(*asset.Path))
+		_, err = fs.Stat(cacheFS, cachePath)
 		if err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				h.l.Error("get file", "error", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			} else {
-				h.l.Info("create folder", "folder", filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID)))
-				err = utils.CreateFolder(filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID)))
+				h.l.Info("create folder", "folder", filepath.Join(utils.VoZ(asset.ParentID)))
+				target, err := cacheFS.Create(cachePath)
 				if err != nil {
-					h.l.Error("create folder", "error", err)
+					h.l.Error("create file", "error", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
-				}
 
-				fs, err := sys.GetFS(utils.VoZ(asset.FSKind), utils.VoZ(asset.FSName), *asset.Root)
+				}
+				defer target.Close()
+
+				fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
 				if err != nil {
 					h.l.Error("get fs", "error", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -67,16 +82,9 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				defer file.Close()
 
-				data, err := io.ReadAll(file)
+				_, err = io.Copy(target, file)
 				if err != nil {
-					h.l.Error("read file", "error", err)
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				err = os.WriteFile(filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), filepath.Base(*asset.Path)), data, 0644)
-				if err != nil {
-					h.l.Error("write file", "error", err)
+					h.l.Error("copy file", "error", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -84,16 +92,22 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-	}
-	if chi.URLParam(r, "download") != "" {
-		w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(*asset.Path))
-	} else {
-		w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(*asset.Path))
-	}
-
-	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled {
-		http.ServeFile(w, r, filepath.Join(config.Cfg.Core.DataFolder, "temp", utils.VoZ(asset.ParentID), filepath.Base(*asset.Path)))
+		http.ServeFileFS(w, r, cacheFS, cachePath)
 		return
 	}
-	http.ServeFile(w, r, filepath.Join(*asset.Root, *asset.Path))
+
+	fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	if err != nil {
+		h.l.Error("get fs", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.ServeFileFS(w, r, fs, *asset.Path)
+}
+
+func shouldCacheFile(asset entities.Asset) bool {
+	if asset.FSKind != "cache" && asset.FSKind != "generated" && asset.FSKind != "local" {
+		return true
+	}
+	return false
 }

@@ -3,13 +3,14 @@ package enrichers
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
+	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
 type gCodeEnricher struct {
@@ -22,7 +23,12 @@ func (g *gCodeEnricher) Enrich(asset *entities.Asset) error {
 		asset.Properties = make(entities.Properties)
 	}
 
-	f, err := os.Open(filepath.Join(*asset.Root, *asset.Path))
+	fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	if err != nil {
+		return fmt.Errorf("error getting fs: %w", err)
+	}
+
+	f, err := fs.Open(utils.VoZ(asset.Path))
 	if err != nil {
 		return err
 	}

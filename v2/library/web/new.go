@@ -3,16 +3,14 @@ package web
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 
-	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/downloader"
-	"github.com/eduardooliveira/stLib/v2/library/downloader/tools"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/library/web/comp"
-	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/eduardooliveira/stLib/v2/web"
 	"github.com/ggicci/httpin"
 	"gorm.io/gorm"
@@ -87,7 +85,8 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 		h.l.Info("new", "GET", r.URL.Query().Get("assetID"))
 		model.ParentID = r.URL.Query().Get("assetID")
 	}
-	entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
+	//TODO: implement uploadFS
+	/*entries, err := os.ReadDir(filepath.Join(config.Cfg.Core.DataFolder, "temp"))
 	if err != nil {
 		return web.ResponseModel{
 			Error:  err,
@@ -97,7 +96,7 @@ func (h webHandler) newAssetHandler(r *http.Request) web.ResponseModel {
 
 	for _, e := range entries {
 		model.TempFiles = append(model.TempFiles, e.Name())
-	}
+	}*/
 	return web.ResponseModel{
 		Status:     http.StatusOK,
 		Component:  comp.New(model),
@@ -113,10 +112,10 @@ func (h webHandler) handleDownload(r *http.Request, parent entities.Asset, req n
 	h.l.Info("new", "urls", req.Urls)
 
 	err := downloader.Download(downloader.DownloadInput{
-		Parent: parent,
-		URL:    req.Urls,
-		R:      h.r,
-		P:      h.p,
+		Parent:    parent,
+		URL:       req.Urls,
+		Repo:      h.r,
+		Processor: h.p,
 	})
 	if err != nil {
 		return err, http.StatusInternalServerError
@@ -132,12 +131,16 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 		return errors.New("no files or folder"), http.StatusBadRequest
 	}
 
+	fSys, err := libfs.GetFS(parent.FSKind, parent.FSName, *parent.Root)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	if req.Folder != "" {
-		err = utils.CreateFolder(filepath.Join(*parent.Root, *parent.Path, req.Folder))
+		err = fSys.Mkdir(filepath.Join(*parent.Path, req.Folder))
 		if err != nil {
 			return fmt.Errorf("creating folder: %v", err), http.StatusInternalServerError
 		}
-		f := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, req.Folder), true, &parent)
+		f := entities.NewAsset(fSys, filepath.Join(*parent.Path, req.Folder), true, &parent)
 
 		if err := h.r.SaveAsset(*f); err != nil {
 			h.l.Error("new", "err", err)
@@ -153,13 +156,20 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 			return err, http.StatusInternalServerError
 		}
 		defer src.Close()
-		err = tools.SaveFile(filepath.Join(*parent.Root, *parent.Path, file.Filename()), src)
+		out, err := fSys.Create(filepath.Join(*parent.Path, file.Filename()))
+		defer out.Close()
 		if err != nil {
 			h.l.Error("new", "err", err)
 			return err, http.StatusInternalServerError
 		}
 
-		a := entities.NewAssetFromRootPath(*parent.Root, filepath.Join(*parent.Path, file.Filename()), false, &parent)
+		_, err = io.Copy(out, src)
+		if err != nil {
+			h.l.Error("new", "err", err)
+			return err, http.StatusInternalServerError
+		}
+
+		a := entities.NewAsset(fSys, filepath.Join(*parent.Path, file.Filename()), false, &parent)
 		if err := h.r.SaveAsset(*a); err != nil {
 			h.l.Error("new", "err", err)
 			return err, http.StatusInternalServerError
@@ -175,7 +185,7 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 }
 
 func (h webHandler) handleTempFiles(r *http.Request, parent entities.Asset, req newAssetRequest) (error, int) {
-	if req.TempFile == "" {
+	/*if req.TempFile == "" {
 		return errors.New("missing Temp File"), http.StatusBadRequest
 	}
 	err := utils.Move(filepath.Join(config.Cfg.Core.DataFolder, "temp", req.TempFile),
@@ -189,6 +199,6 @@ func (h webHandler) handleTempFiles(r *http.Request, parent entities.Asset, req 
 	}
 	if err := h.p.Process(a).Wait(); err != nil {
 		return err, http.StatusInternalServerError
-	}
+	}*/
 	return nil, http.StatusOK
 }

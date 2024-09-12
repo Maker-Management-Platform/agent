@@ -48,7 +48,6 @@ func defaults() {
 	v.SetDefault("core.log.path", "log.log")
 	v.SetDefault("server.port", 8000)
 	if utils.IsDocker {
-		v.SetDefault("library.paths", []string{"/library"})
 		v.SetDefault("library.fileSystems", []map[string]string{
 			{"name": "Main Library", "path": "/library", "kind": "local"},
 		})

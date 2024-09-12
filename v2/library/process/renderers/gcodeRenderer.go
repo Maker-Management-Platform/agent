@@ -9,14 +9,14 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io/fs"
+	"log/slog"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
-	"github.com/eduardooliveira/stLib/v2/library/sys"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
@@ -29,30 +29,28 @@ type tmpImg struct {
 }
 
 func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
-	imgName := fmt.Sprintf("%s.r.png", asset.ID)
-	imgPath := filepath.Join(*asset.ParentID, imgName)
-	imgRoot := filepath.Join(config.Cfg.Core.DataFolder, "img")
-	parentDir := filepath.Join(imgRoot, *asset.ParentID)
-	if _, err := os.Stat(parentDir); os.IsNotExist(err) {
-		if err := os.Mkdir(parentDir, 0755); err != nil {
-			return nil, err
-		}
+	genFS, err := libfs.GetLibFS("generated")
+	if err != nil {
+		return nil, fmt.Errorf("render error getting fs: %w", err)
 	}
-	fullPath := filepath.Join(parentDir, imgName)
-	if _, err := os.Stat(fullPath); err == nil {
-		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
+	imgName := fmt.Sprintf("%s.r.png", asset.ID)
+
+	if _, err := fs.Stat(genFS, imgName); err == nil {
+		return entities.NewAsset(genFS, imgName, false, asset), nil
 	}
 
-	fs, err := sys.GetFS(utils.VoZ(asset.FSKind), utils.VoZ(asset.FSName), *asset.Root)
+	slog.Info("Rendering", "asset", *asset.Path, "img", imgName, "asset", asset)
+
+	objFs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
 
-	f, err := fs.Open(utils.VoZ(asset.Path))
+	f, err := objFs.Open(utils.VoZ(asset.Path))
 	if err != nil {
 		return nil, err
 	}
-	image := &tmpImg{}
+	img := &tmpImg{}
 
 	scanner := bufio.NewScanner(f)
 
@@ -71,8 +69,8 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 				if err != nil {
 					return nil, err
 				}
-				if i.width > image.width || i.height > image.height {
-					image = i
+				if i.width > img.width || i.height > img.height {
+					img = i
 				}
 
 			}
@@ -84,22 +82,30 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return nil, errors.Join(err, errors.New("error reading gcode"))
 	}
 
-	if image.data == nil {
+	if img.data == nil {
 		return nil, errors.New("no thumbnail found")
 	}
 	h := sha1.New()
-	_, err = h.Write(image.data)
+	_, err = h.Write(img.data)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err = r.storeImage(image, fullPath)
+	writer, err := genFS.Create(imgName)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer writer.Close()
 
-	return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
+	i, _, err := image.Decode(bytes.NewReader(img.data))
+	if err != nil {
+		return nil, err
+	}
+	if err := png.Encode(writer, i); err != nil {
+		return nil, err
+	}
+
+	return entities.NewAsset(genFS, imgName, false, asset), nil
 }
 
 func (r *gCodeRenderer) parseThumbnail(scanner *bufio.Scanner, size string, length int) (*tmpImg, error) {

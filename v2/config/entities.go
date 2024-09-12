@@ -12,7 +12,6 @@ type Config struct {
 		Port int `json:"port" mapstructure:"port"`
 	} `json:"server" mapstructure:"server"`
 	Library struct {
-		Paths          []string    `json:"paths" mapstructure:"paths"`
 		FileSystems    FileSystems `json:"fileSystems" mapstructure:"fileSystems"`
 		Blacklist      []string    `json:"blacklist" mapstructure:"blacklist"`
 		IgnoreDotFiles bool        `json:"ignoreDotFiles" mapstructure:"ignoreDotFiles"`
@@ -61,9 +60,11 @@ func (a AssetType) Compare(b AssetType) int {
 }
 
 type FileSystem struct {
-	Name string `json:"name" mapstructure:"name"`
-	Path string `json:"path" mapstructure:"path"`
-	Kind string `json:"kind" mapstructure:"kind"`
+	Name    string         `json:"name" mapstructure:"name"`
+	Path    string         `json:"path" mapstructure:"path"`
+	Kind    string         `json:"kind" mapstructure:"kind"`
+	Config  map[string]any `json:"config" mapstructure:"config"`
+	Default bool           `json:"default" mapstructure:"default"`
 }
 
 type FileSystems []FileSystem

@@ -29,7 +29,7 @@ templ Edit(m *EditModel) {
 			</form>
 		}
 	</div>
-	if m.Action == "save" {
+	if m!=nil && m.Action == "save" {
 		<div class="label" hx-swap-oob="innerHTML:.asset-view .header .label">
 			{ utils.VoZ(m.Asset.Label) }
 		</div>

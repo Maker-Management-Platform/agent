@@ -10,22 +10,24 @@ import (
 )
 
 type DownloadInput struct {
-	Parent entities.Asset
-	URL    string
-	R      *repo.AssetRepo
-	P      *process.Processor
+	Parent    entities.Asset
+	URL       string
+	Repo      *repo.AssetRepo
+	Processor *process.Processor
 }
 
-func Download(in DownloadInput) error {
-	urls := strings.Split(in.URL, ",")
+func Download(input DownloadInput) error {
+	urls := strings.FieldsFunc(input.URL, func(r rune) bool {
+		return r == ',' || r == ' ' || r == '\n'
+	})
 
 	for _, url := range urls {
 		if strings.Contains(url, "thingiverse.com") || strings.Contains(url, "thing:") {
-			td, err := thingiverse.New(in.R, in.P)
+			td, err := thingiverse.New(input.Repo, input.Processor)
 			if err != nil {
 				return err
 			}
-			err = td.Fetch(in.URL, &in.Parent)
+			err = td.Fetch(url, input.Parent) //TODO: fix only shows one thing after download
 			if err != nil {
 				return err
 			}

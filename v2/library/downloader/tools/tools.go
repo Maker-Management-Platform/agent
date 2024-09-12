@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 )
 
-func DownloadFile(name string, parent entities.Asset, client *http.Client, req *http.Request) error {
-	out, err := os.Create(filepath.Join(*parent.Root, *parent.Path, name))
+func DownloadFile(fSys libfs.LibFS, name string, parent entities.Asset, client *http.Client, req *http.Request) error {
+	out, err := fSys.Create(filepath.Join(*parent.Path, name))
 	if err != nil {
 		return err
 	}

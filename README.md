@@ -9,6 +9,53 @@ There are also plans to distribute MMP as an installable application using wails
 This version is highly experimental, so feedback is highly important.
 
 
+## Configuration File
+The config file is located in data/config.toml
+### Filesystem:
+You can configure multiple filesystems aka library folders of different kinds:
+#### LocalFS
+The standard file system
+``` toml
+[[library.filesystems]]
+kind = 'local'
+name = 'Library'
+path = '/library'
+```
+
+#### GitFS
+Uses git as a read only filesystem.   
+The internal library used is [go-fsimpl](https://pkg.go.dev/github.com/hairyhenderson/go-fsimpl/gitfs), please refer to the documentation about environment variables and credentials.
+``` toml
+[[library.filesystems]]
+kind = 'gitfs'
+name = 'ExampleGit'
+
+[library.filesystems.config]
+url = 'https://github.com/Rat-Rig/RatRig-PrintedParts'
+
+```
+
+#### S3
+Not yet implemented, please reach out if you can provide a set of credentials for me to develop and test wit
+
+``` toml
+tba
+```
+
+#### Azure Blob Storage
+Not yet implemented, please reach out if you can provide a set of credentials for me to develop and test with
+
+``` toml
+tba
+```
+
+#### Google Storage
+Not yet implemented, please reach out if you can provide a set of credentials for me to develop and test with
+
+``` toml
+tba
+```
+
 ## Setting up for development
 Run npm install in the frontend folder
 

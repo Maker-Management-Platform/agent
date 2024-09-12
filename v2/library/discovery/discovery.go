@@ -3,23 +3,21 @@ package discovery
 import (
 	"io/fs"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
-	"github.com/eduardooliveira/stLib/v2/library/sys"
 	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
 type discProc struct {
 	discoverer *Discoverer
 	l          *slog.Logger
-	root       string
-	fs         sys.FS
+	fs         libfs.LibFS
 }
 
 type Discoverer struct {
@@ -36,34 +34,17 @@ func New(p *process.Processor, r *repo.AssetRepo) *Discoverer {
 	}
 }
 
-func (d *Discoverer) Get(root string) *discProc {
-	return &discProc{
-		discoverer: d,
-		l:          d.l.With("root", root),
-		root:       root,
-	}
-}
-
-func (d Discoverer) GetForFS(cfgFS config.FileSystem) *discProc {
+func (d Discoverer) DiscoverFS(fs libfs.LibFS) *discProc {
 	dp := &discProc{
 		discoverer: &d,
-		l:          d.l.With("fs", cfgFS.Name),
-		root:       ".",
-	}
-
-	if cfgFS.Kind == "local" {
-		dp.fs = sys.FS{
-			FS:   os.DirFS(cfgFS.Path),
-			Name: cfgFS.Name,
-			Path: cfgFS.Path,
-			Kind: cfgFS.Kind,
-		}
+		l:          d.l.With("fs", fs.GetName()),
+		fs:         fs,
 	}
 
 	return dp
 }
 
-func (d *discProc) ProcessPath(currFS sys.FS, path string, parent *entities.Asset) (asset *entities.Asset, err error) {
+func (d *discProc) processPath(currFS libfs.LibFS, path string, parent *entities.Asset) (asset *entities.Asset, err error) {
 
 	if path != "." && d.shouldSkipFile(path) {
 		return nil, nil
@@ -74,12 +55,7 @@ func (d *discProc) ProcessPath(currFS sys.FS, path string, parent *entities.Asse
 		return nil, err
 	}
 
-	rel, err := filepath.Rel(d.root, path)
-	if err != nil {
-		return nil, err
-	}
-
-	asset = entities.NewAsset(currFS, rel, pathInfo.IsDir(), parent)
+	asset = entities.NewAsset(currFS, path, pathInfo.IsDir(), parent)
 
 	asset.SeenOnScan = utils.Ptr(true)
 
@@ -88,12 +64,12 @@ func (d *discProc) ProcessPath(currFS sys.FS, path string, parent *entities.Asse
 		d.l.Error("Error saving asset", "error", err)
 	}
 
-	if pathInfo.IsDir() || sys.IsBundle(path) {
+	if pathInfo.IsDir() || libfs.IsBundle(path) {
 
 		innerFS := currFS
 		var files []fs.DirEntry
-		if sys.IsBundle(path) {
-			innerFS, err = sys.GetBundleFS(currFS, path)
+		if libfs.IsBundle(path) {
+			innerFS, err = libfs.GetBundleFS(currFS, path)
 			if err != nil {
 				return nil, err
 			}
@@ -110,13 +86,13 @@ func (d *discProc) ProcessPath(currFS sys.FS, path string, parent *entities.Asse
 		}
 
 		for _, file := range files {
-			_, err := d.ProcessPath(innerFS, filepath.Join(path, file.Name()), asset)
+			_, err := d.processPath(innerFS, filepath.Join(path, file.Name()), asset)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
-	if !pathInfo.IsDir() || (!sys.IsBundle(path) || config.Cfg.Library.RenderBundles) {
+	if !pathInfo.IsDir() || (!libfs.IsBundle(path) || config.Cfg.Library.RenderBundles) {
 		d.discoverer.processor.Process(asset)
 	}
 
@@ -126,18 +102,18 @@ func (d *discProc) ProcessPath(currFS sys.FS, path string, parent *entities.Asse
 func (d *discProc) Run() error {
 	d.l.Info("Discovering assets")
 
-	err := d.discoverer.repo.SetDirtyFS(d.fs.Name)
+	err := d.discoverer.repo.SetDirtyFS(d.fs.GetName())
 	if err != nil {
 		return err
 	}
 
-	_, err = d.ProcessPath(d.fs, d.root, nil)
+	_, err = d.processPath(d.fs, ".", nil)
 
 	if err != nil {
 		d.l.Error("Error discovering assets", "error", err)
 	}
 
-	err = d.discoverer.repo.DeleteUnSeenInFS(d.fs.Name)
+	err = d.discoverer.repo.DeleteUnSeenInFS(d.fs.GetName())
 	if err != nil {
 		return err
 	}

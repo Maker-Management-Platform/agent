@@ -88,7 +88,7 @@ func (r AssetRepo) SetDirtyFS(fsName string) error {
 
 func (r AssetRepo) DeleteUnSeenInFS(fsName string) error {
 	return database.DB.Model(entities.Asset{}).
-		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), FSName: &fsName}).Error
+		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), FSName: fsName}).Error
 }
 
 func (r AssetRepo) DeleteUnSeenInRoot(root string) error {

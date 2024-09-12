@@ -2,15 +2,15 @@ package renderers
 
 import (
 	"fmt"
+	"image/png"
+	"io/fs"
 	"log"
 	"log/slog"
-	"os"
-	"path/filepath"
 
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
-	"github.com/eduardooliveira/stLib/v2/library/sys"
+	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"github.com/nfnt/resize"
 )
@@ -48,27 +48,24 @@ func NewSTLRenderer() *stlRenderer {
 }
 
 func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
-	imgName := fmt.Sprintf("%s.r.png", asset.ID)
-	imgPath := filepath.Join(*asset.ParentID, imgName)
-	imgRoot := filepath.Join(config.Cfg.Core.DataFolder, "img")
-	slog.Info("Rendering", "asset", *asset.Path, "img", imgName, "asset", asset)
-	parentDir := filepath.Join(imgRoot, *asset.ParentID)
-	if _, err := os.Stat(parentDir); os.IsNotExist(err) {
-		if err := os.Mkdir(parentDir, 0755); err != nil {
-			return nil, err
-		}
+	genFS, err := libfs.GetLibFS("generated")
+	if err != nil {
+		return nil, fmt.Errorf("render error getting fs: %w", err)
 	}
-	fullPath := filepath.Join(parentDir, imgName)
-	if _, err := os.Stat(fullPath); err == nil {
-		return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
+	imgName := fmt.Sprintf("%s.r.png", asset.ID)
+
+	if _, err := fs.Stat(genFS, imgName); err == nil {
+		return entities.NewAsset(genFS, imgName, false, asset), nil
 	}
 
-	fs, err := sys.GetFS(utils.VoZ(asset.FSKind), utils.VoZ(asset.FSName), *asset.Root)
+	slog.Info("Rendering", "asset", *asset.Path, "img", imgName, "asset", asset)
+
+	objFs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
 
-	f, err := fs.Open(utils.VoZ(asset.Path))
+	f, err := objFs.Open(utils.VoZ(asset.Path))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +77,7 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 	}
 	f.Close()
 
-	f, err = fs.Open(utils.VoZ(asset.Path))
+	f, err = objFs.Open(utils.VoZ(asset.Path))
 	if err != nil {
 		return nil, err
 	}
@@ -115,10 +112,14 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 	image := context.Image()
 	image = resize.Resize(uint(s.width), uint(s.height), image, resize.Bilinear)
 
-	err = fauxgl.SavePNG(fullPath, image)
+	writer, err := genFS.Create(imgName)
 	if err != nil {
 		return nil, err
 	}
+	defer writer.Close()
+	if err := png.Encode(writer, image); err != nil {
+		return nil, err
+	}
 
-	return entities.NewAssetFromRootPath(imgRoot, imgPath, false, asset), nil
+	return entities.NewAsset(genFS, imgName, false, asset), nil
 }
