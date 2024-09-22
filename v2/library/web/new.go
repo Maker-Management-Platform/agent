@@ -112,6 +112,7 @@ func (h webHandler) handleDownload(r *http.Request, parent entities.Asset, req n
 	h.l.Info("new", "urls", req.Urls)
 
 	err := downloader.Download(downloader.DownloadInput{
+		Ctx:       r.Context(),
 		Parent:    parent,
 		URL:       req.Urls,
 		Repo:      h.r,
@@ -131,7 +132,7 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 		return errors.New("no files or folder"), http.StatusBadRequest
 	}
 
-	fSys, err := libfs.GetFS(parent.FSKind, parent.FSName, *parent.Root)
+	fSys, err := libfs.GetAssetFS(r.Context(), parent)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -140,7 +141,7 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 		if err != nil {
 			return fmt.Errorf("creating folder: %v", err), http.StatusInternalServerError
 		}
-		f := entities.NewAsset(fSys, filepath.Join(*parent.Path, req.Folder), true, &parent)
+		f := entities.NewAsset(fSys.(entities.LibFS), filepath.Join(*parent.Path, req.Folder), true, &parent)
 
 		if err := h.r.SaveAsset(*f); err != nil {
 			h.l.Error("new", "err", err)
@@ -169,12 +170,12 @@ func (h webHandler) handleUpload(r *http.Request, parent entities.Asset, req new
 			return err, http.StatusInternalServerError
 		}
 
-		a := entities.NewAsset(fSys, filepath.Join(*parent.Path, file.Filename()), false, &parent)
+		a := entities.NewAsset(fSys.(entities.LibFS), filepath.Join(*parent.Path, file.Filename()), false, &parent)
 		if err := h.r.SaveAsset(*a); err != nil {
 			h.l.Error("new", "err", err)
 			return err, http.StatusInternalServerError
 		}
-		if err := h.p.Process(a).Wait(); err != nil {
+		if err := h.p.Process(r.Context(), a).Wait(); err != nil {
 			h.l.Error("new", "err", err)
 			return err, http.StatusInternalServerError
 		}

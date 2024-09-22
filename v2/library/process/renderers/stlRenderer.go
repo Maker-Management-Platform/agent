@@ -1,6 +1,7 @@
 package renderers
 
 import (
+	"context"
 	"fmt"
 	"image/png"
 	"io/fs"
@@ -47,7 +48,7 @@ func NewSTLRenderer() *stlRenderer {
 	}
 }
 
-func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
+func (s *stlRenderer) Render(ctx context.Context, asset *entities.Asset) (*entities.Asset, error) {
 	genFS, err := libfs.GetLibFS("generated")
 	if err != nil {
 		return nil, fmt.Errorf("render error getting fs: %w", err)
@@ -55,12 +56,12 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 	imgName := fmt.Sprintf("%s.r.png", asset.ID)
 
 	if _, err := fs.Stat(genFS, imgName); err == nil {
-		return entities.NewAsset(genFS, imgName, false, asset), nil
+		return entities.NewAsset(genFS.(entities.LibFS), imgName, false, asset), nil
 	}
 
 	slog.Info("Rendering", "asset", *asset.Path, "img", imgName, "asset", asset)
 
-	objFs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	objFs, err := libfs.GetAssetFS(ctx, *asset)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
@@ -121,5 +122,5 @@ func (s *stlRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return nil, err
 	}
 
-	return entities.NewAsset(genFS, imgName, false, asset), nil
+	return entities.NewAsset(genFS.(entities.LibFS), imgName, false, asset), nil
 }

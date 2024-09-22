@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"context"
 	"strings"
 
 	"github.com/eduardooliveira/stLib/v2/library/downloader/thingiverse"
@@ -10,6 +11,7 @@ import (
 )
 
 type DownloadInput struct {
+	Ctx       context.Context
 	Parent    entities.Asset
 	URL       string
 	Repo      *repo.AssetRepo
@@ -23,7 +25,7 @@ func Download(input DownloadInput) error {
 
 	for _, url := range urls {
 		if strings.Contains(url, "thingiverse.com") || strings.Contains(url, "thing:") {
-			td, err := thingiverse.New(input.Repo, input.Processor)
+			td, err := thingiverse.New(input.Ctx, input.Repo, input.Processor)
 			if err != nil {
 				return err
 			}

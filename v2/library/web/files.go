@@ -38,7 +38,7 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if shouldCacheFile(asset) {
-		if err := h.r.LoadParents(&asset, 1); err != nil {
+		if err := h.r.LoadTree(&asset, func(a *entities.Asset) bool { return false }); err != nil {
 			h.l.Error("get file", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -67,7 +67,7 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				defer target.Close()
 
-				fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+				fs, err := libfs.GetAssetFS(r.Context(), asset)
 				if err != nil {
 					h.l.Error("get fs", "error", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,7 +96,7 @@ func (h webHandler) getFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	fs, err := libfs.GetAssetFS(r.Context(), asset)
 	if err != nil {
 		h.l.Error("get fs", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

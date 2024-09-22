@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"flag"
 	"log"
@@ -70,7 +71,7 @@ func main() {
 
 	r.Mount("/lib", libH)
 
-	l.ScanAsync()
+	l.ScanAsync(context.Background())
 
 	slog.Info("Starting agent")
 

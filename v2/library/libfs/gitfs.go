@@ -13,7 +13,7 @@ import (
 )
 
 type gitfs struct {
-	FS
+	lFS
 	config gitFSConfig
 }
 type gitFSConfig struct {
@@ -22,7 +22,7 @@ type gitFSConfig struct {
 
 func newGitFS(cfgFS config.FileSystem) (LibFS, error) {
 	rtn := gitfs{
-		FS: FS{
+		lFS: lFS{
 			FileSystem:   cfgFS,
 			discovarable: true,
 		},
@@ -44,16 +44,19 @@ func newGitFS(cfgFS config.FileSystem) (LibFS, error) {
 	if err != nil {
 		slog.Error(err.Error())
 	}
-	rtn.FS.FS = fsys
+	rtn.lFS.FS = fsys
 
 	return rtn, nil
 }
 
 func (fs gitfs) GetFS() fs.FS {
-	return fs.FS
+	return fs.lFS
 }
 func (fs gitfs) GetName() string {
 	return fs.Name
+}
+func (fs gitfs) GetRoot() string {
+	return fs.Path
 }
 func (fs gitfs) GetLocation() string {
 	return fs.Path
@@ -76,4 +79,8 @@ func (fs gitfs) Mkdir(name string) error {
 
 func (fs gitfs) setDiscovarable(d bool) {
 	fs.discovarable = d
+}
+
+func (fs gitfs) Remove(name string) error {
+	return errors.New("gitfs is read-only")
 }

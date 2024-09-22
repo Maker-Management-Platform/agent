@@ -1,11 +1,13 @@
 package renderers
 
 import (
+	"context"
+
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 )
 
 type Renderer interface {
-	Render(asset *entities.Asset) (*entities.Asset, error)
+	Render(ctx context.Context, asset *entities.Asset) (*entities.Asset, error)
 }
 
 var renderers = map[string]Renderer{}

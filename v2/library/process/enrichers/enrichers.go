@@ -1,11 +1,13 @@
 package enrichers
 
 import (
+	"context"
+
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 )
 
 type Enricher interface {
-	Enrich(asset *entities.Asset) error
+	Enrich(ctx context.Context, asset *entities.Asset) error
 }
 
 var enrichers = map[string]Enricher{}

@@ -2,6 +2,7 @@ package enrichers
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,13 +18,13 @@ type gCodeEnricher struct {
 	l *slog.Logger
 }
 
-func (g *gCodeEnricher) Enrich(asset *entities.Asset) error {
+func (g *gCodeEnricher) Enrich(ctx context.Context, asset *entities.Asset) error {
 	g.l = slog.With("module", "gcodeEnricher").With("asset", asset.ID)
 	if asset.Properties == nil {
 		asset.Properties = make(entities.Properties)
 	}
 
-	fs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	fs, err := libfs.GetAssetFS(ctx, *asset)
 	if err != nil {
 		return fmt.Errorf("error getting fs: %w", err)
 	}

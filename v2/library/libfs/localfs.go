@@ -11,12 +11,12 @@ import (
 )
 
 type localFS struct {
-	FS
+	lFS
 }
 
 func newLocalFS(cfgFS config.FileSystem) LibFS {
 	return &localFS{
-		FS: FS{
+		lFS: lFS{
 			FileSystem:   cfgFS,
 			FS:           os.DirFS(cfgFS.Path),
 			discovarable: true,
@@ -25,10 +25,13 @@ func newLocalFS(cfgFS config.FileSystem) LibFS {
 }
 
 func (fs localFS) GetFS() fs.FS {
-	return fs.FS
+	return fs.lFS
 }
 func (fs localFS) GetName() string {
-	return fs.FS.Name
+	return fs.lFS.Name
+}
+func (fs localFS) GetRoot() string {
+	return fs.Path
 }
 func (fs localFS) GetLocation() string {
 	return fs.Path
@@ -57,4 +60,8 @@ func (fs localFS) Mkdir(name string) error {
 
 func (fs *localFS) setDiscovarable(d bool) {
 	fs.discovarable = d
+}
+
+func (fs localFS) Remove(name string) error {
+	return os.RemoveAll(filepath.Join(fs.Path, name))
 }

@@ -1,13 +1,12 @@
 package process
 
 import (
-	"errors"
+	"context"
 	"log/slog"
 
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/library/process/enrichers"
-	"github.com/eduardooliveira/stLib/v2/library/process/extractors"
 	"github.com/eduardooliveira/stLib/v2/library/process/renderers"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/utils"
@@ -30,28 +29,14 @@ func New(r *repo.AssetRepo) (*Processor, error) {
 	}, nil
 }
 
-func (p *Processor) ProcessBundled(asset *entities.Asset) (*Process, error) {
-	e, ok := extractors.Get(asset.Parent)
-	if !ok {
-		return nil, errors.New("no extractor found for asset")
-	}
-	err := e.ExtractBundled(asset)
-	if err != nil {
-		return nil, err
-	}
-	if err := p.r.SaveAsset(*asset); err != nil {
-		return nil, err
-	}
-	return p.Process(asset), nil
-}
-
-func (p *Processor) Process(asset *entities.Asset) *Process {
+func (p *Processor) Process(ctx context.Context, asset *entities.Asset) *Process {
 	proc := &Process{
+		ctx:   ctx,
 		p:     p,
 		Asset: asset,
 		done:  make(chan error),
 	}
-	if utils.VoZ(asset.NodeKind) == entities.NodeKindBundled && !config.Cfg.Library.RenderBundles {
+	if asset.FSKind == "bundle" && !config.Cfg.Library.RenderBundles {
 		proc.renderState = "skipped"
 	} else if r, ok := renderers.Get(asset); ok {
 		proc.renderer = r
@@ -77,6 +62,7 @@ func (p *Processor) Process(asset *entities.Asset) *Process {
 }
 
 type Process struct {
+	ctx         context.Context
 	p           *Processor
 	done        chan error
 	Asset       *entities.Asset
@@ -97,7 +83,7 @@ func (p *Process) Run() error {
 	l := slog.With("module", "process").With("asset", *p.Asset.Label)
 
 	if p.renderer != nil {
-		if img, err := p.renderer.Render(p.Asset); err != nil {
+		if img, err := p.renderer.Render(p.ctx, p.Asset); err != nil {
 			p.renderError = err
 			p.renderState = "failed"
 			l.Error("failed to render asset", "error", err)
@@ -111,7 +97,7 @@ func (p *Process) Run() error {
 	}
 
 	if p.enricher != nil {
-		if err := p.enricher.Enrich(p.Asset); err != nil {
+		if err := p.enricher.Enrich(p.ctx, p.Asset); err != nil {
 			p.enrichError = err
 			p.enrichState = "failed"
 			l.Error("failed to enrich asset", "error", err)

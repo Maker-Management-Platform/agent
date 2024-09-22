@@ -10,6 +10,7 @@ import (
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
 	"github.com/eduardooliveira/stLib/v2/library/web"
+	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -53,21 +54,21 @@ func New() (*Library, http.Handler, http.Handler, error) {
 	return lib, webH, nil, nil
 }
 
-func (l Library) ScanFS() error {
+func (l Library) ScanFS(ctx context.Context) error {
 	eg := errgroup.Group{}
 	if len(config.Cfg.Library.FileSystems) == 0 || (len(config.Cfg.Library.FileSystems) == 1 && config.Cfg.Library.FileSystems[0].Path == "change_me") {
 		slog.Warn("invalid library file systems configured")
 		return nil
 	}
 	for _, ffs := range libfs.GetFSs() {
-		eg.Go(l.d.DiscoverFS(ffs).Run)
+		eg.Go(l.d.DiscoverFS(ctx, ffs).Run)
 	}
 	return eg.Wait()
 }
 
-func (l *Library) ScanAsync() {
+func (l *Library) ScanAsync(ctx context.Context) {
 	go func() {
-		if err := l.ScanFS(); err != nil {
+		if err := l.ScanFS(ctx); err != nil {
 			slog.Error("Error scanning library", "error", err)
 		}
 	}()

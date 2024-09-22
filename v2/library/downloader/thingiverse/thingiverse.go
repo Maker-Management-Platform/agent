@@ -23,6 +23,7 @@ import (
 )
 
 type ThingyDownloader struct {
+	ctx   context.Context
 	l     *slog.Logger
 	token string
 	r     *repo.AssetRepo
@@ -36,8 +37,9 @@ type ThingyDownloader struct {
 
 var matcher = regexp.MustCompile(`thing:(\d+)`)
 
-func New(r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
+func New(ctx context.Context, r *repo.AssetRepo, p *process.Processor) (*ThingyDownloader, error) {
 	rtn := &ThingyDownloader{
+		ctx:   ctx,
 		l:     slog.With("module", "thingiverse"),
 		token: config.Cfg.Integrations.Thingiverse.Token,
 		r:     r,
@@ -76,7 +78,7 @@ func (t *ThingyDownloader) Fetch(url string, parent entities.Asset) error {
 		return fmt.Errorf("creating folder: %v", err)
 	}
 
-	t.asset = entities.NewAsset(t.fSys, path, true, &parent)
+	t.asset = entities.NewAsset(t.fSys.(entities.LibFS), path, true, &parent)
 	t.asset.Label = utils.Ptr(t.thing.Name)
 	t.asset.Description = utils.Ptr(t.thing.Description)
 
@@ -204,11 +206,11 @@ func (t ThingyDownloader) fetchImages() error {
 }
 
 func (t ThingyDownloader) processFile(name string) error {
-	i := entities.NewAsset(t.fSys, filepath.Join(*t.asset.Path, name), false, t.asset)
+	i := entities.NewAsset(t.fSys.(entities.LibFS), filepath.Join(*t.asset.Path, name), false, t.asset)
 	if err := t.r.SaveAsset(*i); err != nil {
 		return fmt.Errorf("saving asset: %v", err)
 	}
-	return t.p.Process(i).Wait()
+	return t.p.Process(t.ctx, i).Wait()
 }
 
 type ThingImage struct {

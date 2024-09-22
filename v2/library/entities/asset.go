@@ -3,16 +3,31 @@ package entities
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"io"
+	"io/fs"
 	"log/slog"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/eduardooliveira/stLib/v2/config"
-	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/utils"
 	"gorm.io/gorm"
 )
+
+type LibFS interface {
+	GetFS() fs.FS
+	GetName() string
+	GetLocation() string
+	GetRoot() string
+	Kind() string
+	Open(name string) (fs.File, error)
+	Writable() bool
+	Create(name string) (io.WriteCloser, error)
+	Mkdir(name string) error
+	Remove(name string) error
+	IsBundle(path string) bool
+}
 
 type NodeKind string
 
@@ -29,12 +44,12 @@ type Asset struct {
 	Label        *string    `query:"label" in:"form=label"`
 	Description  *string    `query:"description" in:"form=description"`
 	Path         *string    `query:"path" in:"form=path"`
-	Root         *string    `query:"root" in:"form=root"`
+	Root         string     `query:"root" in:"form=root"`
 	FSKind       string     `query:"fsKind" in:"form=fsKind"`
 	FSName       string     `query:"fsName" in:"form=fsName"`
 	Extension    *string    `query:"extension" in:"form=extension"`
 	Kind         *string    `query:"kind" in:"form=kind"`
-	NodeKind     *NodeKind  `query:"nodeKind" in:"form=nodeKind"`
+	NodeKind     NodeKind   `query:"nodeKind" in:"form=nodeKind"`
 	ParentID     *string    `query:"parentID" in:"form=parentID"`
 	Parent       *Asset     `in:"form=-"`
 	NestedAssets []*Asset   `query:"nestedAssets" in:"form=nestedAssets" gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;"`
@@ -46,55 +61,17 @@ type Asset struct {
 	UpdatedAt    time.Time
 }
 
-func NewAssetFromRootPath(root, path string, isDir bool, parent *Asset) *Asset {
+func NewAsset(fs LibFS, path string, isDir bool, parent *Asset) *Asset {
 	ext := filepath.Ext(path)
 
-	data := []byte(filepath.Join(root, path))
-	md5Hash := md5.Sum(data)
-
-	var asset = &Asset{
-		ID:        hex.EncodeToString(md5Hash[:]),
-		Root:      utils.Ptr(root),
-		Path:      utils.Ptr(path),
-		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
-		Extension: utils.Ptr(ext),
-	}
-	if parent != nil {
-		asset.Parent = parent
-		asset.ParentID = &parent.ID
-	}
-	if isDir {
-		if parent == nil {
-			asset.NodeKind = utils.Ptr(NodeKindRoot)
-		} else {
-			asset.NodeKind = utils.Ptr(NodeKindDir)
-		}
-		asset.Kind = utils.Ptr("dir")
-		return asset
-	}
-
-	asset.NodeKind = utils.Ptr(NodeKindFile)
-	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
-	asset.Kind = utils.Ptr(kind.Name)
-
-	if *asset.Kind == "image" {
-		asset.Thumbnail = utils.Ptr(asset.ID)
-	}
-
-	return asset
-}
-
-func NewAsset(fs libfs.LibFS, path string, isDir bool, parent *Asset) *Asset {
-	ext := filepath.Ext(path)
-
-	data := []byte(filepath.Join(fs.GetName(), fs.GetLocation(), path))
+	data := []byte(filepath.Join(fs.GetName(), fs.GetRoot(), path))
 	md5Hash := md5.Sum(data)
 
 	var asset = &Asset{
 		ID:        hex.EncodeToString(md5Hash[:]),
 		Path:      utils.Ptr(path),
-		Root:      utils.Ptr(fs.GetLocation()),
-		FSName:    fs.GetName(), // if is root
+		Root:      fs.GetRoot(),
+		FSName:    fs.GetName(),
 		FSKind:    fs.Kind(),
 		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
 		Extension: utils.Ptr(ext),
@@ -104,19 +81,21 @@ func NewAsset(fs libfs.LibFS, path string, isDir bool, parent *Asset) *Asset {
 		asset.ParentID = &parent.ID
 	}
 
-	if fs.Kind() == "bundle" {
-		asset.NodeKind = utils.Ptr(NodeKindBundled)
-	} else if libfs.IsBundle(path) {
-		asset.NodeKind = utils.Ptr(NodeKindBundle)
+	if fs.IsBundle(path) {
+		asset.Kind = utils.Ptr("bundle")
+		asset.NodeKind = NodeKindBundle
 	} else if isDir {
 		if parent == nil {
-			asset.NodeKind = utils.Ptr(NodeKindRoot)
+			asset.NodeKind = NodeKindRoot
 			asset.Label = utils.Ptr(fs.GetName())
 		} else {
-			asset.NodeKind = utils.Ptr(NodeKindDir)
+			asset.NodeKind = NodeKindDir
 		}
 	} else {
-		asset.NodeKind = utils.Ptr(NodeKindFile)
+		asset.NodeKind = NodeKindFile
+	}
+	if fs.Kind() == "bundle" {
+		asset.NodeKind = NodeKindBundled
 	}
 
 	if isDir {
@@ -124,36 +103,13 @@ func NewAsset(fs libfs.LibFS, path string, isDir bool, parent *Asset) *Asset {
 		return asset
 	}
 
-	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
-	asset.Kind = utils.Ptr(kind.Name)
-
+	if asset.Kind == nil {
+		kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
+		asset.Kind = utils.Ptr(kind.Name)
+	}
 	if *asset.Kind == "image" {
 		asset.Thumbnail = utils.Ptr(asset.ID)
 	}
-
-	return asset
-}
-
-func NewBundledAsset(parent *Asset, path string) *Asset {
-	ext := filepath.Ext(path)
-
-	data := []byte(filepath.Join(*parent.Root, *parent.Path, path)) //TODO: make consistent with the way its calculated on discovery
-	md5Hash := md5.Sum(data)
-
-	var asset = &Asset{
-		ID:        hex.EncodeToString(md5Hash[:]),
-		Root:      parent.Root,
-		Path:      utils.Ptr(path),
-		Label:     utils.Ptr(strings.TrimSuffix(filepath.Base(path), ext)),
-		Extension: utils.Ptr(ext),
-	}
-
-	asset.Parent = parent
-	asset.ParentID = &parent.ID
-
-	asset.NodeKind = utils.Ptr(NodeKindBundled)
-	kind := config.Cfg.Library.AssetTypes.ByExtension(*asset.Extension)
-	asset.Kind = utils.Ptr(kind.Name)
 
 	return asset
 }

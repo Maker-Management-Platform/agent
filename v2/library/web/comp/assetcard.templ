@@ -16,7 +16,7 @@ templ AssetCard(m *AssetCardModel) {
 	>
 		<div
 			class={ "img flex-basis-56 w-full bgimg_b670 rounded-lg bg-gray-300 bg-cover bg-center", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
-			if utils.VoZ(m.Asset.NodeKind) == entities.NodeKindDir || utils.VoZ(m.Asset.NodeKind) == entities.NodeKindBundle|| utils.VoZ(m.Asset.NodeKind) == entities.NodeKindRoot ||utils.VoZ(m.Asset.Kind) == "dir" {
+			if utils.VoZ(m.Asset.Kind) == "dir" || utils.VoZ(m.Asset.Kind) == "bundle" {
 				hx-get={ fmt.Sprintf("/lib/%s", m.Asset.ID) }
 				hx-target=".asset-view"
 				hx-swap="outerHTML"
@@ -59,7 +59,7 @@ templ AssetCard(m *AssetCardModel) {
 }
 
 templ NodeKindIcon(asset *entities.Asset) {
-	switch utils.VoZ(asset.NodeKind) {
+	switch asset.NodeKind {
 		case entities.NodeKindDir:
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-outline</title><path stroke-width="2" d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z"></path></svg>
 		case entities.NodeKindBundle:

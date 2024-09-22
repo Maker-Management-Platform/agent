@@ -1,6 +1,7 @@
 package libfs
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -8,16 +9,17 @@ import (
 	"slices"
 
 	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
 	"github.com/eduardooliveira/stLib/v2/utils"
 )
 
-type FS struct {
+type lFS struct {
 	fs.FS
 	config.FileSystem
 	discovarable bool
 }
 
-func (fs FS) isDiscovarable() bool {
+func (fs lFS) isDiscovarable() bool {
 	return fs.discovarable
 }
 
@@ -25,13 +27,20 @@ type LibFS interface {
 	GetFS() fs.FS
 	GetName() string
 	GetLocation() string
+	GetRoot() string
 	Kind() string
 	Open(name string) (fs.File, error)
 	Writable() bool
 	Create(name string) (io.WriteCloser, error)
 	Mkdir(name string) error
+	Remove(name string) error
 	isDiscovarable() bool
 	setDiscovarable(bool)
+	IsBundle(path string) bool
+}
+
+func (fs lFS) IsBundle(path string) bool {
+	return slices.Contains(bundleFSs, filepath.Ext(path))
 }
 
 var (
@@ -79,8 +88,19 @@ func LoadFSs() error {
 			Path: filepath.Join(config.Cfg.Core.DataFolder, "generated"),
 		})
 	}
+	if fileSystems["temp"] == nil {
+		if err := utils.CreateFolder(filepath.Join(config.Cfg.Core.DataFolder, "temp")); err != nil {
+			return err
+		}
+		fileSystems["temp"] = newLocalFS(config.FileSystem{
+			Name: "temp",
+			Kind: "local",
+			Path: filepath.Join(config.Cfg.Core.DataFolder, "temp"),
+		})
+	}
 	fileSystems["cache"].setDiscovarable(false)
 	fileSystems["generated"].setDiscovarable(false)
+	fileSystems["temp"].setDiscovarable(false)
 	return nil
 }
 
@@ -88,14 +108,16 @@ func GetDefaultFS() LibFS {
 	return fileSystems[defaultFSName]
 }
 
-func GetFS(kind, name, path string) (LibFS, error) {
-	if kind == "bundle" {
-		return newBundleFS(fileSystems[name], path)
+func GetAssetFS(ctx context.Context, asset entities.Asset) (LibFS, error) {
+	if asset.FSKind == "bundle" {
+		return resolveBundleFS(ctx, asset)
 	}
-	if _, ok := fileSystems[name]; !ok {
-		return nil, errors.New("file system not found")
+
+	if f, ok := fileSystems[asset.FSName]; ok {
+		return f, nil
 	}
-	return fileSystems[name], nil
+
+	return nil, errors.New("file system not found")
 }
 
 func GetLibFS(name string) (LibFS, error) {
@@ -120,6 +142,6 @@ func IsBundle(path string) bool {
 	return slices.Contains(bundleFSs, filepath.Ext(path))
 }
 
-func GetBundleFS(parentFS LibFS, path string) (LibFS, error) {
-	return newBundleFS(parentFS, path)
+func GetBundleFS(ctx context.Context, parentFS LibFS, asset entities.Asset) (LibFS, error) {
+	return newBundleFS(ctx, parentFS, asset)
 }

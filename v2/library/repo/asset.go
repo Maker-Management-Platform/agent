@@ -24,19 +24,26 @@ func (r AssetRepo) GetAsset(id string, deep bool) (rtn entities.Asset, err error
 }
 
 func (r AssetRepo) GetAssetRoots(deep bool) (rtn []*entities.Asset, err error) {
-	q := database.DB.Debug().Where(&entities.Asset{NodeKind: utils.Ptr(entities.NodeKindRoot)})
+	q := database.DB.Debug().Where(&entities.Asset{NodeKind: entities.NodeKindRoot})
 	if deep {
 		q = q.Preload("NestedAssets.NestedAssets")
 	}
 	return rtn, q.Find(&rtn).Error
 }
 
-func (r AssetRepo) GetAssetByRootAndPath(root, path string, deep bool) (rtn entities.Asset, err error) {
-	q := database.DB.Where(&entities.Asset{Root: &root, Path: &path})
-	if deep {
-		q = q.Preload("NestedAssets.NestedAssets")
+func (r AssetRepo) LoadTree(a *entities.Asset, stop func(a *entities.Asset) bool) error {
+	if a.ParentID == nil {
+		return nil
 	}
-	return rtn, q.First(&rtn).Error
+	var parent entities.Asset
+	if err := database.DB.Where("ID = ? ", *a.ParentID).Find(&parent).Error; err != nil {
+		return err
+	}
+	a.Parent = &parent
+	if stop(a) {
+		return nil
+	}
+	return r.LoadTree(&parent, stop)
 }
 
 func (r AssetRepo) LoadParents(a *entities.Asset, dept int, fields ...string) error {
@@ -89,11 +96,6 @@ func (r AssetRepo) SetDirtyFS(fsName string) error {
 func (r AssetRepo) DeleteUnSeenInFS(fsName string) error {
 	return database.DB.Model(entities.Asset{}).
 		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), FSName: fsName}).Error
-}
-
-func (r AssetRepo) DeleteUnSeenInRoot(root string) error {
-	return database.DB.Model(entities.Asset{}).
-		Delete(entities.Asset{}, entities.Asset{SeenOnScan: utils.Ptr(false), Root: &root}).Error
 }
 
 func (r AssetRepo) UpdateAsset(a *entities.Asset) error {

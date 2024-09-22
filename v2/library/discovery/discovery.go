@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"context"
 	"io/fs"
 	"log/slog"
 	"path/filepath"
@@ -18,6 +19,7 @@ type discProc struct {
 	discoverer *Discoverer
 	l          *slog.Logger
 	fs         libfs.LibFS
+	ctx        context.Context
 }
 
 type Discoverer struct {
@@ -34,11 +36,12 @@ func New(p *process.Processor, r *repo.AssetRepo) *Discoverer {
 	}
 }
 
-func (d Discoverer) DiscoverFS(fs libfs.LibFS) *discProc {
+func (d Discoverer) DiscoverFS(ctx context.Context, fs libfs.LibFS) *discProc {
 	dp := &discProc{
 		discoverer: &d,
 		l:          d.l.With("fs", fs.GetName()),
 		fs:         fs,
+		ctx:        ctx,
 	}
 
 	return dp
@@ -55,7 +58,7 @@ func (d *discProc) processPath(currFS libfs.LibFS, path string, parent *entities
 		return nil, err
 	}
 
-	asset = entities.NewAsset(currFS, path, pathInfo.IsDir(), parent)
+	asset = entities.NewAsset(currFS.(entities.LibFS), path, pathInfo.IsDir(), parent)
 
 	asset.SeenOnScan = utils.Ptr(true)
 
@@ -69,7 +72,7 @@ func (d *discProc) processPath(currFS libfs.LibFS, path string, parent *entities
 		innerFS := currFS
 		var files []fs.DirEntry
 		if libfs.IsBundle(path) {
-			innerFS, err = libfs.GetBundleFS(currFS, path)
+			innerFS, err = libfs.GetBundleFS(d.ctx, currFS, *asset)
 			if err != nil {
 				return nil, err
 			}
@@ -93,7 +96,7 @@ func (d *discProc) processPath(currFS libfs.LibFS, path string, parent *entities
 		}
 	}
 	if !pathInfo.IsDir() || (!libfs.IsBundle(path) || config.Cfg.Library.RenderBundles) {
-		d.discoverer.processor.Process(asset)
+		d.discoverer.processor.Process(d.ctx, asset)
 	}
 
 	return asset, nil

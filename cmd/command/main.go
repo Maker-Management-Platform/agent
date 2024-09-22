@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -71,7 +72,7 @@ func main() {
 
 	r.Mount("/lib", libH)
 
-	l.ScanAsync()
+	l.ScanAsync(context.Background())
 
 	slog.Info("Starting agent")
 

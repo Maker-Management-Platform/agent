@@ -3,6 +3,7 @@ package renderers
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
@@ -28,7 +29,7 @@ type tmpImg struct {
 	data   []byte
 }
 
-func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
+func (r *gCodeRenderer) Render(ctx context.Context, asset *entities.Asset) (*entities.Asset, error) {
 	genFS, err := libfs.GetLibFS("generated")
 	if err != nil {
 		return nil, fmt.Errorf("render error getting fs: %w", err)
@@ -36,12 +37,12 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 	imgName := fmt.Sprintf("%s.r.png", asset.ID)
 
 	if _, err := fs.Stat(genFS, imgName); err == nil {
-		return entities.NewAsset(genFS, imgName, false, asset), nil
+		return entities.NewAsset(genFS.(entities.LibFS), imgName, false, asset), nil
 	}
 
 	slog.Info("Rendering", "asset", *asset.Path, "img", imgName, "asset", asset)
 
-	objFs, err := libfs.GetFS(asset.FSKind, asset.FSName, *asset.Root)
+	objFs, err := libfs.GetAssetFS(ctx, *asset)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fs: %w", err)
 	}
@@ -105,7 +106,7 @@ func (r *gCodeRenderer) Render(asset *entities.Asset) (*entities.Asset, error) {
 		return nil, err
 	}
 
-	return entities.NewAsset(genFS, imgName, false, asset), nil
+	return entities.NewAsset(genFS.(entities.LibFS), imgName, false, asset), nil
 }
 
 func (r *gCodeRenderer) parseThumbnail(scanner *bufio.Scanner, size string, length int) (*tmpImg, error) {
