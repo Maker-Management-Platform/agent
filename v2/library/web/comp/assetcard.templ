@@ -12,7 +12,7 @@ css bgimg(url string) {
 
 templ AssetCard(m *AssetCardModel) {
 	<div
-		class="asset-card justi mx-auto my-2 flex h-56 grow-0 basis-56 flex-col items-center justify-end shadow-md"
+		class="asset-card m-2 flex h-56 grow-0 basis-56 flex-col items-center justify-end shadow-md"
 	>
 		<div
 			class={ "img flex-basis-56 w-full bgimg_b670 rounded-lg bg-gray-300 bg-cover bg-center", bgimg(utils.VoZ(m.Asset.Thumbnail)) }
@@ -27,7 +27,7 @@ templ AssetCard(m *AssetCardModel) {
 			<div class="overlay rounded-lg"></div>
 		</div>
 		<div class="z-10 flex max-w-56 justify-center pb-2">
-			@NodeKindIcon(m.Asset)
+			@AssetKindIcon(m.Asset)
 			<div class="truncate px-2 text-white">{ *m.Asset.Label }</div>
 		</div>
 		<div class="controls relative z-10 p-1" onclick="event.stopPropagation();">
@@ -58,14 +58,12 @@ templ AssetCard(m *AssetCardModel) {
 	</div>
 }
 
-templ NodeKindIcon(asset *entities.Asset) {
-	switch asset.NodeKind {
-		case entities.NodeKindDir:
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-outline</title><path stroke-width="2" d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z"></path></svg>
-		case entities.NodeKindBundle:
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-zip-outline</title><path d="M20 6H12L10 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V8C22 6.9 21.1 6 20 6M20 18H16V16H14V18H4V8H14V10H16V8H20V18M16 12V10H18V12H16M14 12H16V14H14V12M18 16H16V14H18V16Z"></path></svg>
-	}
+templ AssetKindIcon(asset *entities.Asset) {
 	switch utils.VoZ(asset.Kind) {
+		case "bundle":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-zip-outline</title><path d="M20 6H12L10 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V8C22 6.9 21.1 6 20 6M20 18H16V16H14V18H4V8H14V10H16V8H20V18M16 12V10H18V12H16M14 12H16V14H14V12M18 16H16V14H18V16Z"></path></svg>
+		case "dir":
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>folder-outline</title><path stroke-width="2" d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z"></path></svg>
 		case "file":
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" stroke="currentColor"><title>file-outline</title><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.9 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z"></path></svg>
 		case "image":

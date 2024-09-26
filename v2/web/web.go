@@ -20,6 +20,7 @@ func New() (http.Handler, error) {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", R(wh.indexHandler))
+	mux.HandleFunc("/home", R(RenderFragment(comp.Home())))
 	return mux, nil
 }
 
@@ -39,9 +40,8 @@ func RenderIndex(path string) error {
 func RenderFragment(frag templ.Component) func(r *http.Request) ResponseModel {
 	return func(r *http.Request) ResponseModel {
 		return ResponseModel{
-			Status:     http.StatusOK,
-			IsFragment: true,
-			Component:  frag,
+			Status:    http.StatusOK,
+			Component: frag,
 		}
 	}
 }
