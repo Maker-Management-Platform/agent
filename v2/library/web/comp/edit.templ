@@ -4,14 +4,14 @@ import "github.com/eduardooliveira/stLib/v2/utils"
 
 templ Edit(m *EditModel) {
 	<div
-		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2 pt-0"
 		:class="tab == 'edit' ? '' : 'hidden'"
 		hx-get="/lib/edit"
 		hx-trigger="tab-edit from:body"
 		hx-vals="js:{assetID:event.detail.assetID}"
 	>
 		if m!=nil {
-			<h1>Edit</h1>
+			<a class="btn btn-ghost text-xl">Edit</a>
 			<form hx-post="/lib/edit" hx-vals="unset">
 				<input type="hidden" name="id" value={ m.Asset.ID }/>
 				<div>

@@ -11,14 +11,14 @@ templ View3D() {
 		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
 		:class="tab == 'viewer' ? '' : 'hidden'"
 	>
-		<p>3D Viewer</p>
+		<a class="btn btn-ghost text-xl">3D Viewer</a>
 		<div
 			class="h-72 viewer-container bg-slate-400"
 			x-ref="viewerContainer"
 			hx-preserve="true"
 		></div>
 		<div
-			class="model-list flex flex-col pt-1"
+			class="model-list flex flex-col pt-2"
 			hx-get="/lib/viewer/list"
 			hx-vals="js:{assetID:event.detail.assetID}"
 			hx-trigger="viewer-model-list-add from:body"
@@ -28,9 +28,9 @@ templ View3D() {
 }
 
 templ ViewerAssetElement(asset entities.Asset) {
-	<div class="flex pb-1 bg-base-300">
-		<div class="avatar">
-			<div class="w-12 h-12 rounded">
+	<div class="flex mb-1 flex-row h-12 bg-base-300 rounded-lg">
+		<div class="avatar flex-none w-12">
+			<div class="rounded">
 				<img
 					src={ fmt.Sprintf("/lib/%s/file", utils.VoZ(asset.Thumbnail)) }
 					alt="Tailwind-CSS-Avatar-component"
@@ -43,7 +43,7 @@ templ ViewerAssetElement(asset entities.Asset) {
 		</div>
 		<div class="">
 			<button
-				class="btn btn-square w-12 h-12"
+				class="btn btn-square w-12 h-12 btn-ghost"
 				type="button"
 				name="delete"
 				@click={ fmt.Sprintf("deleteModel($el,'%s')", asset.ID) }
