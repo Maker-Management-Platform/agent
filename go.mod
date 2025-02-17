@@ -12,6 +12,7 @@ require (
 	github.com/ggicci/httpin v0.19.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-chi/cors v1.2.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/hairyhenderson/go-fsimpl v0.1.7
 	github.com/labstack/echo/v4 v4.12.0

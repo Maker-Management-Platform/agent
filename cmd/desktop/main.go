@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"embed"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/eduardooliveira/stLib/frontend"
 	"github.com/eduardooliveira/stLib/v2/config"
 	"github.com/eduardooliveira/stLib/v2/database"
 	"github.com/eduardooliveira/stLib/v2/library"
@@ -21,9 +22,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
-
-//go:embed all:frontend/dist components
-var assets embed.FS
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
@@ -74,17 +72,17 @@ func main() {
 	l.ScanAsync(context.Background())
 
 	slog.Info("Starting agent")
+	go func() {
+
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Cfg.Server.Port), r))
+	}()
 
 	wails.Run(&options.App{
 		Title:  "mmp",
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
-			Middleware: func(next http.Handler) http.Handler {
-				r.NotFound(next.ServeHTTP)
-				return r
-			},
+			Assets: frontend.FS,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		// Windows platform specific options

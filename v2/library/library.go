@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/eduardooliveira/stLib/v2/config"
+	"github.com/eduardooliveira/stLib/v2/library/api"
 	"github.com/eduardooliveira/stLib/v2/library/discovery"
 	"github.com/eduardooliveira/stLib/v2/library/libfs"
 	"github.com/eduardooliveira/stLib/v2/library/process"
 	"github.com/eduardooliveira/stLib/v2/library/repo"
-	"github.com/eduardooliveira/stLib/v2/library/web"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 )
@@ -41,7 +41,7 @@ func New() (*Library, http.Handler, http.Handler, error) {
 
 	lib.d = discovery.New(lib.p, lib.r)
 
-	webH, err := web.New(lib.r, lib.p)
+	apiH, err := api.New(*lib.r, lib.p)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -51,7 +51,7 @@ func New() (*Library, http.Handler, http.Handler, error) {
 		return nil, nil, nil, err
 	}*/
 
-	return lib, webH, nil, nil
+	return lib, apiH, nil, nil
 }
 
 func (l Library) ScanFS(ctx context.Context) error {

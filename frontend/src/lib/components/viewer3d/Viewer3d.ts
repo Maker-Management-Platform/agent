@@ -1,63 +1,49 @@
+import { Asset } from "../../models";
 import * as THREE from 'three';
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-class State {
-    constructor(
-        models,//: Asset[] | null,
-        modelsRendered,//: ModelMesh[],
-        parent,//: HTMLElement,
-        scene,//: THREE.Scene,
-        camera,//: THREE.PerspectiveCamera,
-        renderer,//: THREE.WebGLRenderer
-        loader,//: STLLoader,
-        controls,//: OrbitControls | null,
-        group,//: THREE.Group,
-        dirty,//: boolean,
-        boxHelper,//: THREE.Box3Helper | null,
-    ) {
-        this.models = models;
-        this.modelsRendered = modelsRendered;
-        this.parent = parent;
-        this.scene = scene;
-        this.camera = camera;
-        this.renderer = renderer;
-        this.loader = loader;
-        this.controls = controls;
-        this.group = group;
-        this.dirty = dirty;
-        this.boxHelper = boxHelper;
-    }
-
+type State = {
+    models: Asset[] | null,
+    modelsRendered: ModelMesh[],
+    parent: HTMLElement,
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    renderer: THREE.WebGLRenderer
+    loader: STLLoader,
+    local_backend: string,
+    controls: OrbitControls | null,
+    group: THREE.Group,
+    dirty: boolean,
+    boxHelper: THREE.Box3Helper | null,
 }
 
-class ModelMesh {
-    constructor(
-        id,//: String,
-        mesh,//: THREE.Mesh,
-        mode,//l: Asset
-    ) {
-        this.id = id;
-        this.mesh = mesh;
-        this.model = model;
-    }
+type ModelMesh = {
+    id: String,
+    mesh: THREE.Mesh,
+    model: Asset
 }
 
+export type Viewer3D = {
+    destroy(): void;
+    setModels(models: Asset[]): void;
+}
 
-export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
-    const state = new State(
-        [],
-        [],
-        parent,
-        new THREE.PerspectiveCamera(20, parent.offsetWidth / parent.offsetHeight, 1, 1000),
-        new THREE.Scene(),
-        new THREE.WebGLRenderer({ antialias: true }),
-        new STLLoader(),
-        null,
-        new THREE.Group(),
-        false,
-        null
-    );
+export const createViewer3D = (parent: HTMLElement): Viewer3D => {
+    const state: State = {
+        models: [],
+        modelsRendered: [],
+        parent: parent,
+        camera: new THREE.PerspectiveCamera(20, parent.offsetWidth / parent.offsetHeight, 1, 1000),
+        scene: new THREE.Scene(),
+        local_backend: "http://localhost:8000",
+        renderer: new THREE.WebGLRenderer({ antialias: true }),
+        loader: new STLLoader(),
+        controls: null,
+        group: new THREE.Group(),
+        dirty: false,
+        boxHelper: null
+    }
 
     state.scene = new THREE.Scene();
     state.scene.background = new THREE.Color(0x333333);
@@ -66,7 +52,7 @@ export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
     state.renderer.setSize(parent.offsetWidth, parent.offsetHeight);
     parent.appendChild(state.renderer.domElement);
 
-    state.camera = new THREE.PerspectiveCamera(60, parent.offsetWidth / parent.offsetHeight, 1, 1000);
+    // state.camera = new THREE.PerspectiveCamera( 60, parent.offsetWidth / parent.offsetHeight, 1, 1000 );
     state.camera.position.set(400, 200, 0);
     state.camera.lookAt(0, 0, 0);
 
@@ -131,7 +117,9 @@ export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
             state.dirty = false;
         }
         state.renderer.clear();
-        state.controls.update();
+        if (state.controls) {
+            state.controls.update();
+        }
 
         // helper.render(state.renderer);
         state.renderer.render(state.scene, state.camera);
@@ -146,21 +134,22 @@ export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
         destroy() {
             state.renderer.dispose();
             state.renderer.forceContextLoss();
+            state.parent.removeChild(state.renderer.domElement);
             console.log("WebGL Context Destroyed");
         },
-        setModels(models/* Asset[]*/) {
+        setModels(models: Asset[]) {
             state.models = models;
             const material = new THREE.MeshPhongMaterial({ color: 0xd5d5d5, specular: 0x494949, shininess: 10, flatShading: true });
             state.group.clear();
             state.models.forEach((model) => {
-                const renderedModel = state.modelsRendered.find(mr => { return model.id == mr.id });
+                const renderedModel = state.modelsRendered.find(mr => { return model.ID == mr.id });
                 if (renderedModel) {
                     state.group.add(renderedModel.mesh);
                     state.dirty = true;
                     return;
                 }
 
-                state.loader.load(`/lib/${model.id}/file?download=true`, function (geometry) {
+                state.loader.load(`${state.local_backend}/api/lib/${model.ID}/file`, function (geometry) {
 
                     const mesh = new THREE.Mesh(geometry, material);
 
@@ -173,7 +162,7 @@ export function createViewer3D(parent/*: HTMLElement*/)/*: Viewer3D*/ {
                     mesh.geometry.computeBoundingBox();
 
                     state.group.add(mesh);
-                    const id /*String*/ = model.id;
+                    const id: String = model.ID;
                     state.modelsRendered.push({ mesh: mesh, id: id, model: model });
                     state.dirty = true;
                 });
