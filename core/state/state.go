@@ -69,7 +69,7 @@ func LoadAssetTypes() error {
 		AssetTypes["model"] = &entities.AssetType{
 			Name:       "model",
 			Label:      "Models",
-			Extensions: []string{".stl", ".3fm"},
+			Extensions: []string{".stl", ".3mf"},
 			Order:      0,
 		}
 		AssetTypes["image"] = &entities.AssetType{
