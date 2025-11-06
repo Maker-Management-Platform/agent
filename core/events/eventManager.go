@@ -16,7 +16,7 @@ type stateType struct {
 	sessions      map[string]*session
 	subscriptions map[string]map[string]*session
 	publishers    map[string]Publisher
-	globalLock    sync.Mutex
+	eventLock     sync.Mutex
 }
 
 type Publisher interface {
@@ -33,21 +33,21 @@ func init() {
 		sessions:      make(map[string]*session),
 		subscriptions: make(map[string]map[string]*session),
 		publishers:    make(map[string]Publisher),
-		globalLock:    sync.Mutex{},
+		eventLock:     sync.Mutex{},
 	}
 }
 
 func RegisterSession(id string) (chan *Message, func()) {
-	state.globalLock.Lock()
-	defer state.globalLock.Unlock()
+	state.eventLock.Lock()
+	defer state.eventLock.Unlock()
 	state.sessions[id] = &session{
 		ID:            id,
 		Out:           make(chan *Message, 100),
 		subscriptions: make(map[string]struct{}, 0),
 	}
 	return state.sessions[id].Out, func() {
-		state.globalLock.Lock()
-		defer state.globalLock.Unlock()
+		state.eventLock.Lock()
+		defer state.eventLock.Unlock()
 
 		for topic := range state.sessions[id].subscriptions {
 			delete(state.subscriptions[topic], id)
@@ -62,8 +62,8 @@ func RegisterSession(id string) (chan *Message, func()) {
 }
 
 func Subscribe(sessionId string, topic string, publisher Publisher) error {
-	state.globalLock.Lock()
-	defer state.globalLock.Unlock()
+	state.eventLock.Lock()
+	defer state.eventLock.Unlock()
 
 	sess, ok := state.sessions[sessionId]
 	if !ok {
@@ -96,8 +96,8 @@ func Subscribe(sessionId string, topic string, publisher Publisher) error {
 }
 
 func UnSubscribe(sessionId string, topic string) {
-	state.globalLock.Lock()
-	defer state.globalLock.Unlock()
+	state.eventLock.Lock()
+	defer state.eventLock.Unlock()
 
 	_, ok := state.subscriptions[topic]
 	if !ok {
@@ -127,12 +127,25 @@ func runSubscription(topic string) {
 		return
 	}
 	for msg := range publisher.Read() {
-		subCount := 0
-
+		// Copy sessions under lock to avoid race conditions
+		state.eventLock.Lock()
+		sessions := make([]*session, 0, len(state.subscriptions[topic]))
 		for _, sess := range state.subscriptions[topic] {
-			subCount++
-			sess.Out <- msg
+			sessions = append(sessions, sess)
+		}
+		state.eventLock.Unlock()
 
+		subCount := 0
+		// Send to sessions without holding lock
+		for _, sess := range sessions {
+			subCount++
+			select {
+			case sess.Out <- msg:
+				// Message sent successfully
+			default:
+				// Channel full, log and skip to prevent blocking
+				log.Printf("Session %s channel full, dropping message for topic %s", sess.ID, topic)
+			}
 		}
 
 		if subCount == 0 {
@@ -145,8 +158,8 @@ func runSubscription(topic string) {
 			return
 		}
 	}
-	state.globalLock.Lock()
-	defer state.globalLock.Unlock()
+	state.eventLock.Lock()
+	defer state.eventLock.Unlock()
 	delete(state.publishers, topic)
 
 	for _, sess := range state.subscriptions[topic] {

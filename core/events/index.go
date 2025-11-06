@@ -41,7 +41,6 @@ func index(c echo.Context) error {
 		case s, ok := <-eventChan:
 			if !ok {
 				log.Println("Event chan closed, closing client")
-				close(eventChan)
 				return nil
 			}
 			err := sender.send(s)
