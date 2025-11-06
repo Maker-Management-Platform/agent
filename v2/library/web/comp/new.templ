@@ -1,0 +1,70 @@
+package comp
+
+templ New(m *NewModel) {
+	<div
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
+		:class="tab == 'new' ? '' : 'hidden'"
+		hx-get="/lib/new"
+		hx-trigger="tab-new from:body"
+		hx-vals="js:{assetID:event.detail.assetID}"
+	>
+		<a class="btn btn-ghost text-xl">New Asset</a>
+		if m!=nil {
+			<form hx-post="/lib/new" hx-vals="unset">
+				<h1>Import URLS</h1>
+				<input name="mode" type="hidden" value="import"/>
+				<input name="parentID" type="hidden" value={ m.ParentID }/>
+				<textarea
+					name="urls"
+					class="textarea textarea-bordered textarea-sm w-full"
+				></textarea>
+				<button class="btn btn-sm btn-primary mt-1">Import</button>
+			</form>
+			<form
+				class="mt-2"
+				hx-post="/lib/new"
+				hx-vals="unset"
+				enctype="multipart/form-data"
+			>
+				<h1>New</h1>
+				<input name="mode" type="hidden" value="upload"/>
+				<input name="parentID" type="hidden" value={ m.ParentID }/>
+				<label class="form-control w-full">
+					<div class="label">
+						<span class="label-text">Folder</span>
+					</div>
+					<input
+						name="folder"
+						type="text"
+						placeholder="Type here"
+						class="input input-bordered w-full"
+					/>
+				</label>
+				<label class="form-control w-full">
+					<div class="label">
+						<span class="label-text">Upload files</span>
+					</div>
+					<input
+						type="file"
+						name="files"
+						multiple
+						class="file-input file-input-bordered w-full"
+					/>
+				</label>
+				<button class="btn btn-sm btn-primary mt-1">Save</button>
+			</form>
+			/*<form hx-post="/lib/new" hx-target="#asset-sidebar">
+			<h1>Move Uploaded gcode</h1>
+			<input name="mode" type="hidden" value="tempFiles"/>
+			<input name="parentID" type="hidden" value={ m.ParentID }/>
+			<select name="tempFile" class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring">
+				for _, tempFile := range m.TempFiles {
+					<option value={ tempFile }>{ tempFile }</option>
+				}
+			</select>
+			<button class="btn btn-sm">Move here</button>
+		</form>
+		*/
+		}
+	</div>
+}

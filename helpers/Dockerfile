@@ -1,11 +1,26 @@
-FROM golang:1.22 AS go
+FROM node:20-alpine AS node
 
 RUN mkdir app
 WORKDIR /app
 COPY . .
 
+WORKDIR frontend
+RUN ls -la
+RUN npm install
+run npx tailwindcss -c ./tailwind.config.js -i ./src/index.css -o ./public/index.css
+run npm run build 
+
+FROM golang:1.22 AS go
+
+RUN mkdir app
+WORKDIR /app
+COPY --from=node /app .
+
 RUN go mod tidy
-RUN go build main.go
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN templ generate
+RUN go build ./cmd/command/
+
 RUN ls -la helpers
 RUN pwd
 
@@ -15,13 +30,13 @@ RUN apt-get update && apt-get install -y ca-certificates && apt-get clean
 
 WORKDIR /app
 
-COPY --from=go /app/main ./
+COPY --from=go /app/command ./
 
 RUN mkdir /data
 RUN mkdir /data/temp
 RUN mkdir /data/assets
 
-RUN chmod +x main
+RUN chmod +x command
 
 VOLUME [ "/data", "/library" ]
-ENTRYPOINT ["/app/main"]
+ENTRYPOINT ["/app/command", "-data-folder", "/data", "-docker", "true"]

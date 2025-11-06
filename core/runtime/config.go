@@ -41,7 +41,7 @@ var Cfg *Config
 
 var dataPath = "/data"
 
-func init() {
+func Init() {
 	viper.BindEnv("DATA_PATH")
 	if viper.GetString("DATA_PATH") != "" {
 		dataPath = viper.GetString("DATA_PATH")

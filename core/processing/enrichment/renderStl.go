@@ -1,18 +1,9 @@
 package enrichment
 
 import (
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"path"
-
 	"github.com/Maker-Management-Platform/fauxgl"
 	"github.com/eduardooliveira/stLib/core/processing/types"
 	"github.com/eduardooliveira/stLib/core/runtime"
-	"github.com/eduardooliveira/stLib/core/system"
-	"github.com/eduardooliveira/stLib/core/utils"
-	"github.com/nfnt/resize"
 )
 
 type stlRenderer struct {
@@ -48,7 +39,7 @@ func NewSTLRenderer() *stlRenderer {
 }
 
 func (s *stlRenderer) Render(job types.ProcessableAsset) (string, error) {
-	renderName := fmt.Sprintf("%s.r.png", job.Asset.ID)
+	/*renderName := fmt.Sprintf("%s.r.png", job.Asset.ID)
 	renderSavePath := utils.ToAssetsPath(job.Asset.ProjectUUID, renderName)
 
 	if _, err := os.Stat(renderSavePath); err == nil {
@@ -91,5 +82,6 @@ func (s *stlRenderer) Render(job types.ProcessableAsset) (string, error) {
 
 	utils.CreateAssetsFolder(job.Project.UUID)
 
-	return renderName, fauxgl.SavePNG(renderSavePath, image)
+	return renderName, fauxgl.SavePNG(renderSavePath, image)*/
+	return "", nil
 }

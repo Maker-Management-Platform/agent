@@ -1,5 +1,7 @@
 .vscode
 static/node_modules
+frontend/node_modules
+build
 testdata*
 main
 main.exe
@@ -8,3 +10,8 @@ cache
 *.log
 __debug*
 /data
+*templ.go
+*templ.txt
+.DS_Store
+cmd/desktop/components
+cmd/desktop/frontend

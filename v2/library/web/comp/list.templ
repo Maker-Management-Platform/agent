@@ -1,0 +1,17 @@
+package comp
+
+templ List(model ListModel) {
+	<div
+		class="flex-1 flex flex-col flex-wrap"
+		id="asset-list"
+		hx-get="/lib/list"
+		hx-include="#asset-id"
+		hx-trigger="nested-assets-update from:body"
+	>
+		<div class="flex-1 flex flex-row flex-wrap content-start items-start">
+			for _, a := range model.Asset.NestedAssets {
+				@AssetCard(&AssetCardModel{Asset: a})
+			}
+		</div>
+	</div>
+}

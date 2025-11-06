@@ -1,0 +1,50 @@
+package comp
+
+templ Search(model SearchModel) {
+	<form
+		hx-get="/lib"
+		hx-target=".asset-view"
+		hx-swap="outerHTML"
+	>
+		<input type="hidden" name="search" value="true"/>
+		<h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-300">Search</h1>
+		<div class="mt-6">
+			<label class="label cursor-pointer">
+				<span class="label-text">Global</span>
+				<input type="checkbox" class="toggle toggle-primary" checked="checked"/>
+			</label>
+		</div>
+		<div class="mt-6">
+			<label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+			<input
+				id="name"
+				name="name"
+				value={ model.Name }
+				rows="3"
+				class="mt-1 input input-bordered w-full max-w-xs"
+			/>
+		</div>
+		<div class="mt-6">
+			<label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+			<input
+				type="text"
+				id="tags"
+				name="tags"
+				value={ model.Tags }
+				class="mt-1 input input-bordered w-full max-w-xs"
+			/>
+		</div>
+		<div class="mt-6">
+			<button
+				type="reset"
+				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+			>Clear</button>
+		</div>
+		<div class="mt-6">
+			<button
+				type="submit"
+				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+			>Submit</button>
+		</div>
+	</form>
+}

@@ -1,0 +1,60 @@
+package comp
+
+import (
+	"fmt"
+	"github.com/eduardooliveira/stLib/v2/library/entities"
+	"github.com/eduardooliveira/stLib/v2/utils"
+)
+
+templ View3D() {
+	<div
+		class="flex flex-col w-96 bg-base-200 rounded-box p-2"
+		:class="tab == 'viewer' ? '' : 'hidden'"
+	>
+		<a class="btn btn-ghost text-xl">3D Viewer</a>
+		<div
+			class="h-72 viewer-container bg-slate-400"
+			x-ref="viewerContainer"
+			hx-preserve="true"
+		></div>
+		<div
+			class="model-list flex flex-col pt-2"
+			hx-get="/lib/viewer/list"
+			hx-vals="js:{assetID:event.detail.assetID}"
+			hx-trigger="viewer-model-list-add from:body"
+			hx-swap="beforeend"
+		></div>
+	</div>
+}
+
+templ ViewerAssetElement(asset entities.Asset) {
+	<div class="flex mb-1 flex-row h-12 bg-base-300 rounded-lg">
+		<div class="avatar flex-none w-12">
+			<div class="rounded">
+				<img
+					src={ fmt.Sprintf("/lib/%s/file", utils.VoZ(asset.Thumbnail)) }
+					alt="Tailwind-CSS-Avatar-component"
+				/>
+			</div>
+		</div>
+		<div class="flex-1 px-1">
+			<p>{ utils.VoZ(asset.Label) }</p>
+			<p>{ utils.VoZ(asset.Kind) }</p>
+		</div>
+		<div class="">
+			<button
+				class="btn btn-square w-12 h-12 btn-ghost"
+				type="button"
+				name="delete"
+				@click={ fmt.Sprintf("deleteModel($el,'%s')", asset.ID) }
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					class="h-6 w-6"
+					stroke="currentColor"
+				><title>delete</title><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path></svg>
+			</button>
+		</div>
+	</div>
+}
