@@ -1,44 +1,44 @@
 .navbar {
     background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-6));
-    height: 100%; 
-    width: 300px;
+    border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
     display: flex;
     flex-direction: column;
-    border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+    height: 100%;
+    width: 300px;
   }
-  
+
   .wrapper {
     display: flex;
     flex: 1;
   }
-  
+
   .aside {
-    flex: 0 0 60px;
+    align-items: center;
     background-color: var(--mantine-color-body);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
-  }
-  
-  .main {
-    flex: 1;
-    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-  }
-  
-  .mainLink {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--mantine-radius-md);
     display: flex;
+    flex: 0 0 60px;
+    flex-direction: column;
+  }
+
+  .main {
+    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+    flex: 1;
+  }
+
+  .mainLink {
     align-items: center;
-    justify-content: center;
+    border-radius: var(--mantine-radius-md);
     color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-  
+    display: flex;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+
     &:hover {
       background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
     }
-  
+
     &[data-active] {
       &,
       &:hover {
@@ -47,52 +47,52 @@
       }
     }
   }
-  
+
   .title {
-    font-family:
-      Greycliff CF,
-      var(--mantine-font-family);
-    margin-bottom: var(--mantine-spacing-xl);
     background-color: var(--mantine-color-body);
+    border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+    font-family:
+      "Greycliff CF",
+      var(--mantine-font-family);
+    height: 60px;
+    margin-bottom: var(--mantine-spacing-xl);
     padding: var(--mantine-spacing-md);
     padding-top: 18px;
-    height: 60px;
-    border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
   }
-  
+
   .logo {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    height: 60px;
-    padding-top: var(--mantine-spacing-md);
     border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+    display: flex;
+    height: 60px;
+    justify-content: center;
     margin-bottom: var(--mantine-spacing-xl);
+    padding-top: var(--mantine-spacing-md);
+    width: 100%;
   }
-  
+
   .link {
-    display: block;
-    text-decoration: none;
-    border-top-right-radius: var(--mantine-radius-md);
     border-bottom-right-radius: var(--mantine-radius-md);
+    border-top-right-radius: var(--mantine-radius-md);
     color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-    padding: 0 var(--mantine-spacing-md);
+    display: block;
     font-size: var(--mantine-font-size-sm);
-    margin-right: var(--mantine-spacing-md);
     font-weight: 500;
     height: 44px;
     line-height: 44px;
-  
+    margin-right: var(--mantine-spacing-md);
+    padding: 0 var(--mantine-spacing-md);
+    text-decoration: none;
+
     &:hover {
       background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
       color: light-dark(var(--mantine-color-dark), var(--mantine-color-light));
     }
-  
+
     &[data-active] {
       &,
       &:hover {
-        border-left-color: var(--mantine-color-blue-filled);
         background-color: var(--mantine-color-blue-filled);
+        border-left-color: var(--mantine-color-blue-filled);
         color: var(--mantine-color-white);
       }
     }

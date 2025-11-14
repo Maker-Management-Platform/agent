@@ -1,0 +1,45 @@
+.card {
+    align-items: center;
+    background-color: var(--mantine-color-dimmed);
+    border-radius: var(--mantine-radius-md);
+    box-shadow: var(--mantine-shadow-sm);
+    display: flex;
+    flex-basis: rem(225px);
+    flex-direction: column-reverse;
+    height: rem(225px);
+    justify-content: space-between;
+    position: relative;
+}
+
+.card .content {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--mantine-spacing-md);
+    z-index: calc(var(--mantine-z-index-app) + 1);
+}
+
+.card .controls {
+    display: none;
+    justify-content: end;
+    width: 100%;
+    z-index: calc(var(--mantine-z-index-app) + 1);
+}
+
+.card .thumbnail {
+    background-position: center;
+    background-size: cover;
+    border-radius: inherit;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+}
+
+.card .thumbnail .overlay {
+    background-image: linear-gradient(180deg, rgb(0 0 0 / 0%) 0%, rgb(0 0 0 / 85%) 90%);
+    border-radius: inherit;
+    inset: 20% 0 0;
+    position: absolute;
+}

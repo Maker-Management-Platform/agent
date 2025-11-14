@@ -1,0 +1,16 @@
+# https://EditorConfig.org
+
+## If using VS Code/VSCodium, please install the extention "EditorConfig for VS Code"
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.{tsx,ts,jsx,js,css,scss,sass}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true

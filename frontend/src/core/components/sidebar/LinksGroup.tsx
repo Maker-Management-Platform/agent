@@ -1,26 +1,51 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { IconChevronRight } from '@tabler/icons-react';
-import { Box, Collapse, Group, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
-import classes from './NavbarLinksGroup.module.css';
 import { Link } from 'react-router';
+import {
+  Box,
+  Collapse,
+  Group,
+  Text,
+  ThemeIcon,
+  UnstyledButton,
+} from '@mantine/core';
+
+import classes from './NavbarLinksGroup.module.css';
 
 interface LinksGroupProps {
-  icon: React.FC<any>;
-  label: string;
-  initiallyOpened?: boolean;
-  path?: string;
-  children?: { label: string; path: string }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly icon: React.FC<any>;
+  readonly label: string;
+  readonly initiallyOpened?: boolean;
+  readonly path?: string;
+  readonly children?: { label: string; path: string }[];
 }
 
-export function LinksGroup({ icon: Icon, label, path, initiallyOpened, children }: LinksGroupProps) {
+/**
+ *
+ * @param param0
+ * @param param0.icon
+ * @param param0.label
+ * @param param0.path
+ * @param param0.initiallyOpened
+ * @param param0.children
+ * @returns
+ */
+function LinksGroup({
+  icon: Icon,
+  label,
+  path,
+  initiallyOpened,
+  children,
+}: LinksGroupProps) {
   const hasLinks = Array.isArray(children);
   const [opened, setOpened] = useState(initiallyOpened || false);
-
 
   const items = (hasLinks ? children : []).map((link) => (
     <Text
       className={classes.link}
       key={link.label}
+      /* eslint-disable-next-line react/jsx-props-no-spreading */
       renderRoot={(props) => <Link {...props} to={path + link.path} />}
     >
       {link.label}
@@ -35,10 +60,17 @@ export function LinksGroup({ icon: Icon, label, path, initiallyOpened, children 
             <ThemeIcon variant="light" size={30}>
               <Icon size={18} />
             </ThemeIcon>
-            {path ? (
-              <Box ml="md"
-                renderRoot={(props) => <Link {...props} to={path} />}
-              >{label}</Box>) : <Box ml="md">{label}</Box>}
+            {path
+              ? (
+                <Box
+                  ml="md"
+                  /* eslint-disable-next-line react/jsx-props-no-spreading */
+                  renderRoot={(props) => <Link {...props} to={path} />}
+                >
+                  {label}
+                </Box>
+              )
+              : <Box ml="md">{label}</Box>}
           </Box>
           {hasLinks && (
             <IconChevronRight
@@ -54,3 +86,5 @@ export function LinksGroup({ icon: Icon, label, path, initiallyOpened, children 
     </>
   );
 }
+
+export default LinksGroup;

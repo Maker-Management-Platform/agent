@@ -1,6 +1,6 @@
 /*
- _       __      _ __
-| |     / /___ _(_) /____
+ _     __    _ __
+| |   / /___ _(_) /____
 | | /| / / __ `/ / / ___/
 | |/ |/ / /_/ / / (__  )
 |__/|__/\__,_/_/_/____/
@@ -9,43 +9,51 @@ The electron alternative for Go
 */
 
 export interface Position {
-    x: number;
-    y: number;
+  x: number;
+  y: number;
 }
 
 export interface Size {
-    w: number;
-    h: number;
+  w: number;
+  h: number;
 }
 
 export interface Screen {
-    isCurrent: boolean;
-    isPrimary: boolean;
-    width : number
-    height : number
+  isCurrent: boolean;
+  isPrimary: boolean;
+  width : number
+  height : number
 }
 
 // Environment information such as platform, buildtype, ...
 export interface EnvironmentInfo {
-    buildType: string;
-    platform: string;
-    arch: string;
+  buildType: string;
+  platform: string;
+  arch: string;
 }
 
 // [EventsEmit](https://wails.io/docs/reference/runtime/events#eventsemit)
 // emits the given event. Optional data may be passed with the event.
 // This will trigger any event listeners.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EventsEmit(eventName: string, ...data: any): void;
 
-// [EventsOn](https://wails.io/docs/reference/runtime/events#eventson) sets up a listener for the given event name.
+// [EventsOn](https://wails.io/docs/reference/runtime/events#eventson)
+// sets up a listener for the given event name.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EventsOn(eventName: string, callback: (...data: any) => void): () => void;
 
 // [EventsOnMultiple](https://wails.io/docs/reference/runtime/events#eventsonmultiple)
 // sets up a listener for the given event name, but will only trigger a given number times.
-export function EventsOnMultiple(eventName: string, callback: (...data: any) => void, maxCallbacks: number): () => void;
+export function EventsOnMultiple(
+  eventName: string,
+  callback: (...data: any) => void, // eslint-disable-line @typescript-eslint/no-explicit-any
+  maxCallbacks: number
+): () => void;
 
 // [EventsOnce](https://wails.io/docs/reference/runtime/events#eventsonce)
 // sets up a listener for the given event name, but will only trigger once.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EventsOnce(eventName: string, callback: (...data: any) => void): () => void;
 
 // [EventsOff](https://wails.io/docs/reference/runtime/events#eventsoff)
@@ -141,12 +149,14 @@ export function WindowSetSize(width: number, height: number): Promise<Size>;
 export function WindowGetSize(): Promise<Size>;
 
 // [WindowSetMaxSize](https://wails.io/docs/reference/runtime/window#windowsetmaxsize)
-// Sets the maximum window size. Will resize the window if the window is currently larger than the given dimensions.
+// Sets the maximum window size. Will resize the window if the window is currently
+// larger than the given dimensions.
 // Setting a size of 0,0 will disable this constraint.
 export function WindowSetMaxSize(width: number, height: number): void;
 
 // [WindowSetMinSize](https://wails.io/docs/reference/runtime/window#windowsetminsize)
-// Sets the minimum window size. Will resize the window if the window is currently smaller than the given dimensions.
+// Sets the minimum window size. Will resize the window if the window is currently
+// smaller than the given dimensions.
 // Setting a size of 0,0 will disable this constraint.
 export function WindowSetMinSize(width: number, height: number): void;
 
@@ -199,11 +209,13 @@ export function WindowIsMinimised(): Promise<boolean>;
 export function WindowIsNormal(): Promise<boolean>;
 
 // [WindowSetBackgroundColour](https://wails.io/docs/reference/runtime/window#windowsetbackgroundcolour)
-// Sets the background colour of the window to the given RGBA colour definition. This colour will show through for all transparent pixels.
+// Sets the background colour of the window to the given RGBA colour definition. This colour will
+//  show through for all transparent pixels.
 export function WindowSetBackgroundColour(R: number, G: number, B: number, A: number): void;
 
 // [ScreenGetAll](https://wails.io/docs/reference/runtime/window#screengetall)
-// Gets the all screens. Call this anew each time you want to refresh data from the underlying windowing system.
+// Gets the all screens. Call this anew each time you want to refresh data from the underlying
+// windowing system.
 export function ScreenGetAll(): Promise<Screen[]>;
 
 // [BrowserOpenURL](https://wails.io/docs/reference/runtime/browser#browseropenurl)
@@ -235,15 +247,19 @@ export function ClipboardGetText(): Promise<string>;
 export function ClipboardSetText(text: string): Promise<boolean>;
 
 // [OnFileDrop](https://wails.io/docs/reference/runtime/draganddrop#onfiledrop)
-// OnFileDrop listens to drag and drop events and calls the callback with the coordinates of the drop and an array of path strings.
-export function OnFileDrop(callback: (x: number, y: number ,paths: string[]) => void, useDropTarget: boolean) :void
+// OnFileDrop listens to drag and drop events and calls the callback with the coordinates of the
+// drop and an array of path strings.
+export function OnFileDrop(
+  callback: (x: number, y: number, paths: string[]) => void,
+  useDropTarget: boolean
+) :void;
 
 // [OnFileDropOff](https://wails.io/docs/reference/runtime/draganddrop#dragandddropoff)
 // OnFileDropOff removes the drag and drop listeners and handlers.
-export function OnFileDropOff() :void
+export function OnFileDropOff() :void;
 
 // Check if the file path resolver is available
 export function CanResolveFilePaths(): boolean;
 
 // Resolves file paths for an array of files
-export function ResolveFilePaths(files: File[]): void
+export function ResolveFilePaths(files: File[]): void;

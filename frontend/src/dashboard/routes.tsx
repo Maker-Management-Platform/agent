@@ -1,10 +1,15 @@
-import { IconGauge } from "@tabler/icons-react";
-import { Dashboard } from "./pages/dashboard/Dashboard";
-import { NavItem } from "@/navigation";
+import React from 'react';
+import { IconGauge } from '@tabler/icons-react';
 
-export const navItem: NavItem = {
-    label: 'Dashboard',
-    icon: IconGauge,
-    path: '/dashboard',
-    element: <Dashboard />,
-}
+import { type INavItem } from 'types/Nav';
+
+import Dashboard from './pages/dashboard/Dashboard';
+
+const dashNavItem: INavItem = {
+  label: 'Dashboard',
+  icon: IconGauge,
+  path: '/dashboard',
+  element: <Dashboard />,
+};
+
+export default dashNavItem;

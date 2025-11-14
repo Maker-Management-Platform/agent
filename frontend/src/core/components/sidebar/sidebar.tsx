@@ -1,9 +1,19 @@
-import { LinksGroup } from './LinksGroup';
-import { Code, Group, ScrollArea, } from '@mantine/core';
-import classes from './sidebar.module.css';
-import { NavItem } from "@/navigation";
+import React from 'react';
+import { Code, Group, ScrollArea } from '@mantine/core';
 
-export function Sidebar({ navItems }: { navItems: NavItem[] }) {
+import { type INavItem } from 'types/Nav';
+
+import LinksGroup from './LinksGroup';
+import classes from './sidebar.module.css';
+
+/**
+ *
+ * @param param0
+ * @param param0.navItems
+ * @returns
+ */
+function Sidebar({ navItems }: { readonly navItems: INavItem[] }) {
+  /* eslint-disable-next-line react/jsx-props-no-spreading */
   const links = navItems.map((item) => <LinksGroup {...item} key={item.label} />);
 
   return (
@@ -21,3 +31,5 @@ export function Sidebar({ navItems }: { navItems: NavItem[] }) {
     </nav>
   );
 }
+
+export default Sidebar;

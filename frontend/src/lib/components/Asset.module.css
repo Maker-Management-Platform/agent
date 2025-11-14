@@ -1,0 +1,13 @@
+.asset {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.asset .list {
+    align-items: flex-start;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    overflow: auto;
+}
