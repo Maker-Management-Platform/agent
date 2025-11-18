@@ -1,0 +1,21 @@
+{
+  "state": "ready",
+  "extruder": {
+    "temperature": 23.2,
+    "target": 0.0
+  },
+  "heater_bed": {
+    "temperature": 24.1,
+    "target": 0.0
+  },
+  "display_status": {
+    "progress": 0.0
+  },
+  "print_stats": {
+    "state": "standby",
+    "filename": "",
+    "total_duration": 0.0,
+    "print_duration": 0.0,
+    "filament_used": 0.0
+  }
+}

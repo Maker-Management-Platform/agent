@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "model1.stl",
+    "path": "/test/path/project1/model1.stl",
+    "thumbnail": "/thumbs/model1.png",
+    "rendered_image": "/renders/model1.jpg",
+    "project_id": 1
+  },
+  {
+    "id": 2,
+    "name": "print.gcode",
+    "path": "/test/path/project1/print.gcode",
+    "project_id": 1
+  },
+  {
+    "id": 3,
+    "name": "photo.jpg",
+    "path": "/test/path/project2/photo.jpg",
+    "thumbnail": "/thumbs/photo_thumb.jpg",
+    "project_id": 2
+  }
+]

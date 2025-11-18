@@ -1,0 +1,35 @@
+{
+  "state": {
+    "text": "Operational",
+    "flags": {
+      "operational": true,
+      "printing": false,
+      "paused": false,
+      "ready": true,
+      "error": false
+    }
+  },
+  "temperature": {
+    "tool0": {
+      "actual": 21.5,
+      "target": 0.0
+    },
+    "bed": {
+      "actual": 22.3,
+      "target": 0.0
+    }
+  },
+  "job": {
+    "file": {
+      "name": null
+    },
+    "estimatedPrintTime": null,
+    "lastPrintTime": null
+  },
+  "progress": {
+    "completion": null,
+    "filepos": null,
+    "printTime": null,
+    "printTimeLeft": null
+  }
+}
