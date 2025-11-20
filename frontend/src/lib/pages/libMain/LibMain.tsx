@@ -1,17 +1,25 @@
-import { Outlet } from "react-router";
-import classes from "./LibMain.module.css";
-import { AssetPageProvider } from "@/lib/contexts/AssetPageContext";
-import { Viewer3dPanel } from "@/lib/components/viewer3d/Viewer3dPanel";
-import { Box } from "@mantine/core";
+import React from 'react';
+import { Outlet } from 'react-router';
+import { Box } from '@mantine/core';
 
+import { AssetPageProvider } from 'lib/contexts/AssetPageContext';
+import { Viewer3dPanel } from 'lib/components/viewer3d/Viewer3dPanel';
 
-export function LibMain() {
-    return (
-        <Box className={classes.main} >
-            <AssetPageProvider>
-                <Outlet />
-                <Viewer3dPanel />
-            </AssetPageProvider>
-        </Box>
-    );
+import classes from './LibMain.module.css';
+
+/**
+ *
+ * @returns
+ */
+function LibMain() {
+  return (
+    <Box className={classes.main}>
+      <AssetPageProvider>
+        <Outlet />
+        <Viewer3dPanel />
+      </AssetPageProvider>
+    </Box>
+  );
 }
+
+export default LibMain;

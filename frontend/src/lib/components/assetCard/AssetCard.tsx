@@ -1,28 +1,44 @@
-import { ActionIcon, Box, rem, Title } from "@mantine/core";
-import classes from "./AssetCard.module.css";
-import { Asset } from "../../models";
-import { Link } from "react-router";
-import { useHover } from "@mantine/hooks";
-import { IconHeart, IconSettings } from "@tabler/icons-react";
-import { useContext } from "react";
-import { SettingsContext } from "@/core/providers/settings/settingsContext";
+import React, { useContext } from 'react';
+import {
+  ActionIcon,
+  Box,
+  rem,
+  Title,
+} from '@mantine/core';
+import { Link } from 'react-router';
+import { useHover } from '@mantine/hooks';
+import { IconHeart, IconSettings } from '@tabler/icons-react';
 
-export function AssetCard({
+import SettingsContext from 'core/providers/settings/settingsContext';
+
+import { type Asset } from '../../models';
+
+import classes from './AssetCard.module.css';
+
+/**
+ *
+ * @param param0
+ * @param param0.asset
+ * @param param0.onSelected
+ * @param param0.onAddTo3dViewer
+ * @returns
+ */
+function AssetCard({
   asset,
   onSelected,
   onAddTo3dViewer,
 }: {
-  asset: Asset;
-  onSelected?: (asset: Asset) => void;
-  onAddTo3dViewer?: (asset: Asset) => void;
+  readonly asset: Asset;
+  readonly onSelected?: (asset: Asset) => void;
+  readonly onAddTo3dViewer?: (asset: Asset) => void;
 }) {
   const { hovered, ref } = useHover();
   const { settings } = useContext(SettingsContext);
-  const shouldNavigate = (a: Asset) => {
-    return (
-      a.NodeKind === "bundle" || a.NodeKind === "dir" || a.NodeKind === "root"
-    );
-  };
+  const shouldNavigate = (a: Asset) => (
+    (
+      a.NodeKind === 'bundle' || a.NodeKind === 'dir' || a.NodeKind === 'root'
+    )
+  );
 
   return (
     <Box className={classes.card} ref={ref} m="0.5rem">
@@ -37,10 +53,10 @@ export function AssetCard({
       </div>
       <div
         className={classes.controls}
-        style={{ display: hovered ? "flex" : "none" }}
+        style={{ display: hovered ? 'flex' : 'none' }}
       >
         <ActionIcon.Group>
-          {asset.Kind === "model" && (
+          {asset.Kind === 'model' && (
             <ActionIcon
               variant="white"
               size="sm"
@@ -74,3 +90,4 @@ export function AssetCard({
   );
 }
 
+export default AssetCard;

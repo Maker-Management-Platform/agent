@@ -31,4 +31,3 @@ export interface NewFolderPost {
   ParentID: string;
   FolderName: string;
 }
-
