@@ -2,7 +2,6 @@ import React, {
   useRef,
   useState,
   useEffect,
-  useContext,
 } from 'react';
 import {
   ActionIcon,
@@ -22,7 +21,7 @@ import {
 } from '@tabler/icons-react';
 
 import { type Asset } from 'lib/models';
-import SettingsContext from 'core/providers/settings/settingsContext';
+import { getLocalBackend } from 'core/stores/settings.store';
 
 import { useAssetPage } from '../../contexts/AssetPageContext';
 
@@ -41,8 +40,6 @@ interface IViewerListCard {
  * @returns
  */
 function ViewerListCard({ asset, onRemove }: IViewerListCard) {
-  const { settings } = useContext(SettingsContext);
-
   return (
     <Flex
       bg="dimmed"
@@ -57,7 +54,7 @@ function ViewerListCard({ asset, onRemove }: IViewerListCard) {
       <Avatar
         size="lg"
         radius="sm"
-        src={`${settings.localBackend}/api/lib/${asset.Thumbnail}/file`}
+        src={`${getLocalBackend()}/api/lib/${asset.Thumbnail}/file`}
       />
       <Box flex={1}>
         {asset.Label}

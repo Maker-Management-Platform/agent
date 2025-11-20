@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
   ActionIcon,
   Box,
@@ -9,7 +9,7 @@ import { Link } from 'react-router';
 import { useHover } from '@mantine/hooks';
 import { IconHeart, IconSettings } from '@tabler/icons-react';
 
-import SettingsContext from 'core/providers/settings/settingsContext';
+import { getLocalBackend } from 'core/stores/settings.store';
 
 import { type Asset } from '../../models';
 
@@ -33,7 +33,6 @@ function AssetCard({
   readonly onAddTo3dViewer?: (asset: Asset) => void;
 }) {
   const { hovered, ref } = useHover();
-  const { settings } = useContext(SettingsContext);
   const shouldNavigate = (a: Asset) => (
     (
       a.NodeKind === 'bundle' || a.NodeKind === 'dir' || a.NodeKind === 'root'
@@ -80,7 +79,7 @@ function AssetCard({
       </div>
       <div
         style={{
-          backgroundImage: `url(${settings.localBackend}/api/lib/${asset.Thumbnail}/file)`,
+          backgroundImage: `url(${getLocalBackend()}/api/lib/${asset.Thumbnail}/file)`,
         }}
         className={classes.thumbnail}
       >
