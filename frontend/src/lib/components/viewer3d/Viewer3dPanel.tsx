@@ -19,11 +19,18 @@ import {
   IconMinus,
   IconX,
 } from '@tabler/icons-react';
+import { useAtomValue } from 'jotai';
 
 import { type Asset } from 'lib/models';
 import { getLocalBackend } from 'core/stores/settings.store';
-
-import { useAssetPage } from '../../contexts/AssetPageContext';
+import {
+  currentViewer3dAssetsAtom,
+  sidebarStateAtom,
+  minimizeSidebar,
+  maximizeSidebar,
+  closeSidebar,
+  removeFromViewer3d,
+} from 'lib/stores/assetPage.store';
 
 import { type Viewer3D, createViewer3D } from './Viewer3d';
 
@@ -81,15 +88,16 @@ function ViewerListCard({ asset, onRemove }: IViewerListCard) {
  * @returns
  */
 export function Viewer3dPanel() {
-  const assetPage = useAssetPage();
+  const viewer3dAssets = useAtomValue(currentViewer3dAssetsAtom);
+  const sidebarState = useAtomValue(sidebarStateAtom);
   const parent = useRef<HTMLDivElement>(null);
   const [viewer3D, setViewer3D] = useState<Viewer3D>();
 
   useEffect(() => {
-    if (assetPage.viewer3dAssets.length > 0) {
+    if (viewer3dAssets.length > 0) {
       // eslint-disable-next-line no-console
-      console.log('Viewer3dPanel useEffect', assetPage.viewer3dAssets);
-      assetPage.minimizeSidebar();
+      console.log('Viewer3dPanel useEffect', viewer3dAssets);
+      minimizeSidebar();
     }
     if (!parent.current) {
       return;
@@ -97,8 +105,8 @@ export function Viewer3dPanel() {
     if (!viewer3D) {
       return;
     }
-    viewer3D.setModels(assetPage.viewer3dAssets);
-  }, [assetPage.viewer3dAssets, viewer3D, assetPage]);
+    viewer3D.setModels(viewer3dAssets);
+  }, [viewer3dAssets, viewer3D]);
 
   /*
   useEffect(() => {
@@ -117,7 +125,7 @@ export function Viewer3dPanel() {
     if (viewer3D) {
       return;
     }
-    if (assetPage.sidebarState === 'closed') {
+    if (sidebarState === 'closed') {
       return;
     }
     if (!parent.current) {
@@ -134,11 +142,11 @@ export function Viewer3dPanel() {
         setViewer3D(undefined);
       }
     };
-  }, [assetPage.sidebarState, viewer3D]);
+  }, [sidebarState, viewer3D]);
 
   return (
     <Paper
-      display={assetPage.sidebarState === 'closed' ? 'none' : 'flex'}
+      display={sidebarState === 'closed' ? 'none' : 'flex'}
       m="sm"
       ml={0}
       flex={1}
@@ -154,26 +162,26 @@ export function Viewer3dPanel() {
           <Box>3D Viewer</Box>
           <Group gap="xs" justify="flex-end">
             {
-              assetPage.sidebarState === 'maximized'
+              sidebarState === 'maximized'
                 ? null
                 : (
                   <ActionIcon
                     variant="transparent"
                     aria-label="Maximize"
-                    onClick={() => assetPage.maximizeSidebar()}
+                    onClick={() => maximizeSidebar()}
                   >
                     <IconArrowsMaximize style={{ width: '60%', height: '60%' }} stroke={1.5} />
                   </ActionIcon>
                 )
             }
             {
-              assetPage.sidebarState === 'minimized'
+              sidebarState === 'minimized'
                 ? null
                 : (
                   <ActionIcon
                     variant="transparent"
                     aria-label="Minimize"
-                    onClick={() => assetPage.minimizeSidebar()}
+                    onClick={() => minimizeSidebar()}
                   >
                     <IconArrowsMinimize style={{ width: '60%', height: '60%' }} stroke={1.5} />
                   </ActionIcon>
@@ -182,7 +190,7 @@ export function Viewer3dPanel() {
             <ActionIcon
               variant="transparent"
               aria-label="Close"
-              onClick={() => assetPage.closeSidebar()}
+              onClick={() => closeSidebar()}
             >
               <IconX style={{ width: '70%', height: '70%' }} stroke={1.5} />
             </ActionIcon>
@@ -195,11 +203,11 @@ export function Viewer3dPanel() {
         </Group>
         <Stack align="stretch" flex={1} style={{ overflowY: 'auto' }}>
           <Stack>
-            {assetPage.viewer3dAssets.map((asset) => (
+            {viewer3dAssets.map((asset: Asset) => (
               <ViewerListCard
                 key={asset.ID}
                 asset={asset}
-                onRemove={(a) => { assetPage.removeFromViewer3d(a); }}
+                onRemove={(a) => { removeFromViewer3d(a); }}
               />
             ))}
           </Stack>

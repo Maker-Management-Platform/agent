@@ -14,11 +14,13 @@ import {
   ActionIcon,
   Paper,
 } from '@mantine/core';
+import { useSetAtom } from 'jotai';
+
+import { addToViewer3d, currentAssetAtom } from 'lib/stores/assetPage.store';
 
 import { useGetAsset } from '../../fetchers/getAsset';
 import AssetCard from '../assetCard/AssetCard';
 import Header from '../header/Header';
-import { useAssetPage } from '../../contexts/AssetPageContext';
 import AssetEditForm from '../assetEditForm/AssetEditForm';
 import AssetNewForm from '../assetNewForm/AssetNewForm';
 
@@ -32,7 +34,7 @@ function Asset() {
   const loc = useLocation();
   const { id } = useParams();
 
-  const assetPageState = useAssetPage();
+  const setCurrentAsset = useSetAtom(currentAssetAtom);
 
   // eslint-disable-next-line unicorn/prefer-string-slice
   const [expandedView, setExpandedView] = useState(loc.hash.substring(1));
@@ -140,11 +142,11 @@ function Asset() {
               asset={a}
               key={a.ID}
               onSelected={(asset) => {
-                assetPageState.setAsset(asset);
+                setCurrentAsset(asset);
               }}
               onAddTo3dViewer={(asset) => {
-                assetPageState.setAsset(asset);
-                assetPageState.addToViewer3d(asset);
+                setCurrentAsset(asset);
+                addToViewer3d(asset);
               }}
             />
           ))}

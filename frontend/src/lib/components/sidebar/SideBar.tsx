@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box } from '@mantine/core';
+import { useAtomValue } from 'jotai';
 
-import { useAssetPage } from '../../contexts/AssetPageContext';
+import { currentAssetAtom } from 'lib/stores/assetPage.store';
 
 import classes from './SideBar.module.css';
 
@@ -10,10 +11,10 @@ import classes from './SideBar.module.css';
  * @returns
  */
 function SideBar() {
-  const pageState = useAssetPage();
+  const asset = useAtomValue(currentAssetAtom);
   return (
     <Box className={classes.sidebar}>
-      {pageState.asset?.Label}
+      {asset?.Label}
     </Box>
   );
 }
