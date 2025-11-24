@@ -1,0 +1,116 @@
+{
+  "extends": [
+    "airbnb",
+    "airbnb-typescript",
+    "plugin:react/recommended",
+    "plugin:unicorn/recommended",
+    "plugin:sonarjs/recommended-legacy",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:jsx-a11y/recommended",
+    "plugin:react-prefer-function-component/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:@eslint-community/eslint-comments/recommended",
+    "plugin:@tanstack/eslint-plugin-query/recommended",
+    "plugin:@eslint-community/eslint-comments/recommended",
+    "plugin:jsdoc/recommended-typescript-error"
+  ],
+  "root": true,
+  "env": {
+		"browser": true
+	},
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "createDefaultProgram": true,
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "react-prefer-function-component",
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "import",
+    "unicorn",
+    "sonarjs",
+    "jsx-a11y",
+    "validate-jsx-nesting",
+    "@tanstack/query",
+    "jsdoc",
+    "react-refresh"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {} // this loads <root_dir>/tsconfig.json to eslint
+    }
+  },
+  "rules": {
+    "curly": ["error", "all"],
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": ["vite.config.ts", "./mocks/*"]}],
+    "import/namespace": "off",
+    "import/named": "off",
+    "import/default": "off",
+    "import/no-named-as-default-member": "off",
+    "import/no-unresolved": ["error", { "ignore": ["^virtual:"] }],
+    "import/order":[
+      "error", {
+        "newlines-between": "always",
+        "groups": [
+          "builtin", 
+          "external", 
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ]
+    }],
+    "jsdoc/require-param-description": 0,
+    "jsdoc/require-returns-description": 0,
+    "jsdoc/tag-lines": ["error", "any", { "startLines": 1 }],
+    "jsx-a11y/label-has-associated-control": [
+      2,
+      {
+        "assert": "either"
+      }
+    ],
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "react/require-default-props": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "sonarjs/fixme-tag": "off",
+    "sonarjs/no-commented-code": "warn",
+    "sonarjs/todo-tag": "off",
+    "@typescript-eslint/consistent-indexed-object-style": "error",
+    "@typescript-eslint/consistent-type-exports": "error",
+    "@typescript-eslint/consistent-type-imports": "error",
+    "@typescript-eslint/dot-notation": "off",
+    "@typescript-eslint/no-dynamic-delete": "error",
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": {
+          "attributes": false
+        }
+      }
+    ],
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/no-array-reduce": "off",
+    "unicorn/no-array-for-each": "off",
+    "unicorn/no-null": "off",
+    "unicorn/no-unreadable-array-destructuring": "off",
+    "unicorn/no-useless-undefined": "off",
+    "unicorn/prefer-at": "off",
+    "unicorn/prefer-export-from": "off",
+    "unicorn/prefer-switch": "off",
+    "unicorn/prefer-object-from-entries": "off",
+    "unicorn/prefer-set-has": "off",
+    "unicorn/prevent-abbreviations": "off",
+    "unicorn/no-new-array": "off"
+  }
+}

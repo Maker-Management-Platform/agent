@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Button,
   CloseButton,
@@ -8,44 +9,48 @@ import {
   TagsInput,
   Textarea,
   TextInput,
-} from "@mantine/core";
-import { Asset, AssetPatch } from "../../models";
-import { useForm } from "@mantine/form";
-import { patchAsset } from "../../fetchers/getAsset";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+} from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export function AssetEditForm({
+import { type Asset, type AssetPatch } from '../../models';
+import { patchAsset } from '../../fetchers/getAsset';
+
+/**
+ *
+ * @param param0
+ * @param param0.asset
+ * @param param0.onClose
+ * @returns
+ */
+function AssetEditForm({
   asset,
   onClose,
 }: {
-  asset: Asset;
-  onClose: () => void;
+  readonly asset: Asset;
+  readonly onClose: () => void;
 }) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: patchAsset,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset", asset.ID] });
+      queryClient.invalidateQueries({ queryKey: ['asset', asset.ID] }).catch(console.error);
       onClose();
     },
   });
   const form = useForm<AssetPatch>({
     initialValues: {
       Label: asset.Label,
-      Description: asset.Description ? asset.Description : "",
-      Tags: asset.Tags ? asset.Tags : [],
+      Description: asset.Description ?? '',
+      Tags: asset.Tags ?? [],
     } as AssetPatch,
     validate: {
-      Label: (value) =>
-        !value || value.length > 0 ? undefined : "Label is required",
-      Description: (value) =>
-        !value || value.length > 0 ? undefined : "Description is required",
+      Label: (value) => ((!value || value.length > 0) ? undefined : 'Label is required'),
+      Description: (value) => ((!value || value.length > 0) ? undefined : 'Description is required'),
     },
   });
-  const formSubmit = (values: AssetPatch): Promise<any> => {
-    values.ID = asset.ID;
-    return mutation.mutateAsync(values);
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const formSubmit = (values: AssetPatch): Promise<any> => (mutation.mutateAsync(values));
   return (
     <form onSubmit={form.onSubmit(formSubmit)} onReset={form.reset}>
       <Group grow>
@@ -57,24 +62,27 @@ export function AssetEditForm({
           <TextInput
             label="Name"
             placeholder="An asset"
-            key={form.key("Label")}
-            {...form.getInputProps("Label")}
+            key={form.key('Label')}
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...form.getInputProps('Label')}
           />
           <Textarea
             mt="md"
             label="Description"
             placeholder="A cool thing to print"
-            key={form.key("Description")}
-            {...form.getInputProps("Description")}
+            key={form.key('Description')}
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...form.getInputProps('Description')}
           />
         </Fieldset>
         <Fieldset legend="Asset Context">
           <TagsInput
             label="Tags"
-            splitChars={[",", " ", "|"]}
+            splitChars={[',', ' ', '|']}
             placeholder="tag1, tag2"
-            key={form.key("Tags")}
-            {...form.getInputProps("Tags")}
+            key={form.key('Tags')}
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...form.getInputProps('Tags')}
           />
         </Fieldset>
       </SimpleGrid>
@@ -94,3 +102,4 @@ export function AssetEditForm({
   );
 }
 
+export default AssetEditForm;

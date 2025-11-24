@@ -1,10 +1,17 @@
-import { IconGauge } from "@tabler/icons-react";
-import { Dashboard } from "./pages/dashboard/Dashboard";
-import { NavItem } from "@/navigation";
+import React from 'react';
+import { IconGauge } from '@tabler/icons-react';
 
-export const navItem: NavItem = {
-    label: 'Dashboard',
-    icon: IconGauge,
-    path: '/dashboard',
-    element: <Dashboard />,
-}
+import { type NavItem } from 'navigation';
+
+import { Dashboard } from './pages/dashboard/Dashboard';
+
+const navItem: NavItem = {
+  label: 'Dashboard',
+  icon: IconGauge,
+  path: '/dashboard',
+  element: <Dashboard />,
+};
+
+export {
+  navItem, // eslint-disable-line import/prefer-default-export
+};

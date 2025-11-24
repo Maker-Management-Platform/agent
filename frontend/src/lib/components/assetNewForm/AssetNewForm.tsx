@@ -1,5 +1,4 @@
-import { newFolderPost, patchAsset } from "@/lib/fetchers/getAsset";
-import { Asset, AssetPatch, NewFolderPost } from "@/lib/models";
+import React from 'react';
 import {
   Button,
   Fieldset,
@@ -7,59 +6,31 @@ import {
   Group,
   Textarea,
   TextInput,
-} from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+} from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export function AssetNewForm({
-  parent,
-  onClose,
-}: {
-  parent: Asset;
-  onClose: () => void;
-}) {
-  return (
-    <>
-      <Grid grow>
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <Fieldset legend="Upload"></Fieldset>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <Fieldset legend="New Folder">
-            <NewFolder
-              parent={parent}
-              callback={() => {
-                onClose();
-              }}
-            />
-          </Fieldset>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <Fieldset legend="Import">
-            <ImportList
-              parent={parent}
-              callback={() => {
-                onClose();
-              }}
-            />
-          </Fieldset>
-        </Grid.Col>
-      </Grid>
-    </>
-  );
+import { newFolderPost } from 'lib/fetchers/getAsset';
+import { type Asset, type AssetPatch, type NewFolderPost } from 'lib/models';
+
+interface INestedProps {
+  readonly parent: Asset;
+  readonly callback: () => void;
 }
 
-interface nestedProps {
-  parent: Asset;
-  callback: () => void;
-}
-
-function NewFolder({ parent, callback }: nestedProps) {
+/**
+ *
+ * @param param0
+ * @param param0.parent
+ * @param param0.callback
+ * @returns
+ */
+function NewFolder({ parent, callback }: INestedProps) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: newFolderPost,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["asset", parent.ID] });
+      queryClient.invalidateQueries({ queryKey: ['asset', parent.ID] }).catch(console.error);
       callback();
     },
   });
@@ -67,24 +38,25 @@ function NewFolder({ parent, callback }: nestedProps) {
   const form = useForm<NewFolderPost>({
     initialValues: {
       ParentID: parent.ID,
-      FolderName: "",
+      FolderName: '',
     } as NewFolderPost,
     validate: {
-      FolderName: (value) =>
-        !value || value.length > 0 ? undefined : "Folder name is required",
+      FolderName: (value) => ((!value || value.length > 0) ? undefined : 'Folder name is required'),
     },
   });
 
-  const formSubmit = (values: AssetPatch): Promise<any> => {
-    return mutation.mutateAsync(values);
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const formSubmit = (values: AssetPatch): Promise<any> => (
+    mutation.mutateAsync(values)
+  );
 
   return (
     <form onSubmit={form.onSubmit(formSubmit)} onReset={form.reset}>
       <TextInput
         placeholder="Folder name"
-        key={form.key("FolderName")}
-        {...form.getInputProps("FolderName")}
+        key={form.key('FolderName')}
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...form.getInputProps('FolderName')}
       />
       <Group align="flex-end" mt="lg">
         <Button type="submit">Create</Button>
@@ -93,13 +65,22 @@ function NewFolder({ parent, callback }: nestedProps) {
   );
 }
 
-function ImportList({ parent, callback }: nestedProps) {
+/**
+ *
+ * @param param0
+ * @param param0.parent
+ * @param param0.callback
+ * @returns
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ImportList({ parent, callback }: INestedProps) {
   return (
     <form>
       <Textarea
         placeholder="List of links"
         minRows={5}
         maxRows={10}
+        // eslint-disable-next-line no-console
         onChange={(e) => console.log(e.target.value)}
       />
       <Group align="flex-end" mt="lg">
@@ -108,3 +89,48 @@ function ImportList({ parent, callback }: nestedProps) {
     </form>
   );
 }
+
+/**
+ *
+ * @param param0
+ * @param param0.parent
+ * @param param0.onClose
+ * @returns
+ */
+function AssetNewForm({
+  parent,
+  onClose,
+}: {
+  readonly parent: Asset;
+  readonly onClose: () => void;
+}) {
+  return (
+    <Grid grow>
+      <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
+        <Fieldset legend="Upload" />
+      </Grid.Col>
+      <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
+        <Fieldset legend="New Folder">
+          <NewFolder
+            parent={parent}
+            callback={() => {
+              onClose();
+            }}
+          />
+        </Fieldset>
+      </Grid.Col>
+      <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
+        <Fieldset legend="Import">
+          <ImportList
+            parent={parent}
+            callback={() => {
+              onClose();
+            }}
+          />
+        </Fieldset>
+      </Grid.Col>
+    </Grid>
+  );
+}
+
+export default AssetNewForm;
